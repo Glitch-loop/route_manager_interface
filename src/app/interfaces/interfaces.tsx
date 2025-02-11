@@ -175,3 +175,14 @@ export interface ISyncRecord {
   action:     'INSERT'|'UPDATE'|'DELETE',
   timestamp:  string
 }
+
+
+// Related to components
+export interface IAccountabilityItem {
+  message: string;
+  value: string;
+  isUnderline: boolean;
+  isBold: boolean;
+  isItalic: boolean;
+  isSeparateLine: boolean;
+}
