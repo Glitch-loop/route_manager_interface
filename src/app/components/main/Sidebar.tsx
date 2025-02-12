@@ -1,4 +1,4 @@
-import ButtonWithNotification from "../components/ButtonWithNotificaion";
+import ButtonWithNotification from "../general/ButtonWithNotificaion";
 
 
 
