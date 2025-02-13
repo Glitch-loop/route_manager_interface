@@ -9,12 +9,12 @@ function IconButtonWithNotification({children, notificationAlert}:{children:any,
     return (
         //absolute 
         <div className="relative w-auto">
-            <div className="relative">
+            <div className="relative left-9">
                 { notificationAlert &&
-                    <div className={`absolute left-9  bg-red-500 p-2 rounded-lg animate-ping`}/>
+                    <div className={`absolute w-0 h-0 p-2 rounded-lg  bg-red-500 animate-ping`}/>
                 }
                 { notificationAlert &&
-                    <div className={`absolute left-9 bg-red-500 p-2 rounded-lg`}/>
+                    <div className={`absolute w-0 h-0 p-2 rounded-lg bg-red-500`}/>
                 }
             </div>
             { children === undefined ?

@@ -11,7 +11,7 @@ export default function Home() {
     <div className="h-screen w-auto bg-slate-600  flex flex-row justify-center items-center">
       <main className="h-auto w-full">
         <div className={`w-full flex flex-row justify-center bg-white`}>
-          <div className="w-1/2">
+          <div className="w-11/12">
             <RouteList />
 
           </div>
