@@ -45,4 +45,4 @@ function CardRouteList({
 }
 
 
-export default CardRouteList
+export default CardRouteList;

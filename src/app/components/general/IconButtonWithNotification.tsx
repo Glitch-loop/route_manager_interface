@@ -1,15 +1,34 @@
 'use client'
 
-import { IconBase, IconType } from "react-icons";
+import { deterimneIconSize, determineBackgroundColor } from "@/app/utils/stylesUtils";
 import { MdOutlineQuestionMark } from "react-icons/md";
 
+import { colorTypes, sizeTypes } from "@/app/interfaces/typesSystem";
 
-function IconButtonWithNotification({children, notificationAlert}:{children:any, notificationAlert?:boolean}) {
-    console.log(children)
+
+function IconButtonWithNotification(
+    {
+        children,
+        onPress,
+        notificationAlert,
+        backGroundColor,
+        size 
+    }:{
+        children:any,
+        onPress:any
+        notificationAlert?:boolean,
+        backGroundColor:colorTypes
+        size:sizeTypes
+    }) {
+
+        const bgColor:string = determineBackgroundColor(backGroundColor)
+        const iconSize = deterimneIconSize(size);
+
+
+
     return (
-        //absolute 
         <div className="relative w-auto">
-            <div className="relative left-9">
+            <div className="relative flex justify-end">
                 { notificationAlert &&
                     <div className={`absolute w-0 h-0 p-2 rounded-lg  bg-red-500 animate-ping`}/>
                 }
@@ -18,11 +37,15 @@ function IconButtonWithNotification({children, notificationAlert}:{children:any,
                 }
             </div>
             { children === undefined ?
-                <button className="bg-orange-500 text-3xl rounded-full p-3 hover:opacity-50 duration-200">
+                <button 
+                    onClick={onPress}
+                    className={`${bgColor} ${iconSize} rounded-full hover:opacity-50 duration-200`}>
                     <MdOutlineQuestionMark/>
                 </button>
                 :
-                <button className="bg-orange-500 text-3xl rounded-full p-3 hover:opacity-50 duration-200">   
+                <button 
+                    onClick={onPress}
+                    className={`${bgColor} ${iconSize} rounded-full hover:opacity-50 duration-200`}>   
                     {children}
                 </button>
             }

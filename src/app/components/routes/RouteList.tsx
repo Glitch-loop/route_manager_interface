@@ -28,8 +28,10 @@ function RouteList(
                     <span className="text-xl">Alexis Gonzáles</span>
                     <span className="text-lg">322-153-2554</span>
                 </div>
-                <div className="flex basis-1/5 justify-center">
-                    <IconButtonWithNotification notificationAlert={true}>
+                <div className=" flex basis-1/5 justify-center">
+                    <IconButtonWithNotification 
+                        notificationAlert={true}
+                        backGroundColor="bg-color-success-primary">
                         <FaRegClipboard />
                     </IconButtonWithNotification>
                 </div>

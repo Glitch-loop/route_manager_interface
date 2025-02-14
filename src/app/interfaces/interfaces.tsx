@@ -186,3 +186,11 @@ export interface IAccountabilityItem {
   isItalic: boolean;
   isSeparateLine: boolean;
 }
+
+
+export interface IColorOption {
+  idColorOption: string;
+  title: string;
+  description?: string;
+  color: string;
+}
