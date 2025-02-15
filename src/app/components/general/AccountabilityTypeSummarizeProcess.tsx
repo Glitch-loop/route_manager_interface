@@ -2,7 +2,13 @@
 
 import { IAccountabilityItem } from "../../interfaces/interfaces"
 
-function AccountabilityTypeSummarizeProcess({titleOfSummarize, contentOfSummariaze}:{titleOfSummarize:string, contentOfSummariaze:IAccountabilityItem[]}) {
+function AccountabilityTypeSummarizeProcess({
+        titleOfSummarize, 
+        contentOfSummariaze
+    }:{
+        titleOfSummarize:string, 
+        contentOfSummariaze:IAccountabilityItem[]
+    }) {
     return (
         <div className=" w-full text-base flex flex-col items-center justify-center">
             <span className="w-full flex flex-row justify-start items-start font-bold text-xl">{titleOfSummarize}</span>

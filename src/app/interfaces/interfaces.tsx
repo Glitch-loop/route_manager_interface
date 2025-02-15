@@ -187,10 +187,17 @@ export interface IAccountabilityItem {
   isSeparateLine: boolean;
 }
 
-
 export interface IColorOption {
   idColorOption: string;
   title: string;
   description?: string;
   color: string;
+}
+
+export interface TextTableProps {
+  headers: string[];
+  data: (string | number)[][];
+  headerStyles?: { [key: number]: string }; 
+  columnStyles?: { [key: number]: string };
+  rowStyles?: { [key: number]: string };
 }

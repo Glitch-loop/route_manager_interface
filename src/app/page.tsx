@@ -8,6 +8,8 @@ import IconButtonWithNotification from "./components/general/IconButtonWithNotif
 
 import GroupsColorPallete from "./components/general/GroupsColorPallete";
 import { IColorOption } from "./interfaces/interfaces";
+import TextTable from "./components/general/TextTable";
+import SummarizeRouteTransaction from "./components/route_tranactions/SummarizeRouteTransaction";
 
 
 
@@ -46,10 +48,12 @@ export default function Home() {
         <div className={`w-full flex flex-row justify-center`}>
           <div className="w-11/12">
             {/* <RouteList /> */}
-            <GroupsColorPallete 
-              palleteTitle={"Color rutas"}
-              itemsColor={palleteColors}
-              onChangeColor={(color:IColorOption) => handlerChangeColor(color)}/>
+            <div className="w-1/2 bg-slate-300">
+              <SummarizeRouteTransaction 
+                arrayProducts={[]}
+                totalSectionCaptionMessage=""/>
+            </div>
+
               
           </div>
 
