@@ -6,12 +6,13 @@ import RouteList from "./components/routes/RouteList";
 import IconButtonWithNotification from "./components/general/IconButtonWithNotification";
 // import ButtonWithNotification from "./components/ButtonWithNotificaion";
 
-import GroupsColorPallete from "./components/general/GroupsColorPallete";
-import { IColorOption } from "./interfaces/interfaces";
+import GroupsColorPallete from "./components/general/ColorGroupsPallete";
+import { IColorOption, IConceptOption } from "./interfaces/interfaces";
 import TextTable from "./components/general/TextTable";
 import SummarizeRouteTransaction from "./components/route_tranactions/SummarizeRouteTransaction";
 
 
+import OptionConcepts from "./components/general/OptionConcepts";
 
 const colors:IColorOption[] = [
   {
@@ -28,9 +29,30 @@ const colors:IColorOption[] = [
   }
 ]
 
+const arrConceptOptions:IConceptOption[] = [
+  {
+    idConcept: "1",
+    conceptName: "Ruta 1 - Miercoles",
+    description: "Alexis",
+    options: [
+      {
+        idOption: "1",
+        optionName: "Mostrar ruta",
+        selected: false
+      },
+      {
+        idOption: "2",
+        optionName: "Data",
+        selected: true
+      },
+    ]
+  }
+]
+
 export default function Home() {
 
   const [palleteColors, setPalleteColors] = useState<IColorOption[]>(colors)
+  const [conceptOptions, setConceptOptions] = useState<IConceptOption[]>(arrConceptOptions)
 
   const handlerChangeColor = (selectedOption:IColorOption) => {
       setPalleteColors(palleteColors.map((item:IColorOption) => {
@@ -52,15 +74,18 @@ export default function Home() {
               <SummarizeRouteTransaction 
                 arrayProducts={[]}
                 totalSectionCaptionMessage=""/>
-              <GroupsColorPallete 
+              {/* <GroupsColorPallete 
                 palleteTitle="qw"
                 onChangeColor={handlerChangeColor}
                 itemsColor={palleteColors}
                 
+              /> */}
+              <OptionConcepts 
+                layoutTitle="Opciones"
+                conceptsToConfigure={conceptOptions}
+                setConceptsToConfigure={setConceptOptions}
               />
             </div>
-
-              
           </div>
 
         </div>

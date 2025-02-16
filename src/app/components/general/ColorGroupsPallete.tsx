@@ -7,7 +7,7 @@ import IconButtonWithNotification from './IconButtonWithNotification';
 import { MdCancel } from "react-icons/md";
 import { IColorOption } from '@/app/interfaces/interfaces';
 
-function GroupsColorPallete({
+function ColorGroupsPallete({
     palleteTitle,
     itemsColor,
     onChangeColor,
@@ -107,4 +107,4 @@ function GroupsColorPallete({
     )
 }
 
-export default GroupsColorPallete;
+export default ColorGroupsPallete;

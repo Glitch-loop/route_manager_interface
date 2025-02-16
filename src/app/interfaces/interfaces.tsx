@@ -203,9 +203,11 @@ export interface TextTableProps {
 }
 
 export interface IConceptOption {
+  idConcept: string;
   conceptName: string;
   description: string;
   options: Array<{
+    idOption: string
     optionName: string;
     selected: boolean;
   }>;
