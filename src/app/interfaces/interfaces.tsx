@@ -201,3 +201,12 @@ export interface TextTableProps {
   columnStyles?: { [key: number]: string };
   rowStyles?: { [key: number]: string };
 }
+
+export interface IConceptOption {
+  conceptName: string;
+  description: string;
+  options: Array<{
+    optionName: string;
+    selected: boolean;
+  }>;
+}

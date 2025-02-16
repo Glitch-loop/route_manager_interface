@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { SketchPicker } from 'react-color';
-import { colors, Dialog } from '@mui/material';
+import { Dialog } from '@mui/material';
 import IconButtonWithNotification from './IconButtonWithNotification';
 import { MdCancel } from "react-icons/md";
 import { IColorOption } from '@/app/interfaces/interfaces';
@@ -14,7 +14,7 @@ function GroupsColorPallete({
 }:{
     palleteTitle:string
     itemsColor:IColorOption[],
-    onChangeColor:any,
+    onChangeColor:(selectedColor:IColorOption) => void,
 }) {
     const [showDialog, setShowDialog] = useState<boolean>(false);
 

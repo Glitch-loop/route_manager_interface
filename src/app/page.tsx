@@ -52,6 +52,12 @@ export default function Home() {
               <SummarizeRouteTransaction 
                 arrayProducts={[]}
                 totalSectionCaptionMessage=""/>
+              <GroupsColorPallete 
+                palleteTitle="qw"
+                onChangeColor={handlerChangeColor}
+                itemsColor={palleteColors}
+                
+              />
             </div>
 
               
