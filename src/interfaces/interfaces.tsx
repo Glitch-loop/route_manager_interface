@@ -65,6 +65,7 @@ export interface IDayGeneralInformation {
   finish_date: string;
   start_petty_cash: number;
   final_petty_cash: number;
+  id_comission: string;
 }
 
 export interface IRouteDayStores {

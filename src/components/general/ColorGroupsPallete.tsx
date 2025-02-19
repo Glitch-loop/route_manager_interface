@@ -5,7 +5,7 @@ import { SketchPicker } from 'react-color';
 import { Dialog } from '@mui/material';
 import IconButtonWithNotification from './IconButtonWithNotification';
 import { MdCancel } from "react-icons/md";
-import { IColorOption } from '@/app/interfaces/interfaces';
+import { IColorOption } from '@/interfaces/interfaces';
 
 function ColorGroupsPallete({
     palleteTitle,

@@ -1,9 +1,9 @@
 'use client'
 
-import { deterimneIconSize, determineBackgroundColor } from "@/app/utils/stylesUtils";
+import { deterimneIconSize, determineBackgroundColor } from "@/utils/stylesUtils";
 import { MdOutlineQuestionMark } from "react-icons/md";
 
-import { colorTypes, sizeTypes } from "@/app/interfaces/typesSystem";
+import { colorTypes, sizeTypes } from "@/interfaces/typesSystem";
 
 
 function IconButtonWithNotification(
@@ -23,9 +23,6 @@ function IconButtonWithNotification(
 
         const bgColor:string = determineBackgroundColor(backGroundColor)
         const iconSize = deterimneIconSize(size);
-
-
-
     return (
         <div className="relative w-auto">
             <div className="relative flex justify-end">

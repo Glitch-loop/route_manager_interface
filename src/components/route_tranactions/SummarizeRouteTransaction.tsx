@@ -1,7 +1,7 @@
 
-import { IProductInventory } from "@/app/interfaces/interfaces";
+import { IProductInventory } from "@/interfaces/interfaces";
 
-import { getProductDevolutionBalanceWithoutNegativeNumber } from "@/app/utils/saleFunctionUtils";
+import { getProductDevolutionBalanceWithoutNegativeNumber } from "@/utils/saleFunctionUtils";
 import AccountabilityTypeSummarizeProcess from "../general/AccountabilityTypeSummarizeProcess";
 
 function SummarizeRouteTransaction({

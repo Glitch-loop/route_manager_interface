@@ -1,3 +1,4 @@
+import Link from "next/link";
 import ButtonWithNotification from "../general/ButtonWithNotificaion";
 
 
@@ -31,10 +32,13 @@ const Sidebar = () => {
                 <div className="my-2 w-11/12">
                     <ButtonWithNotification 
                         label={"Menú principal"}
-                        notificationAlert={true}/>
+                        notificationAlert={true}
+                        href={"/"}/>
                 </div>
-                <div className="my-2 w-11/12">
-                    <ButtonWithNotification label={"Comisiones"}/>
+                <div className="my-2  w-11/12">
+                    <ButtonWithNotification 
+                        label={"Comisiones"}
+                        href={"/comissions"}/>
                 </div>
                 <div className="my-2 w-11/12">
                     <ButtonWithNotification label={"Auditoria"}/>
@@ -43,7 +47,9 @@ const Sidebar = () => {
                     <ButtonWithNotification label={"Operaciones de inventario"}/>
                 </div>
                 <div className="my-2 w-11/12">
-                    <ButtonWithNotification label={"Consultar información"}/>
+                    <ButtonWithNotification 
+                        label={"Consultar información"}
+                        href={"/consult_information"}/>
                 </div>
 
         </aside>

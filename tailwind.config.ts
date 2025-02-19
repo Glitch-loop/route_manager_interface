@@ -23,6 +23,16 @@ export default {
         "color-danger-primary": "#E74C3C",
         "color-danger-secondary": "#F18C8E",
       },
+      fontSize: {
+        "style-h0": "50",
+        "style-h1": "48",
+        "style-h2": "32",
+        "style-h3": "26",
+        "style-h4": "18",
+        "style-p-base": "16",
+        "style-p-small": "13",
+        "style-coment": "10",
+      }
     },
   },
   plugins: [],

@@ -5,7 +5,8 @@ import { SketchPicker } from 'react-color';
 import { Checkbox, Dialog, Switch } from '@mui/material';
 import IconButtonWithNotification from './IconButtonWithNotification';
 import { MdCancel } from "react-icons/md";
-import { IColorOption, IConceptOption } from '@/app/interfaces/interfaces';
+import { IColorOption, IConceptOption } from '@/interfaces/interfaces';
+import ButtonWithNotification from './ButtonWithNotificaion';
 
 interface IConcept {
     idConcept:string, 
@@ -16,6 +17,10 @@ function deterimneExistingConcepts(arrConcepts:IConceptOption[]):IConcept[] {
     return arrConcepts.map((concept) => {return { idConcept: concept.idConcept, activated: false} })
 } 
 
+
+function determineExistingOptions(arrConcepts:IConceptOption[]):IConcept[] { 
+
+}
 
 function OptionConcepts({
     layoutTitle,
@@ -28,8 +33,6 @@ function OptionConcepts({
 }) {
 
     const [existingConcepts, setExistingConcepts] = useState<IConcept[]>(deterimneExistingConcepts(conceptsToConfigure))
-
-
 
     // Function to activate a single option of a particular concept.
     const handlerChangeConfiguration = (idConceptToChange:string, idConfigurationToChange:string) => {
@@ -140,6 +143,14 @@ function OptionConcepts({
     return (
         <div className="relative w-64 flex flex-col bg-system-secondary-background p-2 rounded-md">
             <span className="text-2xl">{layoutTitle}</span>
+            <div className='w-full flex flex-row justify-around'>
+                <ButtonWithNotification 
+                    label={'Activar todo'}
+                    notificationAlert={false}/>
+                <ButtonWithNotification 
+                    label={'Desactivar todo'}
+                    notificationAlert={false}/>
+            </div>
             { conceptsToConfigure.length > 0 &&
                 <div className="flex flex-row">
                     <div className="flex basis-3/4"></div>

@@ -1,6 +1,9 @@
+// Repository
 import { IRepository } from '../interfaces/IRepository';
-import { supabase } from '../../../lib/supabase';
-import TABLES from '../../../utils/tables';
+
+// Database
+import { supabase } from '../../lib/supabase';
+import TABLES from '../../utils/tables';
 import {
   IUser,
   IRoute,
@@ -17,10 +20,10 @@ import {
   IProduct,
   IRouteDayStores,
   IResponse,
-} from '../../../interfaces/interfaces';
+} from '../../interfaces/interfaces';
 
-import 'react-native-url-polyfill/auto';
-import { createApiResponse } from '../../../utils/apiResponse';
+// Utils
+import { createApiResponse } from '../../utils/responseUtils';
 
 /*
   Converts the SQL code error to the most appropiate
@@ -243,7 +246,40 @@ export class SupabaseRepository implements IRepository {
     }
   }
 
-  // TODO: Related to users
+  async getWorkDayByDateRange(initialDate:string, finalDate:string):Promise<IResponse<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.WORK_DAYS)
+                                    .select()
+                                    .gt('start_date', initialDate)
+                                    .lt('start_date', finalDate)
+
+      if (error) {
+        return createApiResponse<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>(500, [], null,'Failed getting work days by date range.');
+      } else {
+        return createApiResponse<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>(200, data, null);
+      }
+    } catch(error) {
+      return createApiResponse<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>(500, [], null, 'Failed getting work days by date range.');
+    }
+  }
+
+  // Related to routes
+  async getAllRoutes():Promise<IResponse<IRoute[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.ROUTES)
+                                    .select()
+
+      if (error) {
+        return createApiResponse<IRoute[]>(500, [], null,'Failed getting work days by date range.');
+      } else {
+        return createApiResponse<IRoute[]>(200, data, null);
+      }
+    } catch(error) {
+      return createApiResponse<IRoute[]>(500, [], null, 'Failed getting work days by date range.');
+    }
+  }
+
+  //Related to users
   async getUserDataByCellphone(user: IUser):Promise<IResponse<IUser>> {
     const emptyUser:IUser = {
       id_vendor:  '',
@@ -288,6 +324,21 @@ export class SupabaseRepository implements IRepository {
         null,
         'It was not possible to communicate with the server'
       );
+    }
+  }
+
+  async getAllUsers():Promise<IResponse<IUser[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.VENDORS)
+                                    .select()
+
+      if (error) {
+        return createApiResponse<IUser[]>(500, [], null,'Failed getting work days by date range.');
+      } else {
+        return createApiResponse<IUser[]>(200, data, null);
+      }
+    } catch(error) {
+      return createApiResponse<IUser[]>(500, [], null, 'Failed getting work days by date range.');
     }
   }
 
@@ -764,6 +815,72 @@ export class SupabaseRepository implements IRepository {
       const { id_route_transaction_operation } = routeTransactionOperation;
       const { data, error } = await supabase.from(TABLES.PRODUCT_OPERATION_DESCRIPTIONS).select()
         .eq('id_route_transaction_operation', id_route_transaction_operation);
+      if (error) {
+        return createApiResponse<IRouteTransactionOperationDescription[]>(
+          determinigSQLSupabaseError(error),
+          [],
+          null,
+          'Failed getting all route transactions operation description of a route transaction operation.'
+        );
+      } else {
+        return createApiResponse<IRouteTransactionOperationDescription[]>(
+          200,
+          data,
+          null
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IRouteTransactionOperationDescription[]>(
+        500,
+        [],
+        null,
+        'Failed getting all route transactions operation description of a route transaction operation.'
+      );
+    }
+  }
+
+  async getAllRouteTransactionOperationsOfWorkDay(routeTransactions:IRouteTransaction[]):Promise<IResponse<IRouteTransactionOperation[]>> {
+    try {
+      const arr_id_route_transaction:string[] = routeTransactions.map((routeTransaction) => { return routeTransaction.id_route_transaction });
+
+      const { data, error } = await supabase.from(TABLES.ROUTE_TRANSACTION_OPERATIONS)
+        .select()
+        .in('id_route_transaction', arr_id_route_transaction);
+
+      if (error) {
+        return createApiResponse<IRouteTransactionOperation[]>(
+          determinigSQLSupabaseError(error),
+          [],
+          null,
+          'Failed getting all route transactions operation description of a route transaction operation.'
+        );
+      } else {
+        return createApiResponse<IRouteTransactionOperation[]>(
+          200,
+          data,
+          null
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IRouteTransactionOperation[]>(
+        500,
+        [],
+        null,
+        'Failed getting all route transactions operation description of a route transaction operation.'
+      );
+    }
+  }
+
+
+
+  async getAllRouteTransactionOperationsDescriptionsOfWorkDay(routeTransactionOperations:IRouteTransactionOperation[]):Promise<IResponse<IRouteTransactionOperationDescription[]>> {
+    try {
+      const arr_id_route_transaction_operations:string[] = routeTransactionOperations.map((routeTransactionOperation) => { return routeTransactionOperation.id_route_transaction_operation });
+
+      const { data, error } = await supabase.from(TABLES.ROUTE_TRANSACTION_OPERATIONS_DESCRIPTONS)
+        .select()
+        .in('id_route_transaction_operation', arr_id_route_transaction_operations);
+
       if (error) {
         return createApiResponse<IRouteTransactionOperationDescription[]>(
           determinigSQLSupabaseError(error),

@@ -13,7 +13,7 @@ import {
   IProduct,
   IRouteDayStores,
   IResponse,
-} from '../../../interfaces/interfaces';
+} from '../../interfaces/interfaces';
 
 export interface IRepository {
   // Related to the information of the stores
@@ -27,9 +27,14 @@ export interface IRepository {
   // Related to the work day information
   insertWorkDay(workday:IRoute&IDayGeneralInformation&IDay&IRouteDay):Promise<IResponse<null>>;
   updateWorkDay(workday:IRoute&IDayGeneralInformation&IDay&IRouteDay):Promise<IResponse<null>>;
+  getWorkDayByDateRange(initialDate:string, finalDate:string):Promise<IResponse<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>>;
+
+  // Related to routes
+  getAllRoutes():Promise<IResponse<IRoute[]>>;
 
   // related to users
   getUserDataByCellphone(user:IUser):Promise<IResponse<IUser>>;
+  getAllUsers():Promise<IResponse<IUser[]>>;
 
   // Related to products (inventory operations)
   insertInventoryOperation(inventoryOperation: IInventoryOperation):Promise<IResponse<null>>;
@@ -46,4 +51,7 @@ export interface IRepository {
   getAllRouteTransactionOperationsOfRouteTransaction(routeTransaction: IRouteTransaction):Promise<IResponse<IRouteTransactionOperation[]>>;
   insertRouteTransactionOperationDescription(transactionOperationDescription: IRouteTransactionOperationDescription[]):Promise<IResponse<null>>;
   getAllRouteTransactionOperationsDescriptionOfRouteTransactionOperation(routeTransactionOperation:IRouteTransactionOperation):Promise<IResponse<IRouteTransactionOperationDescription[]>>;
+
+  getAllRouteTransactionOperationsOfWorkDay(routeTransaction:IRouteTransaction[]):Promise<IResponse<IRouteTransactionOperation[]>>;
+  getAllRouteTransactionOperationsDescriptionsOfWorkDay(routeTransactionOperation:IRouteTransactionOperation[]):Promise<IResponse<IRouteTransactionOperationDescription[]>>;
 }

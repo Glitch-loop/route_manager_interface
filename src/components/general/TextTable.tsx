@@ -1,6 +1,6 @@
 import React from "react";
 
-import { TextTableProps } from "@/app/interfaces/interfaces";
+import { TextTableProps } from "@/interfaces/interfaces";
 
 const TextTable: React.FC<TextTableProps> = ({ headers, data, headerStyles = {}, columnStyles = {}, rowStyles = {} }) => {
   return (

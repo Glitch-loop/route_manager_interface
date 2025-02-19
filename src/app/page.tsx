@@ -2,17 +2,17 @@
 import { useState } from "react";
 
 
-import RouteList from "./components/routes/RouteList";
-import IconButtonWithNotification from "./components/general/IconButtonWithNotification";
+import RouteList from "../components/routes/RouteList";
+import IconButtonWithNotification from "../components/general/IconButtonWithNotification";
 // import ButtonWithNotification from "./components/ButtonWithNotificaion";
 
-import GroupsColorPallete from "./components/general/ColorGroupsPallete";
-import { IColorOption, IConceptOption } from "./interfaces/interfaces";
-import TextTable from "./components/general/TextTable";
-import SummarizeRouteTransaction from "./components/route_tranactions/SummarizeRouteTransaction";
+import GroupsColorPallete from "../components/general/ColorGroupsPallete";
+import { IColorOption, IConceptOption } from "../interfaces/interfaces";
+import TextTable from "../components/general/TextTable";
+import SummarizeRouteTransaction from "../components/route_tranactions/SummarizeRouteTransaction";
 
 
-import OptionConcepts from "./components/general/OptionConcepts";
+import OptionConcepts from "../components/general/OptionConcepts";
 
 const colors:IColorOption[] = [
   {
@@ -65,7 +65,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen w-auto bg-slate-600  flex flex-row justify-center items-center">
+    <div className="h-auto w-auto bg-slate-600  flex flex-row justify-center items-center">
       <main className="h-auto w-full">
         <div className={`w-full flex flex-row justify-center`}>
           <div className="w-11/12">
