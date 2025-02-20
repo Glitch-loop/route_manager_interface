@@ -18,6 +18,8 @@ import {
     IRouteTransaction,
     IRouteTransactionOperation,
     IRouteTransactionOperationDescription,
+    IInventoryOperation,
+    IInventoryOperationDescription,
 } from '@/interfaces/interfaces';
 
 // Controllers
@@ -26,9 +28,9 @@ import {
 } from '@/controllers/WorkDayController';
 
 import { 
-    getRouteTransactionsFromRouteDay,
-    getRouteTransactionOperationsFromRouteDay,
-    getRouteTransactionOperationDescriptionsFromRouteDay,
+    getRouteTransactionsFromWorkDay,
+    getRouteTransactionOperationsFromWorkDay,
+    getRouteTransactionOperationDescriptionsFromWorkDay,
 } from '@/controllers/RouteTransactionsController';
 
 // Components
@@ -39,6 +41,8 @@ import { getAllVendors } from '@/controllers/VendorController';
 import { getAllRoutes } from '@/controllers/RoutesController';
 import SummarizeRouteTransaction from '@/components/route_tranactions/SummarizeRouteTransaction';
 import SummarizeOfTheDay from '@/components/route_tranactions/SummarizeOfTheDay';
+import { getInventoryOperationsOfWorkDay, getInventoryOperationDescriptionsOfWorkDay } from '@/controllers/InventoryController';
+import SummarizeDayComission from '@/components/route_tranactions/SummarizeDayComission';
 
 
 function ConsultInformation() {
@@ -52,6 +56,8 @@ function ConsultInformation() {
     const [routeTransactions, setRouteTransactions] = useState<IRouteTransaction[]|undefined>(undefined);
     const [routeTransactionOperations, setRouteTransactionOperations] = useState<IRouteTransactionOperation[]|undefined>(undefined);
     const [routeTransactionOperationDescriptions, setRouteTransactionOperationDescriptions] = useState<IRouteTransactionOperationDescription[]|undefined>(undefined);
+    const [inventoryOperations, setInventoryOperations] = useState<IInventoryOperation[]|undefined>(undefined);
+    const [inventoryOperationDescriptions, setInventoryOperationDescriptions] = useState<IInventoryOperationDescription[]|undefined>(undefined);
 
     const handlerSearchWorkDays = async () => {
         if(initialDate === null) {
@@ -69,47 +75,56 @@ function ConsultInformation() {
 
 
     const handlerSelectWorkDay = async(workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay) => {
-        const routeTransactions:IRouteTransaction[] = await getRouteTransactionsFromRouteDay(workDay);
-        const routeTransactionOperations:IRouteTransactionOperation[] = await getRouteTransactionOperationsFromRouteDay(routeTransactions);
-        const routeTransactionOperationDescriptions:IRouteTransactionOperationDescription[] = await getRouteTransactionOperationDescriptionsFromRouteDay(routeTransactionOperations);
+        // Getting information related to transactions
+        const routeTransactions:IRouteTransaction[] = await getRouteTransactionsFromWorkDay(workDay);
+        const routeTransactionOperations:IRouteTransactionOperation[] = await getRouteTransactionOperationsFromWorkDay(routeTransactions);
+        const routeTransactionOperationDescriptions:IRouteTransactionOperationDescription[] = await getRouteTransactionOperationDescriptionsFromWorkDay(routeTransactionOperations);
 
         setWorkday(workDay);
-        setRouteTransactions(routeTransactions)
-        setRouteTransactionOperations(routeTransactionOperations)
-        setRouteTransactionOperationDescriptions(routeTransactionOperationDescriptions)
+        setRouteTransactions(routeTransactions);
+        setRouteTransactionOperations(routeTransactionOperations);
+        setRouteTransactionOperationDescriptions(routeTransactionOperationDescriptions);
+
+        // Getting information related to inventory operation
+        const inventoryOperations:IInventoryOperation[] = await getInventoryOperationsOfWorkDay(workDay);
+        const inventoryOperationDescriptions:IInventoryOperationDescription[] = await getInventoryOperationDescriptionsOfWorkDay(inventoryOperations)
+
+        setInventoryOperations(inventoryOperations);
+        setInventoryOperationDescriptions(inventoryOperationDescriptions)
     }
 
     return (
     <div className="w-full h-full flex flex-col items-start">
         <span className="text-style-h0">Consulta de información</span>
         <div className='w-full h-60 flex flex-row justify-start ml-3 mb-14'>
-            <div className='flex flex-row justify-start'>
+            <div className='flex flex-row basis-4/12 justify-start'>
                 <DateRangePicker 
                     defaultDay={dayjs()}
                     initialDate={initialDate}
                     finalDate={finalDate}
                     setInitialDate={setInitialDate}
                     setFinalDate={setFinalDate}/>
+                <div className='h-full flex flex-col items-center justify-center'>
+                    <ButtonWithNotification 
+                        handlerPress={handlerSearchWorkDays}
+                        label='Buscar'/>
+                </div>
             </div>
-            <div className='h-full flex flex-col items-center justify-center ml-5'>
-                <ButtonWithNotification 
-                    handlerPress={handlerSearchWorkDays}
-                    label='Buscar'/>
-            </div>
+            <div className='flex flex-row basis-8/12 justify-center'>
             { workDays.length > 0 &&
-                <div className='w-9/12 flex flex-row justify-center'>
+                <div className='w-11/12'>
                     <TableSearchVisualization 
                         workDays={workDays}
                         vendors={vendors}
                         routes={routes}
-                        onSelectWorkDay={handlerSelectWorkDay}
-
-                        />
+                        maxHeight={275}
+                        onSelectWorkDay={handlerSelectWorkDay}/>
                 </div>
+
             }
+            </div>
         </div>
-        
-        <div className='flex flex-row'>
+        <div className=' my-3 ml-3 flex flex-row overflow-x-auto'>
             { workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined &&
                 <SummarizeOfTheDay
                     workday={workday}
@@ -117,7 +132,21 @@ function ConsultInformation() {
                     routeTransactionOperations={routeTransactionOperations}
                     routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
                 />
+
             }
+            { (workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
+                && routeTransactionOperationDescriptions !== undefined && inventoryOperations !== undefined && inventoryOperationDescriptions !== undefined) &&
+                <SummarizeDayComission
+                    workday={workday}
+                    routeTransactions={routeTransactions}
+                    routeTransactionOperations={routeTransactionOperations}
+                    routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
+                    inventoryOperations={inventoryOperations}
+                    inventoryOperationDescriptions={inventoryOperationDescriptions}
+                />
+
+            }
+
         </div>
     </div>)
 }

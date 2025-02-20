@@ -27,7 +27,7 @@ import {
 // Initializing database repository.
 const repository = RepositoryFactory.createRepository('supabase');
 
-export async function getRouteTransactionsFromRouteDay(workday:IRoute&IDayGeneralInformation&IDay&IRouteDay):Promise<IRouteTransaction[]> {
+export async function getRouteTransactionsFromWorkDay(workday:IRoute&IDayGeneralInformation&IDay&IRouteDay):Promise<IRouteTransaction[]> {
     const responseRouteTransactions:IResponse<IRouteTransaction[]> = await repository.getAllRouteTransactionsOfWorkDay(workday);
     const routeTransactions:IRouteTransaction[] = getDataFromApiResponse(responseRouteTransactions);
 
@@ -35,14 +35,14 @@ export async function getRouteTransactionsFromRouteDay(workday:IRoute&IDayGenera
 }
 
 
-export async function getRouteTransactionOperationsFromRouteDay(routeTransactions:IRouteTransaction[]):Promise<IRouteTransactionOperation[]> {
+export async function getRouteTransactionOperationsFromWorkDay(routeTransactions:IRouteTransaction[]):Promise<IRouteTransactionOperation[]> {
     const responseRouteTransactionOperations:IResponse<IRouteTransactionOperation[]> = await repository.getAllRouteTransactionOperationsOfWorkDay(routeTransactions);
     const routeTransactionOperations:IRouteTransactionOperation[] = getDataFromApiResponse(responseRouteTransactionOperations);
 
     return routeTransactionOperations;
 }
 
-export async function getRouteTransactionOperationDescriptionsFromRouteDay(routeTransactionOperations:IRouteTransactionOperation[]):Promise<IRouteTransactionOperationDescription[]> {
+export async function getRouteTransactionOperationDescriptionsFromWorkDay(routeTransactionOperations:IRouteTransactionOperation[]):Promise<IRouteTransactionOperationDescription[]> {
     const responseRouteTransactionOperationsDescriptions:IResponse<IRouteTransactionOperationDescription[]> = await repository.getAllRouteTransactionOperationsDescriptionsOfWorkDay(routeTransactionOperations);
     const routeTransactionOperationsDescriptions:IRouteTransactionOperationDescription[] = getDataFromApiResponse(responseRouteTransactionOperationsDescriptions);
 

@@ -447,36 +447,6 @@ export class SupabaseRepository implements IRepository {
     }
   }
 
-  async getAllInventoryOperationsOfWorkDay(workDay: IDayGeneralInformation):Promise<IResponse<IInventoryOperation[]>> {
-    try {
-      const { id_work_day } = workDay;
-      const { data, error } = await supabase.from(TABLES.INVENTORY_OPERATIONS).select().eq('id_work_day', id_work_day);
-
-      if (error) {
-        return createApiResponse<IInventoryOperation[]>(
-          determinigSQLSupabaseError(error),
-          [], 
-          null,
-          'Failed getting all inventory operations of the day.'
-        );
-      } else {
-        return createApiResponse<IInventoryOperation[]>(
-          200,
-          data,
-          null,
-          ''
-        );
-      }
-    } catch(error) {
-      return createApiResponse<IInventoryOperation[]>(
-        500,
-        [],
-        null,
-        'Failed getting all inventory operations of the day.'
-      );
-    }
-  }
-
   async insertInventoryOperationDescription(inventoryOperationDescription: IInventoryOperationDescription[]):Promise<IResponse<null>> {
     try {
       for (let i = 0; i < inventoryOperationDescription.length; i++) {
@@ -557,6 +527,66 @@ export class SupabaseRepository implements IRepository {
         [],
         null,
         'Failed getting all operation description of an inventory operation.'
+      );
+    }
+  }
+
+  async getAllInventoryOperationsOfWorkDay(workDay: IDayGeneralInformation):Promise<IResponse<IInventoryOperation[]>> {
+    try {
+      const { id_work_day } = workDay;
+      const { data, error } = await supabase.from(TABLES.INVENTORY_OPERATIONS).select().eq('id_work_day', id_work_day);
+
+      if (error) {
+        return createApiResponse<IInventoryOperation[]>(
+          determinigSQLSupabaseError(error),
+          [], 
+          null,
+          'Failed getting all inventory operations of the day.'
+        );
+      } else {
+        return createApiResponse<IInventoryOperation[]>(
+          200,
+          data,
+          null,
+          ''
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IInventoryOperation[]>(
+        500,
+        [],
+        null,
+        'Failed getting all inventory operations of the day.'
+      );
+    }
+  }
+
+  async getAllInventoryOperationDescriptionsOfWorkDay(inventoryOperations: IInventoryOperation[]):Promise<IResponse<IInventoryOperationDescription[]>> {
+    try {
+      const arrIdInventoryOperations = inventoryOperations.map((inventoryOperation:IInventoryOperation) => { return inventoryOperation.id_inventory_operation; });
+      const { data, error } = await supabase.from(TABLES.PRODUCT_OPERATION_DESCRIPTIONS).select().in('id_inventory_operation', arrIdInventoryOperations)
+
+      if (error) {
+        return createApiResponse<IInventoryOperationDescription[]>(
+          determinigSQLSupabaseError(error),
+          [], 
+          null,
+          'Failed getting all inventory operations of the day.'
+        );
+      } else {
+        return createApiResponse<IInventoryOperationDescription[]>(
+          200,
+          data,
+          null,
+          ''
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IInventoryOperationDescription[]>(
+        500,
+        [],
+        null,
+        'Failed getting all inventory operations of the day.'
       );
     }
   }

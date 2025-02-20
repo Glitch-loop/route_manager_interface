@@ -1,4 +1,30 @@
-import { IProductInventory } from "../interfaces/interfaces";
+import { 
+  IProductInventory,
+  IRouteTransactionOperation,
+  IRouteTransactionOperationDescription
+ } from "../interfaces/interfaces";
+
+
+
+export function isOperationDescriptionEqualToMovement(
+  operationDescription:IRouteTransactionOperationDescription, 
+  jsonOperationDescription:Record<string, IRouteTransactionOperation>, 
+  movement:string
+):boolean {
+      console.log(operationDescription)
+      let result:boolean = false;
+      if (jsonOperationDescription[operationDescription.id_route_transaction_operation] === undefined) {
+          result = false;
+      } else {
+          const routeOperation:IRouteTransactionOperation = jsonOperationDescription[operationDescription.id_route_transaction_operation]
+          if (routeOperation.id_route_transaction_operation_type === movement) {
+              result = true;
+          } else {
+              result = false;
+          }
+      }
+      return result;
+}
 
 
 // Related to selling calculations

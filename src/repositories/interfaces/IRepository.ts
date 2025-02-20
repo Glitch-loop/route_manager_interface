@@ -39,9 +39,10 @@ export interface IRepository {
   // Related to products (inventory operations)
   insertInventoryOperation(inventoryOperation: IInventoryOperation):Promise<IResponse<null>>;
   updateInventoryOperation(inventoryOperation: IInventoryOperation):Promise<IResponse<null>>;
-  getAllInventoryOperationsOfWorkDay(workDay: IDayGeneralInformation):Promise<IResponse<IInventoryOperation[]>>;
   insertInventoryOperationDescription(inventoryOperationDescription: IInventoryOperationDescription[]):Promise<IResponse<null>>;
   getAllInventoryOperationDescriptionsOfInventoryOperation(inventoryOperation: IInventoryOperation):Promise<IResponse<IInventoryOperationDescription[]>>;
+  getAllInventoryOperationsOfWorkDay(workDay: IDayGeneralInformation):Promise<IResponse<IInventoryOperation[]>>;
+  getAllInventoryOperationDescriptionsOfWorkDay(inventoryOperations: IInventoryOperation[]):Promise<IResponse<IInventoryOperationDescription[]>>;
 
   // Related to route transactions
   insertRouteTransaction(transactionOperation: IRouteTransaction):Promise<IResponse<null>>;
@@ -54,4 +55,6 @@ export interface IRepository {
 
   getAllRouteTransactionOperationsOfWorkDay(routeTransaction:IRouteTransaction[]):Promise<IResponse<IRouteTransactionOperation[]>>;
   getAllRouteTransactionOperationsDescriptionsOfWorkDay(routeTransactionOperation:IRouteTransactionOperation[]):Promise<IResponse<IRouteTransactionOperationDescription[]>>;
+
+
 }

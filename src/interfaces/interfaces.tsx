@@ -213,3 +213,8 @@ export interface IConceptOption {
     selected: boolean;
   }>;
 }
+
+
+export interface IMapConcepts {
+  
+}
