@@ -47,6 +47,7 @@ import SummarizeRouteTransacionsOfTheDay from '@/components/route_tranactions/Su
 
 // Utils
 import { convertProductToProductInventoryInterface } from '@/utils/inventoryUtils';
+import { getInformationOfStores } from '@/controllers/StoreController';
 
 function ConsultInformation() {
     const [initialDate, setInitialDate] = useState<Dayjs | null>(null);
@@ -55,6 +56,7 @@ function ConsultInformation() {
     const [workDays, setWorkDays] = useState<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>([]);
     const [vendors, setVendors] = useState<IUser[]>([]);
     const [routes, setRoutes] = useState<IRoute[]>([]);
+    const [stores, setStores] = useState<IStore[]>([]);
     const [workday, setWorkday] = useState<(IRoute&IDayGeneralInformation&IDay&IRouteDay|undefined)>();
     const [routeTransactions, setRouteTransactions] = useState<IRouteTransaction[]|undefined>(undefined);
     const [routeTransactionOperations, setRouteTransactionOperations] = useState<IRouteTransactionOperation[]|undefined>(undefined);
@@ -99,6 +101,23 @@ function ConsultInformation() {
         // Getting information related to product inventory
         const products:IProduct[] = await getAllConceptOfProducts();
         setProductsInventory(convertProductToProductInventoryInterface(products))
+
+        // Getting ingotmation related to stores
+        const storesOfTheDay:Set<string> = new Set<string>();
+
+        // Getting all the stores of the day
+        routeTransactions.forEach((routeTransaction:IRouteTransaction) => {
+            const { id_store } = routeTransaction;
+
+            if (storesOfTheDay.has(id_store) === false) {
+                storesOfTheDay.add(id_store);
+            }
+        });
+
+        const informationOfStores:IStore[] = await getInformationOfStores(
+            [...storesOfTheDay.entries()].map((item) => {return item[0]}))
+        
+        setStores(informationOfStores)
     }
 
     return (
@@ -166,6 +185,7 @@ function ConsultInformation() {
                         routeTransactionOperationsOfTheDay={routeTransactionOperations}
                         routeTransactionOperationDescriptionsOfTheDay={routeTransactionOperationDescriptions}
                         productsInventory={productsInventory}
+                        storesOfTheDay={stores}
                     />
                 </div>
             }

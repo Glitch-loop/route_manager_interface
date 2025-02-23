@@ -16,11 +16,15 @@ import {
 } from '../../interfaces/interfaces';
 
 export interface IRepository {
-  // Related to the information of the stores
+  // Related to route
   getAllDays(): Promise<IResponse<IDay[]>>;
   getAllDaysByRoute(id_route:string): Promise<IResponse<IRouteDay[]>>;
   getAllRoutesByVendor(id_vendor:string): Promise<IResponse<IRoute[]>>;
+  
+  // Related to products
   getAllProducts(): Promise<IResponse<IProduct[]>>;
+
+  // Related stores
   getAllStoresInARouteDay(id_route_day:string): Promise<IResponse<IRouteDayStores[]>>;
   getStoresByArrID(arr_id_stores: string[]): Promise<IResponse<IStore[]>>;
 

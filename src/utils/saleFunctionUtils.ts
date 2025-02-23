@@ -12,7 +12,6 @@ export function isOperationDescriptionEqualToMovement(
   jsonOperationDescription:Record<string, IRouteTransactionOperation>, 
   movement:string
 ):boolean {
-      console.log(operationDescription)
       let result:boolean = false;
       if (jsonOperationDescription[operationDescription.id_route_transaction_operation] === undefined) {
           result = false;
