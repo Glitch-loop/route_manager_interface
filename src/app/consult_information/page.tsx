@@ -20,30 +20,33 @@ import {
     IRouteTransactionOperationDescription,
     IInventoryOperation,
     IInventoryOperationDescription,
+    IProductInventory,
+    IProduct,
 } from '@/interfaces/interfaces';
 
 // Controllers
 import { 
     getStoresByDate,
 } from '@/controllers/WorkDayController';
-
+import { getAllVendors } from '@/controllers/VendorController';
+import { getAllRoutes } from '@/controllers/RoutesController';
 import { 
     getRouteTransactionsFromWorkDay,
     getRouteTransactionOperationsFromWorkDay,
     getRouteTransactionOperationDescriptionsFromWorkDay,
 } from '@/controllers/RouteTransactionsController';
+import { getInventoryOperationsOfWorkDay, getInventoryOperationDescriptionsOfWorkDay, getAllConceptOfProducts } from '@/controllers/InventoryController';
 
 // Components
 import DateRangePicker from '@/components/general/DateRangePicker';
 import ButtonWithNotification from '@/components/general/ButtonWithNotificaion';
 import TableSearchVisualization from '@/components/workday/TableSearchVisualizationWorkDay';
-import { getAllVendors } from '@/controllers/VendorController';
-import { getAllRoutes } from '@/controllers/RoutesController';
-import SummarizeRouteTransaction from '@/components/route_tranactions/SummarizeRouteTransaction';
 import SummarizeOfTheDay from '@/components/route_tranactions/SummarizeOfTheDay';
-import { getInventoryOperationsOfWorkDay, getInventoryOperationDescriptionsOfWorkDay } from '@/controllers/InventoryController';
 import SummarizeDayComission from '@/components/route_tranactions/SummarizeDayComission';
+import SummarizeRouteTransacionsOfTheDay from '@/components/route_tranactions/SummarizeRouteTransacionsOfTheDay';
 
+// Utils
+import { convertProductToProductInventoryInterface } from '@/utils/inventoryUtils';
 
 function ConsultInformation() {
     const [initialDate, setInitialDate] = useState<Dayjs | null>(null);
@@ -58,6 +61,7 @@ function ConsultInformation() {
     const [routeTransactionOperationDescriptions, setRouteTransactionOperationDescriptions] = useState<IRouteTransactionOperationDescription[]|undefined>(undefined);
     const [inventoryOperations, setInventoryOperations] = useState<IInventoryOperation[]|undefined>(undefined);
     const [inventoryOperationDescriptions, setInventoryOperationDescriptions] = useState<IInventoryOperationDescription[]|undefined>(undefined);
+    const [productsInventory, setProductsInventory] = useState<IProductInventory[]|undefined>([]);
 
     const handlerSearchWorkDays = async () => {
         if(initialDate === null) {
@@ -91,11 +95,16 @@ function ConsultInformation() {
 
         setInventoryOperations(inventoryOperations);
         setInventoryOperationDescriptions(inventoryOperationDescriptions)
+
+        // Getting information related to product inventory
+        const products:IProduct[] = await getAllConceptOfProducts();
+        setProductsInventory(convertProductToProductInventoryInterface(products))
     }
 
     return (
     <div className="w-full h-full flex flex-col items-start">
         <span className="text-style-h0">Consulta de información</span>
+        {/* Parameters to consult the days */}
         <div className='w-full h-60 flex flex-row justify-start ml-3 mb-14'>
             <div className='flex flex-row basis-4/12 justify-start'>
                 <DateRangePicker 
@@ -124,27 +133,41 @@ function ConsultInformation() {
             }
             </div>
         </div>
-        <div className=' my-3 ml-3 flex flex-row overflow-x-auto'>
-            { workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined &&
-                <SummarizeOfTheDay
-                    workday={workday}
-                    routeTransactions={routeTransactions}
-                    routeTransactionOperations={routeTransactionOperations}
-                    routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
-                />
+        {/* Components that summarize the day */}
+        <div className=' my-3 ml-3 flex flex-col overflow-x-auto'>
+            <div className='flex flex-row'>
+                { workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined &&
+                    <SummarizeOfTheDay
+                        workday={workday}
+                        routeTransactions={routeTransactions}
+                        routeTransactionOperations={routeTransactionOperations}
+                        routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
+                    />
 
-            }
-            { (workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
-                && routeTransactionOperationDescriptions !== undefined && inventoryOperations !== undefined && inventoryOperationDescriptions !== undefined) &&
-                <SummarizeDayComission
-                    workday={workday}
-                    routeTransactions={routeTransactions}
-                    routeTransactionOperations={routeTransactionOperations}
-                    routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
-                    inventoryOperations={inventoryOperations}
-                    inventoryOperationDescriptions={inventoryOperationDescriptions}
-                />
-
+                }
+                { (workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
+                    && routeTransactionOperationDescriptions !== undefined && inventoryOperations !== undefined && inventoryOperationDescriptions !== undefined) &&
+                    <SummarizeDayComission
+                        workday={workday}
+                        routeTransactions={routeTransactions}
+                        routeTransactionOperations={routeTransactionOperations}
+                        routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
+                        inventoryOperations={inventoryOperations}
+                        inventoryOperationDescriptions={inventoryOperationDescriptions}
+                    />
+                }
+            </div>
+            {/* Summarie of prodct of the day */}
+            {/* Summaraize of route transactions */}
+            { routeTransactions && routeTransactionOperations && routeTransactionOperationDescriptions && productsInventory &&
+                <div className=''>
+                    <SummarizeRouteTransacionsOfTheDay 
+                        routeTransactionOfTheDay={routeTransactions}
+                        routeTransactionOperationsOfTheDay={routeTransactionOperations}
+                        routeTransactionOperationDescriptionsOfTheDay={routeTransactionOperationDescriptions}
+                        productsInventory={productsInventory}
+                    />
+                </div>
             }
 
         </div>

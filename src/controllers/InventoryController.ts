@@ -6,15 +6,14 @@ import {
     IDayGeneralInformation,
     IInventoryOperation,
     IInventoryOperationDescription,
+    IProduct,
+    IProductInventory,
     IResponse,
     IRoute,
-    IRouteTransaction,
 } from '@/interfaces/interfaces';
 
 // Utils
-
 import {
-  apiResponseStatus,
   getDataFromApiResponse,
 } from '@/utils/responseUtils';
 
@@ -36,4 +35,12 @@ export async function getInventoryOperationDescriptionsOfWorkDay(inventoryOperat
     const allInventoryOperationDescriptions = getDataFromApiResponse(allInventoryOperationDescriptionsResponse);
 
     return allInventoryOperationDescriptions;
+}
+
+export async function getAllConceptOfProducts():Promise<IProduct[]> {
+    const allConceptOfProductsResponse:IResponse<IProduct[]> = await repository.getAllProducts();
+
+    const allConceptOfProducts:IProduct[] = getDataFromApiResponse(allConceptOfProductsResponse);
+
+    return allConceptOfProducts
 }

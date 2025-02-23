@@ -1,9 +1,10 @@
 import { 
+  IPaymentMethod,
   IProductInventory,
+  IRouteTransaction,
   IRouteTransactionOperation,
   IRouteTransactionOperationDescription
  } from "../interfaces/interfaces";
-
 
 
 export function isOperationDescriptionEqualToMovement(
@@ -56,4 +57,49 @@ export function formatToCurrency(numberToConvert:number, currencySymbol:string =
   }
 
   return convertedNumber;
+}
+
+export function calculateChange(total:number, received:number){
+  let difference:number = 0;
+  if (total < 0) {
+    /*
+      It means that the vendor has to give money to the client, this probably
+      becuase of a product devolution.
+    */
+    if (total + received < 0) {
+      difference = 0;
+    } else {
+      difference = (total + received);
+    }
+  } else {
+    /* Do nothing; It is a normal selling (vendor has to receive money)*/
+    if (total - received < 0) {
+      difference = (total - received) * -1;
+    } else {
+      difference = 0;
+    }
+  }
+  return difference;
+}
+
+
+// Related to payment method
+export function getPaymentMethod(routeTransaction: IRouteTransaction, paymentMethods: any[]) {
+  const foundPaymentMethod:IPaymentMethod = {
+    id_payment_method: '',
+    payment_method_name: '',
+  };
+
+  const searchResult:IPaymentMethod|undefined = paymentMethods.find((paymentMethod:IPaymentMethod) => {
+    return paymentMethod.id_payment_method === routeTransaction.id_payment_method;
+  });
+
+  if (searchResult === undefined) {
+    /* No hay instrucciones */
+  } else {
+    foundPaymentMethod.id_payment_method = searchResult.id_payment_method;
+    foundPaymentMethod.payment_method_name = searchResult.payment_method_name;
+  }
+
+  return foundPaymentMethod;
 }

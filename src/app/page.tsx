@@ -9,7 +9,7 @@ import IconButtonWithNotification from "../components/general/IconButtonWithNoti
 import GroupsColorPallete from "../components/general/ColorGroupsPallete";
 import { IColorOption, IConceptOption } from "../interfaces/interfaces";
 import TextTable from "../components/general/TextTable";
-import SummarizeRouteTransaction from "../components/route_tranactions/SummarizeRouteTransaction";
+import SummarizeRouteTransaction from "../components/route_tranactions/SummarizeRouteTransacionsOfTheDay";
 
 
 import OptionConcepts from "../components/general/OptionConcepts";

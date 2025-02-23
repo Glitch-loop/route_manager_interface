@@ -37,7 +37,7 @@ function AccountabilityTypeSummarizeProcess({
                         </div>
                         { isSeparateLine &&
                             <div className="w-full flex flex-row justify-center items-center">
-                                <div className="w-11/12 bg-black py-px my-2 "/>
+                                <div className="w-11/12 bg-black py-px my-1"/>
                             </div>
                         }
                     </div>

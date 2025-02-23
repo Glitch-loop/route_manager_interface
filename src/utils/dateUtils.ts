@@ -27,3 +27,7 @@ export function determineCurrentDayByDayName(dayToDetermine:string) {
 export function cast_string_to_timestamp_standard_format(date:string) {
   return dayjs(date).format('dddd, DD-MMM-YY HH:MM').replace(/^./, (char) => char.toUpperCase());
 }
+
+export function cast_string_to_date_hour_format(date:string) {
+  return dayjs(date).format('DD-MMM-YY HH:MM');
+}
