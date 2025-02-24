@@ -53,14 +53,21 @@ function ConsultInformation() {
     const [initialDate, setInitialDate] = useState<Dayjs | null>(null);
     const [finalDate, setFinalDate] = useState<Dayjs | null>(null);
 
+    // States related to the workday
     const [workDays, setWorkDays] = useState<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>([]);
+    const [workday, setWorkday] = useState<(IRoute&IDayGeneralInformation&IDay&IRouteDay|undefined)>();
     const [vendors, setVendors] = useState<IUser[]>([]);
     const [routes, setRoutes] = useState<IRoute[]>([]);
+    
+    // States related to stores
     const [stores, setStores] = useState<IStore[]>([]);
-    const [workday, setWorkday] = useState<(IRoute&IDayGeneralInformation&IDay&IRouteDay|undefined)>();
+
+    // States related to route transactions
     const [routeTransactions, setRouteTransactions] = useState<IRouteTransaction[]|undefined>(undefined);
     const [routeTransactionOperations, setRouteTransactionOperations] = useState<IRouteTransactionOperation[]|undefined>(undefined);
     const [routeTransactionOperationDescriptions, setRouteTransactionOperationDescriptions] = useState<IRouteTransactionOperationDescription[]|undefined>(undefined);
+    
+    // States related to product inventory
     const [inventoryOperations, setInventoryOperations] = useState<IInventoryOperation[]|undefined>(undefined);
     const [inventoryOperationDescriptions, setInventoryOperationDescriptions] = useState<IInventoryOperationDescription[]|undefined>(undefined);
     const [productsInventory, setProductsInventory] = useState<IProductInventory[]|undefined>([]);
@@ -148,7 +155,6 @@ function ConsultInformation() {
                         maxHeight={275}
                         onSelectWorkDay={handlerSelectWorkDay}/>
                 </div>
-
             }
             </div>
         </div>
