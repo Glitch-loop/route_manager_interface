@@ -48,6 +48,36 @@ import SummarizeRouteTransacionsOfTheDay from '@/components/route_tranactions/Su
 // Utils
 import { convertProductToProductInventoryInterface } from '@/utils/inventoryUtils';
 import { getInformationOfStores } from '@/controllers/StoreController';
+import TableInventoryOperationsVisualization from '@/components/inventory/TableInventoryOperationsVisualization';
+import TableInventoryVisualization from '@/components/inventory/TableInventoryVisualization';
+import { cast_string_to_timestamp_standard_format } from '@/utils/dateUtils';
+
+
+function getRouteName(idRoute:string, routes:IRoute[]):string {
+    let routeName:string = '';
+    const index:number = routes.findIndex((route) => {return route.id_route === idRoute});
+
+    if (index === -1) {
+        routeName = "No especificado";
+    } else {
+        routeName = routes[index].route_name;
+    }
+
+    return routeName;
+}
+
+function getVendorName(idVendor:string, vendors:IUser[]):string {
+    let vendorName:string = '';
+    const index:number = vendors.findIndex((vendor) => {return vendor.id_vendor === idVendor});
+
+    if (index === -1) {
+        vendorName = "No especificado";
+    } else {
+        vendorName = vendors[index].name;
+    }
+
+    return vendorName;   
+}
 
 function ConsultInformation() {
     const [initialDate, setInitialDate] = useState<Dayjs | null>(null);
@@ -70,7 +100,7 @@ function ConsultInformation() {
     // States related to product inventory
     const [inventoryOperations, setInventoryOperations] = useState<IInventoryOperation[]|undefined>(undefined);
     const [inventoryOperationDescriptions, setInventoryOperationDescriptions] = useState<IInventoryOperationDescription[]|undefined>(undefined);
-    const [productsInventory, setProductsInventory] = useState<IProductInventory[]|undefined>([]);
+    const [productsInventory, setProductsInventory] = useState<IProductInventory[]|undefined>(undefined);
 
     const handlerSearchWorkDays = async () => {
         if(initialDate === null) {
@@ -88,6 +118,11 @@ function ConsultInformation() {
 
 
     const handlerSelectWorkDay = async(workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay) => {
+        // Getting information related to product inventory
+        const products:IProduct[] = await getAllConceptOfProducts();
+        console.log("Before set: ", convertProductToProductInventoryInterface(products))
+        setProductsInventory(convertProductToProductInventoryInterface(products))
+        
         // Getting information related to transactions
         const routeTransactions:IRouteTransaction[] = await getRouteTransactionsFromWorkDay(workDay);
         const routeTransactionOperations:IRouteTransactionOperation[] = await getRouteTransactionOperationsFromWorkDay(routeTransactions);
@@ -104,10 +139,6 @@ function ConsultInformation() {
 
         setInventoryOperations(inventoryOperations);
         setInventoryOperationDescriptions(inventoryOperationDescriptions)
-
-        // Getting information related to product inventory
-        const products:IProduct[] = await getAllConceptOfProducts();
-        setProductsInventory(convertProductToProductInventoryInterface(products))
 
         // Getting ingotmation related to stores
         const storesOfTheDay:Set<string> = new Set<string>();
@@ -158,8 +189,17 @@ function ConsultInformation() {
             }
             </div>
         </div>
+        {/* Title of the day */}
+        { workday !== undefined && 
+            <div className='flex flex-col ml-2'>
+                <span className='text-3xl font-bold'>Ruta: { getRouteName(workday.id_route, routes) }</span>
+                <span className='text-2xl'>Fecha: {cast_string_to_timestamp_standard_format(workday.start_date)}</span>
+                <span className='text-xl'>Vendedor: {getVendorName(workday.id_vendor, vendors)}</span>
+            </div>
+        
+        }
         {/* Components that summarize the day */}
-        <div className=' my-3 ml-3 flex flex-col overflow-x-auto'>
+        <div className='w-3/5 my-3 ml-3 flex flex-col overflow-x-auto'>
             <div className='flex flex-row'>
                 { workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined &&
                     <SummarizeOfTheDay
@@ -183,9 +223,24 @@ function ConsultInformation() {
                 }
             </div>
             {/* Summarie of prodct of the day */}
+            { (productsInventory !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
+                && routeTransactionOperationDescriptions !== undefined && inventoryOperations !== undefined && inventoryOperationDescriptions !== undefined) &&
+                <div className='w-full my-3'>
+                    <span className='text-xl font-bold ml-2'>Resumen de movimiento de inventario</span>
+                    <TableInventoryVisualization
+                        inventory={productsInventory}
+                        inventoryOperations={inventoryOperations}
+                        inventoryOperationDescriptions={inventoryOperationDescriptions}
+                        routeTransactions={routeTransactions}
+                        routeTransactionOperations={routeTransactionOperations}
+                        routeTransactionOperationDescriptions={routeTransactionOperationDescriptions}
+                    />
+                </div>
+            }
             {/* Summaraize of route transactions */}
             { routeTransactions && routeTransactionOperations && routeTransactionOperationDescriptions && productsInventory &&
-                <div className=''>
+                <div className='w-full'>
+                    <span className='text-xl font-bold ml-2'>Resumen de ventas</span>
                     <SummarizeRouteTransacionsOfTheDay 
                         routeTransactionOfTheDay={routeTransactions}
                         routeTransactionOperationsOfTheDay={routeTransactionOperations}

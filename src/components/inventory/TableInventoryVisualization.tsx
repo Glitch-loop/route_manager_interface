@@ -27,10 +27,11 @@ import {
   viewTagRowTableStyle,
   textRowTableStyle,
   cellTableStyleWithAmountOfProduct,
+  headerRowTitleTableStyle,
 } from '@/styles/inventoryOperationTableStyles';
 import { convertArrayInJsonUsingInterfaces } from '@/utils/generalUtils';
 import DAYS_OPERATIONS from '@/utils/dayOperations';
-import { isTypeIInventoryOperationDescription, isTypeIRouteTransactionOperation, isTypeIRouteTransactionOperationDescription } from '@/utils/guards';
+import { isTypeIInventoryOperationDescription, isTypeIProductInventory, isTypeIRouteTransactionOperation, isTypeIRouteTransactionOperationDescription } from '@/utils/guards';
 
 function groupConceptsInTheirParentConcept<T>(arrConceptToGroup:T[]):Map<string, T[]> {
   const groupedConcepts:Map<string, T[]> = new Map<string, T[]>()
@@ -90,15 +91,19 @@ function getProductInventoryOfInventoryOperationType(inventoryOperationType:stri
   return productInventory;
 }
 
-
 function getProductInventoryByInventoryOperationType(
   targetTypeOperation:string, 
   routeTransactions:IRouteTransaction[],
   routeTransactionOperations:Map<string, IRouteTransactionOperation[]>,
   routeTransactionOperationDescriptions:Map<string, IRouteTransactionOperationDescription[]>,
   inventory:IProductInventory[]):IProductInventory[] {
-    
-  const productInventoryMap:Map<string, IProductInventory> = convertArrayInJsonUsingInterfaces(inventory);  
+  const resultInventory:IProductInventory[] = []
+  
+  const newInventory = inventory.map((productInventory:IProductInventory) => {
+    return {...productInventory, amount: 0}
+  })
+
+  const productInventoryMap:Record<string, IProductInventory> = convertArrayInJsonUsingInterfaces(newInventory);  
   
 
   for (const transaction of routeTransactions) {
@@ -115,8 +120,8 @@ function getProductInventoryByInventoryOperationType(
             if (arrOperationDescriptions) {
               for (const transactionOperationDescription of arrOperationDescriptions) {
                 const {id_product, amount} = transactionOperationDescription
-                if (productInventoryMap.get(id_product) !== undefined) {
-                  productInventoryMap.get(id_product)!.amount += amount
+                if (productInventoryMap[id_product] !== undefined) {
+                  productInventoryMap[id_product].amount += amount
                 }
               }
             }
@@ -125,9 +130,14 @@ function getProductInventoryByInventoryOperationType(
       }
     }
   }
+  
 
-  return [...productInventoryMap.entries()].map(([idProduct, productInventory]) => { return productInventory } )  
 
+  for (const key in productInventoryMap) {
+    resultInventory.push(productInventoryMap[key]);
+  }
+
+  return resultInventory;
 }
 
 /*
@@ -186,13 +196,12 @@ const TableInventoryVisualization = (
     routeTransactionOperations:IRouteTransactionOperation[],
     routeTransactionOperationDescriptions:IRouteTransactionOperationDescription[],
   }) => {
-    
     const  suggestedInventory: IProductInventory[] = [];
     let  initialInventory:IProductInventory[] = []; // There is only "one" initial inventory operation
     let  restockInventories:IProductInventory[][] = []; // It could be many "restock" inventories
     let  soldOperations: IProductInventory[] = []; // Outflow in concept of selling
     let  repositionsOperations:IProductInventory[] = []; // Outflow in concept of repositions
-    let  returnedInventory:IProductInventory[] = []; // There is only "one" final inventory operations
+    let  returnedInventory:IProductInventory[] = []; // There is only "one" final inventory operation
     let  inventoryWithdrawal:boolean = false;
     let  inventoryOutflow:boolean = false;
     let  finalOperation:boolean = false;
@@ -208,27 +217,31 @@ const TableInventoryVisualization = (
 
     // Determining inventory operations    
     
-    initialInventory = getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.start_shift_inventory, inventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory, undefined);
+    initialInventory = getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.start_shift_inventory, 
+      inventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory.map((product) => { return {...product, amount: 0}}), undefined);
     
-    returnedInventory = getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.end_shift_inventory, inventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory, undefined);
+    returnedInventory = getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.end_shift_inventory, 
+      inventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory.map((product) => { return {...product, amount: 0}}), undefined);
   
     // Determining valid restock inventories
     const validRestockInventoryOperations:IInventoryOperation[] = inventoryOperations.filter((inventoryOperation:IInventoryOperation) => {
-      const { state } = inventoryOperation;
-      return state === 1;
+      const { state, id_inventory_operation_type } = inventoryOperation;
+      return state === 1 && id_inventory_operation_type === DAYS_OPERATIONS.restock_inventory;
     })
 
     restockInventories = validRestockInventoryOperations.reduce((matrixProductInventory:IProductInventory[][], inventoryOperation:IInventoryOperation) => {
       const { id_inventory_operation } = inventoryOperation;
       matrixProductInventory.push(
-        getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.restock_inventory, validRestockInventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory, id_inventory_operation)
+        getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.restock_inventory, validRestockInventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory.map((product) => { return {...product, amount: 0}}), id_inventory_operation)
       )
       return matrixProductInventory;
-    }, [])
+    }, []);
+
+    console.log("Restock inventory: ", restockInventories.length)
 
     // Determining route trasnactions
-    soldOperations = getProductInventoryByInventoryOperationType(DAYS_OPERATIONS.sales, routeTransactions, transactionOperationsByRouteTransactions, transactionDescriptionByTransactionOperation, inventory);
-    repositionsOperations = getProductInventoryByInventoryOperationType(DAYS_OPERATIONS.product_reposition, routeTransactions, transactionOperationsByRouteTransactions, transactionDescriptionByTransactionOperation, inventory);
+    soldOperations = getProductInventoryByInventoryOperationType(DAYS_OPERATIONS.sales, routeTransactions, transactionOperationsByRouteTransactions, transactionDescriptionByTransactionOperation, inventory.map((product) => { return {...product, amount: 0}}));
+    repositionsOperations = getProductInventoryByInventoryOperationType(DAYS_OPERATIONS.product_reposition, routeTransactions, transactionOperationsByRouteTransactions, transactionDescriptionByTransactionOperation, inventory.map((product) => { return {...product, amount: 0}}));
 
 
 
@@ -245,12 +258,12 @@ const TableInventoryVisualization = (
       { (initialInventory.length > 0
       || returnedInventory.length > 0
       || restockInventories.length > 0) ?
-        <div className={`w-full flex flex-row`}>
+        <div className={`flex flex-row`}>
           {/* Datatable for name of the products */}
-          <TableContainer className='w-1/3'>
-            <Table >
-              <TableHead>
-                <TableRow className={`${headerTitleTableStyle}`}>
+          <TableContainer className='flex basis-1/6'>
+            <Table>
+              <TableHead className={`${headerTitleTableStyle}`}>
+                <TableRow className={`${headerRowTitleTableStyle}`}>
                   <TableCell className={`${viewTagHeaderTableStyle}`}>
                     <span className={`${textHeaderTableStyle}`}>
                       Producto
@@ -276,277 +289,279 @@ const TableInventoryVisualization = (
             </Table>
           </TableContainer>
           {/* Datatable for the information for each concept */}
-          <TableContainer>
-            <Table className={`w-full`}>
-              {/* Header section */}
-              <TableHead>
-                <TableRow>
-                  {/* This field is never empty since it is necessary anytime */}
-                  { initialInventory.length > 0 &&
-                    <TableCell className={`${headerTitleTableStyle}`}>
-                      <div className={`${viewTagHeaderTableStyle}`}>
-                        <span className={`${textHeaderTableStyle}`}>
-                          Inventario inicial
-                        </span>
-                      </div>
-                    </TableCell>
-                  }
-                  { restockInventories.length > 0 &&
-                    restockInventories.map((currentInventory, index) => {
-                      return (
-                        <TableCell key={index} className={`${headerTitleTableStyle}`}>
-                          <div className={`${viewTagHeaderTableStyle}`}>
-                            <span className={`${textHeaderTableStyle}`}>
-                              Re-stock
-                            </span>
-                          </div>
-                        </TableCell>
-                      );
-                    })
-                  }
-                  {/*
-                    This field is never empty since it is the reason of this component (inventory operation)
-                  */}
-                  { inventoryWithdrawal &&
-                    <TableCell className={`${headerTitleTableStyle}`}>
-                      <div className={`${viewTagHeaderTableStyle}`}>
-                        <span className={`${textHeaderTableStyle} font-bold underline`}>
-                          Salida total
-                        </span>
-                      </div>
-                    </TableCell>
-                  }
-                  { soldOperations.length > 0 &&
-                    <TableCell className={`${headerTitleTableStyle}`}>
-                      <div className={`${viewTagHeaderTableStyle}`}>
-                        <span className={`${textHeaderTableStyle}`}>
-                          Venta
-                        </span>
-                      </div>
-                    </TableCell>
-                  }
-                  { repositionsOperations.length > 0 &&
-                    <TableCell className={`${headerTitleTableStyle}`}>
-                      <div className={`${viewTagHeaderTableStyle}`}>
-                        <span className={`${textHeaderTableStyle}`}>
-                          Cambio
-                        </span>
-                      </div>
-                    </TableCell>
-                  }
-                  { inventoryOutflow &&
-                    <TableCell className={`${headerTitleTableStyle}`}>
-                      <div className={`${viewTagHeaderTableStyle}`}>
-                        <span className={`${textHeaderTableStyle} font-bold underline`}>
-                          Total vendido y cambiado
-                        </span>
-                      </div>
-                    </TableCell>
-                  }
-                  { finalOperation &&
-                    <TableCell className={`${headerTitleTableStyle}`}>
-                      <div className={`${viewTagHeaderTableStyle}`}>
-                        <span className={`${textHeaderTableStyle}`}>
-                          Inventario final
-                        </span>
-                      </div>
-                    </TableCell>
-                  }
-                  { returnedInventory.length > 0 &&
+          <div className='flex basis-5/6 overflow-x-hidden'>
+            <TableContainer>
+              <Table>
+                {/* Header section */}
+                <TableHead>
+                  <TableRow>
+                    {/* This field is never empty since it is necessary anytime */}
+                    { initialInventory.length > 0 &&
                       <TableCell className={`${headerTitleTableStyle}`}>
                         <div className={`${viewTagHeaderTableStyle}`}>
                           <span className={`${textHeaderTableStyle}`}>
-                            Inventario físico
+                            Inventario inicial
                           </span>
                         </div>
-                    </TableCell>
+                      </TableCell>
+                    }
+                    { restockInventories.length > 0 &&
+                      restockInventories.map((currentInventory, index) => {
+                        return (
+                          <TableCell key={index} className={`${headerTitleTableStyle}`}>
+                            <div className={`${viewTagHeaderTableStyle}`}>
+                              <span className={`${textHeaderTableStyle}`}>
+                                Re-stock
+                              </span>
+                            </div>
+                          </TableCell>
+                        );
+                      })
+                    }
+                    {/*
+                      This field is never empty since it is the reason of this component (inventory operation)
+                    */}
+                    { inventoryWithdrawal &&
+                      <TableCell className={`${headerTitleTableStyle}`}>
+                        <div className={`${viewTagHeaderTableStyle}`}>
+                          <span className={`${textHeaderTableStyle} font-bold underline`}>
+                            Salida total
+                          </span>
+                        </div>
+                      </TableCell>
+                    }
+                    { soldOperations.length > 0 &&
+                      <TableCell className={`${headerTitleTableStyle}`}>
+                        <div className={`${viewTagHeaderTableStyle}`}>
+                          <span className={`${textHeaderTableStyle}`}>
+                            Venta
+                          </span>
+                        </div>
+                      </TableCell>
+                    }
+                    { repositionsOperations.length > 0 &&
+                      <TableCell className={`${headerTitleTableStyle}`}>
+                        <div className={`${viewTagHeaderTableStyle}`}>
+                          <span className={`${textHeaderTableStyle}`}>
+                            Cambio
+                          </span>
+                        </div>
+                      </TableCell>
+                    }
+                    { inventoryOutflow &&
+                      <TableCell className={`${headerTitleTableStyle}`}>
+                        <div className={`${viewTagHeaderTableStyle}`}>
+                          <span className={`${textHeaderTableStyle} font-bold underline`}>
+                            Total vendido y cambiado
+                          </span>
+                        </div>
+                      </TableCell>
+                    }
+                    { finalOperation &&
+                      <TableCell className={`${headerTitleTableStyle}`}>
+                        <div className={`${viewTagHeaderTableStyle}`}>
+                          <span className={`${textHeaderTableStyle}`}>
+                            Inventario final
+                          </span>
+                        </div>
+                      </TableCell>
+                    }
+                    { returnedInventory.length > 0 &&
+                        <TableCell className={`${headerTitleTableStyle}`}>
+                          <div className={`${viewTagHeaderTableStyle}`}>
+                            <span className={`${textHeaderTableStyle}`}>
+                              Inventario físico
+                            </span>
+                          </div>
+                      </TableCell>
+                    }
+                    { issueInventory &&
+                      <TableCell className={`${headerTitleTableStyle}`}>
+                        <div className={`${viewTagHeaderTableStyle}`}>
+                          <span className={`${textHeaderTableStyle} font-bold underline`}>
+                            Problema con inventario
+                          </span>
+                        </div>
+                      </TableCell>
+                    }
+                  </TableRow>
+                </TableHead>
+                {/* Body section */}
+                <TableBody>
+                  { (initialInventory.length > 0 || returnedInventory.length > 0 || restockInventories.length > 0) &&
+                    inventory.map((product) => {
+                      /*
+                        To keep an order of how to print the inventory operations, it is used the variable "inventory" which has
+                        all the products (and the current amount for each product).
+
+                        "Inventory" is used has the reference of what to print in the "current iteration", so it is going to depend
+                        on the current product that it is going to be searched that particular product in the other arrays that store
+                        the information of the "product inventory"
+
+                        Since the inventory operations only store if a product had a movement, if there is not find the product of the
+                        current operation, it is going to be diplayed with a value of "0" (indicating that it was not a
+                        movement of that particular product).
+                      */
+
+                      // Propierties that are always going to be present.
+                      const id_product = product.id_product;
+
+                      /* Declaring variables that will store the amount of product for each type of operation*/
+                      let suggestedAmount = 0;
+                      let initialInventoryOperationAmount = 0;
+                      let returnedInventoryOperationAmount = 0;
+                      const restockInventoryOperationAmount:number[] = [];
+                      let soldInventoryOperationAmount = 0;
+                      let repositionInventoryOperationAmount = 0;
+
+                      // Special calculations variables
+                      let withdrawalAmount = 0;
+                      let inventoryOutflowAmount = 0;
+                      let finalOperationAmount = 0;
+                      let inventoryIssueAmount = 0;
+
+                      // Searching the product in the inventory operations
+                      suggestedAmount                   = findProductAmountInArray(suggestedInventory, id_product);
+                      initialInventoryOperationAmount   = findProductAmountInArray(initialInventory, id_product);
+                      returnedInventoryOperationAmount  = findProductAmountInArray(returnedInventory, id_product);
+                      soldInventoryOperationAmount      = findProductAmountInArray(soldOperations, id_product);
+                      repositionInventoryOperationAmount
+                        = findProductAmountInArray(repositionsOperations, id_product);
+
+                      restockInventories.forEach((restockInventory:IProductInventory[]) => {
+                        const currentRestockProductAmount
+                          = findProductAmountInArray(restockInventory, id_product);
+
+                          withdrawalAmount += currentRestockProductAmount;
+                        restockInventoryOperationAmount.push(currentRestockProductAmount);
+                      });
+
+                      // Special calculations
+                      withdrawalAmount += initialInventoryOperationAmount;
+                      inventoryOutflowAmount = soldInventoryOperationAmount + repositionInventoryOperationAmount;
+
+                      finalOperationAmount = withdrawalAmount - inventoryOutflowAmount;
+
+                      inventoryIssueAmount = finalOperationAmount - returnedInventoryOperationAmount;
+                      return (
+                        <TableRow className={`${rowTableStyle}`}
+                        key={product.id_product}>
+                          {/* This field is never empty since it is necessary anytime */}
+                          {/* Product (product identification) */}
+                          {/* Suggested inventory */}
+                          { suggestedInventory.length > 0 &&
+                            <TableCell className={`${suggestedAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {suggestedAmount}
+                                </span>
+                              </div>
+                            </TableCell>
+                          }
+                          {/* Initial inventory */}
+                          { initialInventory.length > 0 &&
+                            <TableCell className={`${initialInventoryOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {initialInventoryOperationAmount}
+                                </span>
+                              </div>
+                          </TableCell>
+
+                          }
+                          {/* Restock of product */}
+                          { restockInventoryOperationAmount.length > 0 &&
+                            restockInventoryOperationAmount.map((productAmount, index) => {
+                              return (
+                                <TableCell key={index} className={`${productAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                                  <div className={`${viewTagRowTableStyle}`}>
+                                    <span className={`${textRowTableStyle}`}>
+                                      {productAmount}
+                                    </span>
+                                  </div>
+                                </TableCell>
+                              );
+                            })
+                          }
+                          {/* Inflow product */}
+                          { inventoryWithdrawal === true &&
+                            <TableCell className={`${withdrawalAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {withdrawalAmount}
+                                </span>
+                              </div>
+                            </TableCell>
+                          }
+                          {/* Product sold */}
+                          { soldOperations.length > 0 &&
+                            <TableCell className={`${soldInventoryOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {soldInventoryOperationAmount}
+                                </span>
+                              </div>
+                            </TableCell>
+                          }
+                          {/* Product reposition */}
+                          { repositionsOperations.length > 0 &&
+                            <TableCell className={`${repositionInventoryOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {repositionInventoryOperationAmount}
+                                </span>
+                              </div>
+                            </TableCell>
+                          }
+                          {/* Outflow product */}
+                          { inventoryOutflow === true &&
+                            <TableCell className={`${inventoryOutflowAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {inventoryOutflowAmount}
+                                </span>
+                              </div>
+                            </TableCell>
+                          }
+                          {/* Final inventory */}
+                          { finalOperation === true &&
+                            <TableCell className={`${finalOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {finalOperationAmount}
+                                </span>
+                              </div>
+                            </TableCell>
+                          }
+                          {/* Returned inventory */}
+                          { returnedInventory.length > 0 &&
+                            <TableCell className={`${returnedInventoryOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {returnedInventoryOperationAmount}
+                                </span>
+                              </div>
+                            </TableCell>
+                          }
+                          {/* Inventory problem */}
+                          { issueInventory === true &&
+                            <TableCell className={`${cellTableStyle} 
+                              ${inventoryIssueAmount === 0 ? 'bg-green-500' : 'bg-red-500'}`}>
+                              <div className={`${viewTagRowTableStyle}`}>
+                                <span className={`${textRowTableStyle}`}>
+                                  {inventoryIssueAmount}
+                                </span>
+                              </div>
+                            </TableCell>
+                          }
+                        </TableRow>
+                      );
+                    })
                   }
-                  { issueInventory &&
-                    <TableCell className={`${headerTitleTableStyle}`}>
-                      <div className={`${viewTagHeaderTableStyle}`}>
-                        <span className={`${textHeaderTableStyle} font-bold underline`}>
-                          Problema con inventario
-                        </span>
-                      </div>
-                    </TableCell>
-                  }
-                </TableRow>
-              </TableHead>
-              {/* Body section */}
-              <TableBody>
-                { (initialInventory.length > 0 || returnedInventory.length > 0 || restockInventories.length > 0) &&
-                  inventory.map((product) => {
-                    /*
-                      To keep an order of how to print the inventory operations, it is used the variable "inventory" which has
-                      all the products (and the current amount for each product).
-
-                      "Inventory" is used has the reference of what to print in the "current iteration", so it is going to depend
-                      on the current product that it is going to be searched that particular product in the other arrays that store
-                      the information of the "product inventory"
-
-                      Since the inventory operations only store if a product had a movement, if there is not find the product of the
-                      current operation, it is going to be diplayed with a value of "0" (indicating that it was not a
-                      movement of that particular product).
-                    */
-
-                    // Propierties that are always going to be present.
-                    const id_product = product.id_product;
-
-                    /* Declaring variables that will store the amount of product for each type of operation*/
-                    let suggestedAmount = 0;
-                    let initialInventoryOperationAmount = 0;
-                    let returnedInventoryOperationAmount = 0;
-                    const restockInventoryOperationAmount:number[] = [];
-                    let soldInventoryOperationAmount = 0;
-                    let repositionInventoryOperationAmount = 0;
-
-                    // Special calculations variables
-                    let withdrawalAmount = 0;
-                    let inventoryOutflowAmount = 0;
-                    let finalOperationAmount = 0;
-                    let inventoryIssueAmount = 0;
-
-                    // Searching the product in the inventory operations
-                    suggestedAmount                   = findProductAmountInArray(suggestedInventory, id_product);
-                    initialInventoryOperationAmount   = findProductAmountInArray(initialInventory, id_product);
-                    returnedInventoryOperationAmount  = findProductAmountInArray(returnedInventory, id_product);
-                    soldInventoryOperationAmount      = findProductAmountInArray(soldOperations, id_product);
-                    repositionInventoryOperationAmount
-                      = findProductAmountInArray(repositionsOperations, id_product);
-
-                    restockInventories.forEach((restockInventory:IProductInventory[]) => {
-                      const currentRestockProductAmount
-                        = findProductAmountInArray(restockInventory, id_product);
-
-                        withdrawalAmount += currentRestockProductAmount;
-                      restockInventoryOperationAmount.push(currentRestockProductAmount);
-                    });
-
-                    // Special calculations
-                    withdrawalAmount += initialInventoryOperationAmount;
-                    inventoryOutflowAmount = soldInventoryOperationAmount + repositionInventoryOperationAmount;
-
-                    finalOperationAmount = withdrawalAmount - inventoryOutflowAmount;
-
-                    inventoryIssueAmount = finalOperationAmount - returnedInventoryOperationAmount;
-                    return (
-                      <TableRow className={`${rowTableStyle}`}
-                      key={product.id_product}>
-                        {/* This field is never empty since it is necessary anytime */}
-                        {/* Product (product identification) */}
-                        {/* Suggested inventory */}
-                        { suggestedInventory.length > 0 &&
-                          <TableCell className={`${suggestedAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {suggestedAmount}
-                              </span>
-                            </div>
-                          </TableCell>
-                        }
-                        {/* Initial inventory */}
-                        { initialInventory.length > 0 &&
-                          <TableCell className={`${initialInventoryOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {initialInventoryOperationAmount}
-                              </span>
-                            </div>
-                        </TableCell>
-
-                        }
-                        {/* Restock of product */}
-                        { restockInventoryOperationAmount.length > 0 &&
-                          restockInventoryOperationAmount.map((productAmount, index) => {
-                            return (
-                              <TableCell key={index} className={`${productAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                                <div className={`${viewTagRowTableStyle}`}>
-                                  <span className={`${textRowTableStyle}`}>
-                                    {productAmount}
-                                  </span>
-                                </div>
-                              </TableCell>
-                            );
-                          })
-                        }
-                        {/* Inflow product */}
-                        { inventoryWithdrawal === true &&
-                          <TableCell className={`${withdrawalAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {withdrawalAmount}
-                              </span>
-                            </div>
-                          </TableCell>
-                        }
-                        {/* Product sold */}
-                        { soldOperations.length > 0 &&
-                          <TableCell className={`${soldInventoryOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {soldInventoryOperationAmount}
-                              </span>
-                            </div>
-                          </TableCell>
-                        }
-                        {/* Product reposition */}
-                        { repositionsOperations.length > 0 &&
-                          <TableCell className={`${repositionInventoryOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {repositionInventoryOperationAmount}
-                              </span>
-                            </div>
-                          </TableCell>
-                        }
-                        {/* Outflow product */}
-                        { inventoryOutflow === true &&
-                          <TableCell className={`${inventoryOutflowAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {inventoryOutflowAmount}
-                              </span>
-                            </div>
-                          </TableCell>
-                        }
-                        {/* Final inventory */}
-                        { finalOperation === true &&
-                          <TableCell className={`${finalOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {finalOperationAmount}
-                              </span>
-                            </div>
-                          </TableCell>
-                        }
-                        {/* Returned inventory */}
-                        { returnedInventory.length > 0 &&
-                          <TableCell className={`${returnedInventoryOperationAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {returnedInventoryOperationAmount}
-                              </span>
-                            </div>
-                          </TableCell>
-                        }
-                        {/* Inventory problem */}
-                        { issueInventory === true &&
-                          <TableCell className={`${cellTableStyle} 
-                            ${inventoryIssueAmount === 0 ? 'bg-green-500' : 'bg-red-500'}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
-                                {inventoryIssueAmount}
-                              </span>
-                            </div>
-                          </TableCell>
-                        }
-                      </TableRow>
-                    );
-                  })
-                }
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </div>
         </div> :
         <div className={`w-full flex flex-col justify-center`}>
           {/* <ActivityIndicator size={'large'} /> */}

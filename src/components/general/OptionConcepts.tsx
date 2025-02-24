@@ -41,7 +41,6 @@ function OptionConcepts({
         // Configuring the option in the section
         setConceptsToConfigure(
             conceptsToConfigure.map((concept:IConceptOption) => {
-                console.log("Current ID: ", idConceptToChange)
                 const { idConcept, conceptName, description, options } = concept;
 
                 if (idConceptToChange === idConcept) {

@@ -37,7 +37,6 @@ const SummarizeRouteTransacionsOfTheDay = ({
     // let jsonRouteTransactionOperationsDescription:Record<string, IRouteTransactionOperationDescription> = convertArrayInJsonUsingInterfaces(routeTransactionOperationDescriptionsOfTheDay);
     const jsonStores:Record<string, IStore> = convertArrayInJsonUsingInterfaces(storesOfTheDay);
 
-    console.log(jsonStores)
     const routeTransactionsGroupedByStore:Map<string, IRouteTransaction[]> = new Map<string, IRouteTransaction[]>();
 
     routeTransactionOfTheDay.forEach((routeTransaction:IRouteTransaction) => {

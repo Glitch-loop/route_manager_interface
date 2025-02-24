@@ -36,22 +36,21 @@ export function capitalizeFirstLetter(input: string|undefined|null): string {
 
 export function convertArrayInJsonUsingInterfaces(arrayToConvert:unknown[]):Record<string, unknown> {
     const convertedArray:Record<string, unknown> = {};
-    
     arrayToConvert.forEach((item:unknown) => {
         if (isTypeIRouteTransaction(item)) {
-            convertedArray[item.id_route_transaction] = item;
+          convertedArray[item.id_route_transaction] = item;
         } else if (isTypeIRouteTransactionOperation(item)) {
-            convertedArray[item.id_route_transaction_operation] = item;
+          convertedArray[item.id_route_transaction_operation] = item;
         } else if (isTypeIRouteTransactionOperationDescription(item)) {
-            convertedArray[item.id_route_transaction_operation_description] = item;
+          convertedArray[item.id_route_transaction_operation_description] = item;
         } else if (isTypeIStore(item)) {
-            convertedArray[item.id_store] = item;
+          convertedArray[item.id_store] = item;
         } else if (isTypeIInventoryOperation(item)) {
-            convertedArray[item.id_inventory_operation] = item;
+          convertedArray[item.id_inventory_operation] = item;
         } else if (isTypeIInventoryOperationDescription(item)) {
-            convertedArray[item.id_product_operation_description] = item;
+          convertedArray[item.id_product_operation_description] = item;
         } else if (isTypeIProductInventory(item)) {
-            convertedArray[item.id_product] = item;
+          convertedArray[item.id_product] = item;
         }
     })
 
