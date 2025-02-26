@@ -35,7 +35,7 @@ import {
     getRouteTransactionOperationsFromWorkDay,
     getRouteTransactionOperationDescriptionsFromWorkDay,
 } from '@/controllers/RouteTransactionsController';
-import { getInventoryOperationsOfWorkDay, getInventoryOperationDescriptionsOfWorkDay, getAllConceptOfProducts } from '@/controllers/InventoryController';
+import { getInventoryOperationsOfWorkDay, getInventoryOperationDescriptionsOfWorkDay, getAllConceptOfProducts, getTotalInventoriesOfAllStoresByIdOperationType } from '@/controllers/InventoryController';
 
 // Components
 import DateRangePicker from '@/components/general/DateRangePicker';
@@ -44,6 +44,7 @@ import TableSearchVisualization from '@/components/workday/TableSearchVisualizat
 import SummarizeOfTheDay from '@/components/route_tranactions/SummarizeOfTheDay';
 import SummarizeDayComission from '@/components/route_tranactions/SummarizeDayComission';
 import SummarizeRouteTransacionsOfTheDay from '@/components/route_tranactions/SummarizeRouteTransacionsOfTheDay';
+import { Accordion, AccordionDetails, AccordionSummary, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 
 // Utils
 import { convertProductToProductInventoryInterface } from '@/utils/inventoryUtils';
@@ -51,6 +52,7 @@ import { getInformationOfStores } from '@/controllers/StoreController';
 import TableInventoryOperationsVisualization from '@/components/inventory/TableInventoryOperationsVisualization';
 import TableInventoryVisualization from '@/components/inventory/TableInventoryVisualization';
 import { cast_string_to_timestamp_standard_format } from '@/utils/dateUtils';
+import DAYS_OPERATIONS from '@/utils/dayOperations';
 
 
 function getRouteName(idRoute:string, routes:IRoute[]):string {
@@ -85,7 +87,7 @@ function ConsultInformation() {
 
     // States related to the workday
     const [workDays, setWorkDays] = useState<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>([]);
-    const [workday, setWorkday] = useState<(IRoute&IDayGeneralInformation&IDay&IRouteDay|undefined)>();
+    const [workday, setWorkday] = useState<((IRoute&IDayGeneralInformation&IDay&IRouteDay)|undefined)>();
     const [vendors, setVendors] = useState<IUser[]>([]);
     const [routes, setRoutes] = useState<IRoute[]>([]);
     
@@ -101,6 +103,11 @@ function ConsultInformation() {
     const [inventoryOperations, setInventoryOperations] = useState<IInventoryOperation[]|undefined>(undefined);
     const [inventoryOperationDescriptions, setInventoryOperationDescriptions] = useState<IInventoryOperationDescription[]|undefined>(undefined);
     const [productsInventory, setProductsInventory] = useState<IProductInventory[]|undefined>(undefined);
+
+    const [nameOfStores, setNameOfStores] = useState<string[]>([]);
+    const [productRepositionByStore, setProductRepositionByStore] = useState<IProductInventory[][]>([]);
+    const [productSoldByStore, setProductSoldByStore] = useState<IProductInventory[][]>([]);
+    const [productDevolutionByStore, setProductDevolutionByStore] = useState<IProductInventory[][]>([]);
 
     const handlerSearchWorkDays = async () => {
         if(initialDate === null) {
@@ -120,7 +127,6 @@ function ConsultInformation() {
     const handlerSelectWorkDay = async(workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay) => {
         // Getting information related to product inventory
         const products:IProduct[] = await getAllConceptOfProducts();
-        console.log("Before set: ", convertProductToProductInventoryInterface(products))
         setProductsInventory(convertProductToProductInventoryInterface(products))
         
         // Getting information related to transactions
@@ -156,6 +162,55 @@ function ConsultInformation() {
             [...storesOfTheDay.entries()].map((item) => {return item[0]}))
         
         setStores(informationOfStores)
+
+
+        // Setting up visuzalized by store and the type of operarion
+        setNameOfStores(stores.map((currentStore) => {return currentStore.store_name;}));
+
+        // Reposition concept
+        const responseInventoryByStoreAndDevolutionOperation:(IStore & { productInventory: IProductInventory[] })[] =  getTotalInventoriesOfAllStoresByIdOperationType(
+            DAYS_OPERATIONS.product_devolution,
+            stores,
+            routeTransactions,
+            routeTransactionOperations,
+            routeTransactionOperationDescriptions);
+
+        const totalProductDevolutionOfStores:IProductInventory[][] = []
+        for(const record of responseInventoryByStoreAndDevolutionOperation) {
+            const { productInventory } = record;
+            totalProductDevolutionOfStores.push(productInventory);
+          }
+          setProductDevolutionByStore(totalProductDevolutionOfStores);
+
+        // Reposition concept
+        const responseInventoryByStoreAndRepositionOperation:(IStore & { productInventory: IProductInventory[] })[] =  getTotalInventoriesOfAllStoresByIdOperationType(
+            DAYS_OPERATIONS.product_reposition,
+            stores,
+            routeTransactions,
+            routeTransactionOperations,
+            routeTransactionOperationDescriptions);
+
+        const totalProductRepositionOfStores:IProductInventory[][] = []
+        for(const record of responseInventoryByStoreAndRepositionOperation) {
+            const { productInventory } = record;
+            totalProductRepositionOfStores.push(productInventory);
+          }
+        setProductRepositionByStore(totalProductRepositionOfStores);
+
+        // Selling concept
+        const responseInventoryByStoreAndSaleOperation:(IStore & { productInventory: IProductInventory[] })[] = getTotalInventoriesOfAllStoresByIdOperationType(
+            DAYS_OPERATIONS.sales,
+            stores,
+            routeTransactions,
+            routeTransactionOperations,
+            routeTransactionOperationDescriptions);
+
+        const totalProductSaleOfStores:IProductInventory[][] = [];
+        for(const record of responseInventoryByStoreAndSaleOperation) {
+          const { productInventory } = record;
+          totalProductSaleOfStores.push(productInventory);
+        }
+        setProductSoldByStore(totalProductSaleOfStores);
     }
 
     return (
@@ -195,6 +250,7 @@ function ConsultInformation() {
                 <span className='text-3xl font-bold'>Ruta: { getRouteName(workday.id_route, routes) }</span>
                 <span className='text-2xl'>Fecha: {cast_string_to_timestamp_standard_format(workday.start_date)}</span>
                 <span className='text-xl'>Vendedor: {getVendorName(workday.id_vendor, vendors)}</span>
+                <span className='text-xl'>id ruta: {workday.id_work_day}</span>
             </div>
         
         }
@@ -222,19 +278,62 @@ function ConsultInformation() {
                     />
                 }
             </div>
-            {/* Summarie of prodct of the day */}
+            {/* Summarize of product of the day */}
             { (productsInventory !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
                 && routeTransactionOperationDescriptions !== undefined && inventoryOperations !== undefined && inventoryOperationDescriptions !== undefined) &&
                 <div className='w-full my-3'>
-                    <span className='text-xl font-bold ml-2'>Resumen de movimiento de inventario</span>
-                    <TableInventoryVisualization
-                        inventory={productsInventory}
-                        inventoryOperations={inventoryOperations}
-                        inventoryOperationDescriptions={inventoryOperationDescriptions}
-                        routeTransactions={routeTransactions}
-                        routeTransactionOperations={routeTransactionOperations}
-                        routeTransactionOperationDescriptions={routeTransactionOperationDescriptions}
-                    />
+                    <Accordion className='my-3'>
+                        <AccordionSummary>
+                            <span className='text-xl font-bold ml-2'>Resumen de movimiento de inventario</span>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <TableInventoryVisualization
+                                inventory={productsInventory}
+                                inventoryOperations={inventoryOperations}
+                                inventoryOperationDescriptions={inventoryOperationDescriptions}
+                                routeTransactions={routeTransactions}
+                                routeTransactionOperations={routeTransactionOperations}
+                                routeTransactionOperationDescriptions={routeTransactionOperationDescriptions}/>
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion className='my-3'>
+                        <AccordionSummary>
+                            <span className={`text-xl font-bold ml-2`}>Merma de producto por tienda</span>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <TableInventoryOperationsVisualization
+                                inventory             = {productsInventory}
+                                titleColumns          = {nameOfStores}
+                                productInventories    = {productDevolutionByStore}
+                                calculateTotal        = {true}/>
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion className='my-3'>
+                        <AccordionSummary>
+                            <span className={`text-xl font-bold ml-2`}>Reposición de producto por tienda</span>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <TableInventoryOperationsVisualization
+                                inventory             = {productsInventory}
+                                titleColumns          = {nameOfStores}
+                                productInventories    = {productRepositionByStore}
+                                calculateTotal        = {true}/>
+                        </AccordionDetails>
+                    </Accordion>
+                    <Accordion className='my-3'>
+                        <AccordionSummary>
+                            <span className={`text-xl font-bold ml-2`}>Producto vendido por tienda</span>
+                        </AccordionSummary>
+                        <AccordionDetails>
+                            <TableInventoryOperationsVisualization
+                                inventory             = {productsInventory}
+                                titleColumns          = {nameOfStores}
+                                productInventories    = {productSoldByStore}
+                                calculateTotal        = {true}/>
+                        </AccordionDetails>
+                    </Accordion>
+                    
+
                 </div>
             }
             {/* Summaraize of route transactions */}

@@ -18,20 +18,33 @@ import { convertInventoryOperationDescriptionToProductInventoryInterface, conver
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 
 // Styles
-import {
-  headerTitleTableStyle,
-  viewTagHeaderTableStyle,
-  textHeaderTableStyle,
-  rowTableStyle,
-  cellTableStyle,
-  viewTagRowTableStyle,
-  textRowTableStyle,
-  cellTableStyleWithAmountOfProduct,
-  headerRowTitleTableStyle,
-} from '@/styles/inventoryOperationTableStyles';
+// import {
+//   headerTitleTableStyle,
+//   viewTagHeaderTableStyle,
+//   textHeaderTableStyle,
+//   rowTableStyle,
+//   cellTableStyle,
+//   viewTagRowTableStyle,
+//   textRowTableStyle,
+//   cellTableStyleWithAmountOfProduct,
+//   headerRowTitleTableStyle,
+// } from '@/styles/inventoryOperationTableStyles';
 import { convertArrayInJsonUsingInterfaces } from '@/utils/generalUtils';
 import DAYS_OPERATIONS from '@/utils/dayOperations';
 import { isTypeIInventoryOperationDescription, isTypeIProductInventory, isTypeIRouteTransactionOperation, isTypeIRouteTransactionOperationDescription } from '@/utils/guards';
+
+
+const headerTitleTableStyle:string = 'h-32 w-28 flex flex-row justify-center items-center';
+const headerRowTitleTableStyle:string = 'w-28 flex flex-row justify-center items-center';
+const viewTagHeaderTableStyle:string = 'w-full flex flex-row justify-center items-center';
+const textHeaderTableStyle:string = 'h-16 align-middle text-center text-black flex flex-row justify-center items-center';
+
+const rowTableStyle:string = 'h-32';
+const cellTableStyle:string = 'flex flex-row justify-center';
+const cellTableStyleWithAmountOfProduct:string = 'flex flex-row justify-center bg-amber-100';
+const viewTagRowTableStyle:string = 'w-full flex flex-row items-center justify-center';
+const textRowTableStyle:string = 'text-sm text-center text-black flex flex-row justify-center';
+
 
 function groupConceptsInTheirParentConcept<T>(arrConceptToGroup:T[]):Map<string, T[]> {
   const groupedConcepts:Map<string, T[]> = new Map<string, T[]>()
@@ -237,8 +250,6 @@ const TableInventoryVisualization = (
       return matrixProductInventory;
     }, []);
 
-    console.log("Restock inventory: ", restockInventories.length)
-
     // Determining route trasnactions
     soldOperations = getProductInventoryByInventoryOperationType(DAYS_OPERATIONS.sales, routeTransactions, transactionOperationsByRouteTransactions, transactionDescriptionByTransactionOperation, inventory.map((product) => { return {...product, amount: 0}}));
     repositionsOperations = getProductInventoryByInventoryOperationType(DAYS_OPERATIONS.product_reposition, routeTransactions, transactionOperationsByRouteTransactions, transactionDescriptionByTransactionOperation, inventory.map((product) => { return {...product, amount: 0}}));
@@ -260,7 +271,7 @@ const TableInventoryVisualization = (
       || restockInventories.length > 0) ?
         <div className={`flex flex-row`}>
           {/* Datatable for name of the products */}
-          <TableContainer className='flex basis-1/6'>
+          {/* <TableContainer className='flex basis-1/6'>
             <Table>
               <TableHead className={`${headerTitleTableStyle}`}>
                 <TableRow className={`${headerRowTitleTableStyle}`}>
@@ -287,14 +298,21 @@ const TableInventoryVisualization = (
                 }
               </TableBody>
             </Table>
-          </TableContainer>
+          </TableContainer> */}
           {/* Datatable for the information for each concept */}
-          <div className='flex basis-5/6 overflow-x-hidden'>
+          <div className='flex basis-full overflow-x-hidden'>
             <TableContainer>
               <Table>
                 {/* Header section */}
                 <TableHead>
                   <TableRow>
+                    <TableCell className={`${headerTitleTableStyle}`}>
+                        <div className={`${viewTagHeaderTableStyle}`}>
+                          <span className={`${textHeaderTableStyle}`}>
+                            Producto
+                          </span>
+                        </div>
+                    </TableCell>
                     {/* This field is never empty since it is necessary anytime */}
                     { initialInventory.length > 0 &&
                       <TableCell className={`${headerTitleTableStyle}`}>
@@ -405,7 +423,8 @@ const TableInventoryVisualization = (
 
                       // Propierties that are always going to be present.
                       const id_product = product.id_product;
-
+                      const product_name = product.product_name;
+                      
                       /* Declaring variables that will store the amount of product for each type of operation*/
                       let suggestedAmount = 0;
                       let initialInventoryOperationAmount = 0;
@@ -446,6 +465,13 @@ const TableInventoryVisualization = (
                       return (
                         <TableRow className={`${rowTableStyle}`}
                         key={product.id_product}>
+                            <TableCell className={`${suggestedAmount > 0 ? cellTableStyleWithAmountOfProduct : cellTableStyle}`}>
+                            <div className={`${viewTagRowTableStyle}`}>
+                              <span className={`${textRowTableStyle}`}>
+                                {product_name}
+                              </span>
+                            </div>
+                          </TableCell>
                           {/* This field is never empty since it is necessary anytime */}
                           {/* Product (product identification) */}
                           {/* Suggested inventory */}

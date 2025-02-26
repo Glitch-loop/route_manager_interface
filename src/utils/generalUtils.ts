@@ -56,3 +56,26 @@ export function convertArrayInJsonUsingInterfaces(arrayToConvert:unknown[]):Reco
 
     return convertedArray;
 }
+
+
+export function addingInformationParticularFieldOfObject(
+  dictionary: any,
+  idField: string,
+  fieldToAddTheInformation: string,
+  informationToAdd:any,
+  newObject: any) {
+  const updatedDictionary:any = { ...dictionary };
+
+  if (!updatedDictionary[idField]) {
+    updatedDictionary[idField] = { ...newObject };
+  } else {
+    if (fieldToAddTheInformation in updatedDictionary[idField]) {
+      updatedDictionary[idField][fieldToAddTheInformation] += informationToAdd;
+    } else {
+      /* The field doesn't exist in the object/json */
+      updatedDictionary[idField][fieldToAddTheInformation] = informationToAdd;
+    }
+  }
+
+  return updatedDictionary;
+}
