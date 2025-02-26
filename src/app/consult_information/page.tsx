@@ -104,10 +104,10 @@ function ConsultInformation() {
     const [inventoryOperationDescriptions, setInventoryOperationDescriptions] = useState<IInventoryOperationDescription[]|undefined>(undefined);
     const [productsInventory, setProductsInventory] = useState<IProductInventory[]|undefined>(undefined);
 
-    const [nameOfStores, setNameOfStores] = useState<string[]>([]);
-    const [productRepositionByStore, setProductRepositionByStore] = useState<IProductInventory[][]>([]);
-    const [productSoldByStore, setProductSoldByStore] = useState<IProductInventory[][]>([]);
-    const [productDevolutionByStore, setProductDevolutionByStore] = useState<IProductInventory[][]>([]);
+    const [nameOfStores, setNameOfStores] = useState<string[]|undefined>(undefined);
+    const [productRepositionByStore, setProductRepositionByStore] = useState<IProductInventory[][]|undefined>(undefined);
+    const [productSoldByStore, setProductSoldByStore] = useState<IProductInventory[][]|undefined>(undefined);
+    const [productDevolutionByStore, setProductDevolutionByStore] = useState<IProductInventory[][]|undefined>(undefined);
 
     const handlerSearchWorkDays = async () => {
         if(initialDate === null) {
@@ -279,10 +279,14 @@ function ConsultInformation() {
                 }
             </div>
             {/* Summarize of product of the day */}
-            { (productsInventory !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
-                && routeTransactionOperationDescriptions !== undefined && inventoryOperations !== undefined && inventoryOperationDescriptions !== undefined) &&
+            { ( productsInventory !== undefined && 
+                inventoryOperations !== undefined && 
+                inventoryOperationDescriptions !== undefined &&
+                routeTransactions !== undefined && 
+                routeTransactionOperations !== undefined && 
+                routeTransactionOperationDescriptions !== undefined) &&
                 <div className='w-full my-3'>
-                    <Accordion className='my-3'>
+                    <Accordion className=''>
                         <AccordionSummary>
                             <span className='text-xl font-bold ml-2'>Resumen de movimiento de inventario</span>
                         </AccordionSummary>
@@ -296,7 +300,13 @@ function ConsultInformation() {
                                 routeTransactionOperationDescriptions={routeTransactionOperationDescriptions}/>
                         </AccordionDetails>
                     </Accordion>
-                    <Accordion className='my-3'>
+                </div>
+            }
+            { ( productsInventory !== undefined && 
+                nameOfStores !== undefined && 
+                productDevolutionByStore !== undefined) &&
+                <div className='w-full my-3'>
+                    <Accordion className=''>
                         <AccordionSummary>
                             <span className={`text-xl font-bold ml-2`}>Merma de producto por tienda</span>
                         </AccordionSummary>
@@ -308,7 +318,13 @@ function ConsultInformation() {
                                 calculateTotal        = {true}/>
                         </AccordionDetails>
                     </Accordion>
-                    <Accordion className='my-3'>
+                </div>
+            }
+            { ( productsInventory !== undefined && 
+                nameOfStores !== undefined && 
+                productRepositionByStore !== undefined) &&
+                <div className='w-full my-3'>
+                    <Accordion>
                         <AccordionSummary>
                             <span className={`text-xl font-bold ml-2`}>Reposición de producto por tienda</span>
                         </AccordionSummary>
@@ -320,7 +336,13 @@ function ConsultInformation() {
                                 calculateTotal        = {true}/>
                         </AccordionDetails>
                     </Accordion>
-                    <Accordion className='my-3'>
+                </div>
+            }
+            { ( productsInventory !== undefined && 
+                nameOfStores !== undefined && 
+                productSoldByStore !== undefined) &&
+                <div className='w-full my-3'>
+                    <Accordion>
                         <AccordionSummary>
                             <span className={`text-xl font-bold ml-2`}>Producto vendido por tienda</span>
                         </AccordionSummary>
@@ -332,8 +354,6 @@ function ConsultInformation() {
                                 calculateTotal        = {true}/>
                         </AccordionDetails>
                     </Accordion>
-                    
-
                 </div>
             }
             {/* Summaraize of route transactions */}
