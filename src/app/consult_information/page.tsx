@@ -106,7 +106,7 @@ function ConsultInformation() {
 
     const [nameOfStores, setNameOfStores] = useState<string[]|undefined>(undefined);
     const [productRepositionByStore, setProductRepositionByStore] = useState<IProductInventory[][]|undefined>(undefined);
-    const [productSoldByStore, setProductSoldByStore] = useState<IProductInventory[][]|undefined>(undefined);
+    const [productSoldByStore, setProductSoldByStore] = useState<IProductInventory[][]>([]);
     const [productDevolutionByStore, setProductDevolutionByStore] = useState<IProductInventory[][]|undefined>(undefined);
 
     const handlerSearchWorkDays = async () => {
@@ -165,52 +165,43 @@ function ConsultInformation() {
 
 
         // Setting up visuzalized by store and the type of operarion
-        setNameOfStores(stores.map((currentStore) => {return currentStore.store_name;}));
+        setNameOfStores(informationOfStores.map((currentStore) => {return currentStore.store_name;}));
 
         // Reposition concept
-        const responseInventoryByStoreAndDevolutionOperation:(IStore & { productInventory: IProductInventory[] })[] =  getTotalInventoriesOfAllStoresByIdOperationType(
+        const responseInventoryByStoreAndDevolutionOperation:(IStore & { productInventory: IProductInventory[] })[] = await getTotalInventoriesOfAllStoresByIdOperationType(
             DAYS_OPERATIONS.product_devolution,
-            stores,
+            informationOfStores,
             routeTransactions,
             routeTransactionOperations,
             routeTransactionOperationDescriptions);
+        setProductDevolutionByStore(
+            responseInventoryByStoreAndDevolutionOperation
+            .map(((currentInventory) => { const { productInventory } = currentInventory; return productInventory;})));
 
-        const totalProductDevolutionOfStores:IProductInventory[][] = []
-        for(const record of responseInventoryByStoreAndDevolutionOperation) {
-            const { productInventory } = record;
-            totalProductDevolutionOfStores.push(productInventory);
-          }
-          setProductDevolutionByStore(totalProductDevolutionOfStores);
 
         // Reposition concept
-        const responseInventoryByStoreAndRepositionOperation:(IStore & { productInventory: IProductInventory[] })[] =  getTotalInventoriesOfAllStoresByIdOperationType(
+        const responseInventoryByStoreAndRepositionOperation:(IStore & { productInventory: IProductInventory[] })[] = await getTotalInventoriesOfAllStoresByIdOperationType(
             DAYS_OPERATIONS.product_reposition,
-            stores,
+            informationOfStores,
             routeTransactions,
             routeTransactionOperations,
             routeTransactionOperationDescriptions);
+        setProductRepositionByStore(
+            responseInventoryByStoreAndRepositionOperation
+            .map(((currentInventory) => { const { productInventory } = currentInventory; return productInventory;})));
+        
 
-        const totalProductRepositionOfStores:IProductInventory[][] = []
-        for(const record of responseInventoryByStoreAndRepositionOperation) {
-            const { productInventory } = record;
-            totalProductRepositionOfStores.push(productInventory);
-          }
-        setProductRepositionByStore(totalProductRepositionOfStores);
 
         // Selling concept
-        const responseInventoryByStoreAndSaleOperation:(IStore & { productInventory: IProductInventory[] })[] = getTotalInventoriesOfAllStoresByIdOperationType(
+        const responseInventoryByStoreAndSaleOperation:(IStore & { productInventory: IProductInventory[] })[] = await getTotalInventoriesOfAllStoresByIdOperationType(
             DAYS_OPERATIONS.sales,
-            stores,
+            informationOfStores,
             routeTransactions,
             routeTransactionOperations,
             routeTransactionOperationDescriptions);
-
-        const totalProductSaleOfStores:IProductInventory[][] = [];
-        for(const record of responseInventoryByStoreAndSaleOperation) {
-          const { productInventory } = record;
-          totalProductSaleOfStores.push(productInventory);
-        }
-        setProductSoldByStore(totalProductSaleOfStores);
+        setProductSoldByStore(
+            responseInventoryByStoreAndSaleOperation
+            .map(((currentInventory) => { const { productInventory } = currentInventory; return productInventory;})));
     }
 
     return (
@@ -340,7 +331,7 @@ function ConsultInformation() {
             }
             { ( productsInventory !== undefined && 
                 nameOfStores !== undefined && 
-                productSoldByStore !== undefined) &&
+                productSoldByStore?.length > 0) &&
                 <div className='w-full my-3'>
                     <Accordion>
                         <AccordionSummary>
