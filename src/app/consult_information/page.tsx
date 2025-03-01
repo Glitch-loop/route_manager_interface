@@ -6,14 +6,11 @@ import dayjs, { Dayjs } from 'dayjs';
 
 // Interfaces
 import {
-    IRouteDayStores,
     IStore,
     IDayGeneralInformation,
     IDay,
     IRouteDay,
     IRoute,
-    IStoreStatusDay,
-    IResponse,
     IUser,
     IRouteTransaction,
     IRouteTransactionOperation,
@@ -44,7 +41,7 @@ import TableSearchVisualization from '@/components/workday/TableSearchVisualizat
 import SummarizeOfTheDay from '@/components/route_tranactions/SummarizeOfTheDay';
 import SummarizeDayComission from '@/components/route_tranactions/SummarizeDayComission';
 import SummarizeRouteTransacionsOfTheDay from '@/components/route_tranactions/SummarizeRouteTransacionsOfTheDay';
-import { Accordion, AccordionDetails, AccordionSummary, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
+import { Accordion, AccordionDetails, AccordionSummary } from '@mui/material';
 
 // Utils
 import { convertProductToProductInventoryInterface } from '@/utils/inventoryUtils';
@@ -106,7 +103,7 @@ function ConsultInformation() {
 
     const [nameOfStores, setNameOfStores] = useState<string[]|undefined>(undefined);
     const [productRepositionByStore, setProductRepositionByStore] = useState<IProductInventory[][]|undefined>(undefined);
-    const [productSoldByStore, setProductSoldByStore] = useState<IProductInventory[][]>([]);
+    const [productSoldByStore, setProductSoldByStore] = useState<IProductInventory[][]|undefined>(undefined);
     const [productDevolutionByStore, setProductDevolutionByStore] = useState<IProductInventory[][]|undefined>(undefined);
 
     const handlerSearchWorkDays = async () => {
@@ -206,7 +203,7 @@ function ConsultInformation() {
 
     return (
     <div className="w-full h-full flex flex-col items-start">
-        <span className="text-style-h0">Consulta de información</span>
+        <span className="text-style-h0 ml-3">Consulta de información</span>
         {/* Parameters to consult the days */}
         <div className='w-full h-60 flex flex-row justify-start ml-3 mb-14'>
             <div className='flex flex-row basis-4/12 justify-start'>
@@ -331,7 +328,7 @@ function ConsultInformation() {
             }
             { ( productsInventory !== undefined && 
                 nameOfStores !== undefined && 
-                productSoldByStore?.length > 0) &&
+                productSoldByStore !== undefined) &&
                 <div className='w-full my-3'>
                     <Accordion>
                         <AccordionSummary>

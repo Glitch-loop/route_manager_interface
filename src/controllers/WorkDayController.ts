@@ -30,4 +30,7 @@ export async function getStoresByDate(initialDate:string, finalDate:string):Prom
     return workDaysInDateRange.data;
 }
 
-
+export async function getOpenWorkDays():Promise<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]> {
+  const openWorkDaysResult:IResponse<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]> = await repository.getOpenWorkDays();
+  return openWorkDaysResult.data;
+}

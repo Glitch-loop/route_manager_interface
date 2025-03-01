@@ -31,4 +31,10 @@ export async function getAllVendors():Promise<IUser[]> {
     return allVendors.data;
 }
 
+export async function getVendorById(id_vendor:string):Promise<IUser> {
+    const vendorResponse:IResponse<IUser> = await repository.getUserDataById(id_vendor);
+
+    return vendorResponse.data;
+}
+
 

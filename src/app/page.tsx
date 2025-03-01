@@ -1,5 +1,5 @@
 'use client'
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 import RouteList from "../components/routes/RouteList";
@@ -7,12 +7,24 @@ import IconButtonWithNotification from "../components/general/IconButtonWithNoti
 // import ButtonWithNotification from "./components/ButtonWithNotificaion";
 
 import GroupsColorPallete from "../components/general/ColorGroupsPallete";
-import { IColorOption, IConceptOption } from "../interfaces/interfaces";
+import { IColorOption, IConceptOption, IDay, IDayGeneralInformation, IRoute, IRouteDay } from "../interfaces/interfaces";
 import TextTable from "../components/general/TextTable";
 import SummarizeRouteTransaction from "../components/route_tranactions/SummarizeRouteTransacionsOfTheDay";
 
 
 import OptionConcepts from "../components/general/OptionConcepts";
+
+import { RepositoryFactory } from "@/repositories/RepositoryFactory";
+
+
+
+import { supabase } from "@/lib/supabase";
+import TABLES from "@/utils/tables";
+import { getDataFromApiResponse } from "@/utils/responseUtils";
+import { getOpenWorkDays } from "@/controllers/WorkDayController";
+
+// Initializing database repository.
+const repository = RepositoryFactory.createRepository('supabase');
 
 const colors:IColorOption[] = [
   {
@@ -51,8 +63,33 @@ const arrConceptOptions:IConceptOption[] = [
 
 export default function Home() {
 
+  useEffect(() => {
+    
+    // const channelResponse = repository.suscribeTable('INSERT', TABLES.ROUTE_PATHS, 
+    //   (payload) => { console.log("New coordinate: ", payload) }
+    // )
+    
+    // const channel = getDataFromApiResponse(channelResponse);
+    
+    getOpenWorkDays()
+    .then((data) => setOpenWorkDays(data));
+
+    // const handleInsert = (payload) => {
+    //       console.log("Something new: ", payload)
+    //     }
+    
+    
+    //     supabase
+    //       .channel('sellings')
+    //       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'route_paths'}, handleInsert)
+    //       .subscribe()
+    
+  }, [])
+
   const [palleteColors, setPalleteColors] = useState<IColorOption[]>(colors)
   const [conceptOptions, setConceptOptions] = useState<IConceptOption[]>(arrConceptOptions)
+
+  const [openWorkDays, setOpenWorkDays] = useState<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]|undefined>(undefined)
 
   const handlerChangeColor = (selectedOption:IColorOption) => {
       setPalleteColors(palleteColors.map((item:IColorOption) => {
@@ -65,29 +102,17 @@ export default function Home() {
   }
 
   return (
-    <div className="h-auto w-auto bg-slate-600  flex flex-row justify-center items-center">
+    <div className="h-auto w-auto flex flex-row justify-center items-center">
       <main className="h-auto w-full">
         <div className={`w-full flex flex-row justify-center`}>
           <div className="w-11/12">
-            {/* <RouteList /> */}
-            <div className="w-1/2 bg-slate-300">
-              <SummarizeRouteTransaction 
-                arrayProducts={[]}
-                totalSectionCaptionMessage=""/>
-              {/* <GroupsColorPallete 
-                palleteTitle="qw"
-                onChangeColor={handlerChangeColor}
-                itemsColor={palleteColors}
-                
-              /> */}
-              <OptionConcepts 
-                layoutTitle="Opciones"
-                conceptsToConfigure={conceptOptions}
-                setConceptsToConfigure={setConceptOptions}
-              />
-            </div>
+            { openWorkDays !== undefined &&
+              openWorkDays.map((workday) => {
+                const { id_work_day } = workday;
+                return <RouteList key={id_work_day} workDay={workday}/>
+              })
+            }
           </div>
-
         </div>
       </main>
     </div>

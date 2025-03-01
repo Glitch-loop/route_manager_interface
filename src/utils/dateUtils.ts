@@ -31,3 +31,7 @@ export function cast_string_to_timestamp_standard_format(date:string) {
 export function cast_string_to_date_hour_format(date:string) {
   return dayjs(date).format('DD-MMM-YY HH:MM');
 }
+
+export function cast_string_to_hour_format(date:string) {
+  return dayjs(date).format('HH:MM');
+}

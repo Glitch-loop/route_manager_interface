@@ -12,7 +12,7 @@ import {
  } from '../../interfaces/interfaces';
 
 // Utils
-import { convertInventoryOperationDescriptionToProductInventoryInterface, convertOperationDescriptionToProductInventoryInterface, findProductAmountInArray } from '@/utils/inventoryUtils';
+import { convertInventoryOperationDescriptionToProductInventoryInterface, findProductAmountInArray } from '@/utils/inventoryUtils';
 
 // Components
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
@@ -31,7 +31,7 @@ import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 // } from '@/styles/inventoryOperationTableStyles';
 import { convertArrayInJsonUsingInterfaces } from '@/utils/generalUtils';
 import DAYS_OPERATIONS from '@/utils/dayOperations';
-import { isTypeIInventoryOperationDescription, isTypeIProductInventory, isTypeIRouteTransactionOperation, isTypeIRouteTransactionOperationDescription } from '@/utils/guards';
+import { isTypeIInventoryOperationDescription, isTypeIRouteTransactionOperation, isTypeIRouteTransactionOperationDescription } from '@/utils/guards';
 
 
 const headerTitleTableStyle:string = 'h-32 w-28 flex flex-row justify-center items-center';

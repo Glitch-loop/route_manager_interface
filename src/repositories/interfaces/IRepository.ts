@@ -1,3 +1,4 @@
+import { RealtimeChannel } from '@supabase/supabase-js';
 import {
   IUser,
   IRoute,
@@ -32,12 +33,14 @@ export interface IRepository {
   insertWorkDay(workday:IRoute&IDayGeneralInformation&IDay&IRouteDay):Promise<IResponse<null>>;
   updateWorkDay(workday:IRoute&IDayGeneralInformation&IDay&IRouteDay):Promise<IResponse<null>>;
   getWorkDayByDateRange(initialDate:string, finalDate:string):Promise<IResponse<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>>;
+  getOpenWorkDays():Promise<IResponse<(IRoute&IDayGeneralInformation&IDay&IRouteDay)[]>>;
 
   // Related to routes
   getAllRoutes():Promise<IResponse<IRoute[]>>;
 
   // related to users
   getUserDataByCellphone(user:IUser):Promise<IResponse<IUser>>;
+  getUserDataById(id_vendor:string):Promise<IResponse<IUser>>;
   getAllUsers():Promise<IResponse<IUser[]>>;
 
   // Related to products (inventory operations)
@@ -60,5 +63,6 @@ export interface IRepository {
   getAllRouteTransactionOperationsOfWorkDay(routeTransaction:IRouteTransaction[]):Promise<IResponse<IRouteTransactionOperation[]>>;
   getAllRouteTransactionOperationsDescriptionsOfWorkDay(routeTransactionOperation:IRouteTransactionOperation[]):Promise<IResponse<IRouteTransactionOperationDescription[]>>;
 
-
+  // Subscriptions
+  suscribeTable(typeOfEvent: 'INSERT'|'UPDATE'|'DELETE', tableName:string, action:(payload) => void):IResponse<RealtimeChannel>;
 }
