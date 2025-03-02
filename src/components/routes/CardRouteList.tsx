@@ -1,5 +1,11 @@
+import { enumStoreStates } from "@/interfaces/enumStoreStates";
+import { IStore, IStoreStatusDay } from "@/interfaces/interfaces";
 import { getColorDependingOnTheDifferenceOfDates } from "@/utils/dateUtils";
-import { determineBackgroundColor } from "@/utils/stylesUtils";
+import { determineBackgroundColor, 
+    // getColorContextOfStore 
+} from "@/utils/stylesUtils";
+
+
 
 
 function CardRouteList({    
@@ -8,6 +14,7 @@ function CardRouteList({
     descriptionSecondColumn, 
     thirdColumn, 
     fourthColumn,
+    cardColorStyle,
     informationUpperCard,
     informationLowerCard,
     rateOfDifferenceUpperCard,
@@ -17,7 +24,8 @@ function CardRouteList({
     seconColumn:string, 
     descriptionSecondColumn:string, 
     thirdColumn:string, 
-    fourthColumn:string
+    fourthColumn:string,
+    cardColorStyle:string,
     informationUpperCard?:string,
     informationLowerCard?:string,
     rateOfDifferenceUpperCard?:number,
@@ -41,7 +49,10 @@ function CardRouteList({
 
     return (
     <div className="w-full flex flex-row max-h-16 mt-3">
-        <div className="text-lg flex flex-row basis-4/5 justify-center items-center p-3 bg-orange-400 rounded-md">
+        <div 
+            className={"text-lg flex flex-row basis-4/5 justify-center items-center p-3 rounded-md"}
+            style={{backgroundColor: cardColorStyle}} 
+            >
             <span className="flex basis-1/6 justify-center">{firstColumn}</span>
             <div className="flex flex-col basis-4/6 justify-center">
                 <span className="">{seconColumn}</span>

@@ -22,7 +22,6 @@ import {
 
 // Utils
 import { getAddressOfStore } from "@/utils/storeUtils";
-import { convertArrayInJsonUsingInterfaces } from "@/utils/generalUtils";
 
 // Components
 import IconButtonWithNotification from "../general/IconButtonWithNotification";
@@ -37,23 +36,29 @@ import {
     cast_string_to_date_hour_format, 
     cast_string_to_hour_format, 
     differenceBetweenDatesInSeconds, 
-    differenceBetweenDatesWithFormat 
+    differenceBetweenDatesWithFormat, 
+    isDateGreater
 } from "@/utils/dateUtils";
 import { getVendorById } from "@/controllers/VendorController";
+import { isTypeIInventoryOperation, isTypeIRouteTransaction } from "@/utils/guards";
+import { getNameOfOperationType } from "@/utils/dayOperationUtils";
+import { 
+    determineDayOperationTypeBackgroundColor, 
+    determineStoreContextBackgroundColor 
+} from "@/utils/stylesUtils";
+import { formatToCurrency } from "@/utils/saleFunctionUtils";
 
 
 function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay }) {
     
     const initializeElement = async () => {
         const { id_vendor } = workDay;
+        const setOfStores = new Set<string>();
+        const operationsOfTheDay:(IRouteTransaction|IInventoryOperation)[] = []
 
         // Related to vendor
         setVendor(await getVendorById(id_vendor));
 
-        console.log("Initializing: ", workDay.id_work_day)
-        const setOfStores = new Set<string>();
-
-        console.log("Getting concept")
         // Related to route transaction
         const routeTransactions:IRouteTransaction[] = await getRouteTransactionsFromWorkDay(workDay);
         setRouteTransactions(routeTransactions);
@@ -62,10 +67,8 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
         const inventoryOperations:IInventoryOperation[] = await getInventoryOperationsOfWorkDay(workDay);
         setInventoryOperations(inventoryOperations);
 
-        console.log("Getting planned stores")
         // Related to stores
         const storesInDay:IRouteDayStores[] = await getStoresOfRouteDay(workDay)
-        console.log("storesInDay: ", storesInDay)
         // Getting the planned stores of the day
         storesInDay.forEach((store:IRouteDayStores) => {
             const {id_store} = store;
@@ -82,13 +85,10 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
             }
         });
 
-        console.log("Getting stores")
         // Getting information of stores
-        console.log([...setOfStores.entries()].map(([id_store, value]) => { return id_store; }))
         const storesInTheDay:IStore[] = await getInformationOfStores([...setOfStores.entries()].map(([id_store, value]) => { return id_store; }))
         const storesWithStatus:Record<string, IStore&IStoreStatusDay&IRouteDayStores> = {};
         
-        console.log("Creating input")
         storesInTheDay.forEach((store:IStore) => {
             const { id_store } = store;
             const plannedStoreFound:IRouteDayStores|undefined = storesInDay.find((plannedStore:IRouteDayStores) => {
@@ -97,7 +97,6 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
 
             if (plannedStoreFound) {
                 const {id_route_day_store, position_in_route, id_route_day} = plannedStoreFound;
-                console.log(position_in_route)
                 storesWithStatus[id_store] = {
                     ...store,
                     route_day_state: 0,
@@ -115,18 +114,35 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                 }
             }
 
-             
+            
         })
-
-        console.log("storesWithStatus: ", 
-            storesWithStatus
-        )
         setPlannedStores(storesInDay);
         setStores(storesWithStatus);
+
+        // Ordering inventory operations and route transactions in a single state
+        routeTransactions.forEach((routeTransaction:IRouteTransaction) => {
+            operationsOfTheDay.push(routeTransaction);
+        });
+        
+        inventoryOperations.forEach((inventoryOperation:IInventoryOperation) => {
+            operationsOfTheDay.push(inventoryOperation);
+        });
+
+        operationsOfTheDay.sort((a:IRouteTransaction|IInventoryOperation, b:IRouteTransaction|IInventoryOperation) => {
+            let isGreater:number = 0
+            if (isDateGreater(a.date, b.date)) {
+                isGreater = 1;
+            } else {
+                isGreater = -1;
+            }
+
+            return isGreater;
+        })
+
+        setDayOperations(operationsOfTheDay)
     }
 
     useEffect(() => {
-        console.log("Initializing day: ", workDay)
         initializeElement();
     }, [])
 
@@ -144,8 +160,11 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
     // States related to product inventory
     const [inventoryOperations, setInventoryOperations] = useState<IInventoryOperation[]|undefined>(undefined);
 
+    // States related to day operations
+    const [dayOperations, setDayOperations] = useState<(IRouteTransaction|IInventoryOperation)[] | undefined>(undefined);
+
     const { route_name, day_name, start_date, finish_date } = workDay;
-    console.log("finish_date: ", finish_date)
+
     return (
         <div className="w-full h-1/2 flex flex-col items-center">
             {/* Information about the route */}
@@ -189,42 +208,76 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
             </div>
             <div className="w-full max-h-96 overflow-y-auto">
                 <div className="w-full my-3 flex flex-col justify-center items-center">
-                    { routeTransactions !== undefined &&
-                        routeTransactions.map((currentDayOperation, index:number) => {
-                            let nameOfStore:string = '';
-                            let addressOfStore:string = '';
+                    { dayOperations !== undefined &&
+                        dayOperations.map((currentDayOperation, index:number) => {
+                            let idOfTheCard:string = '';
+                            let title:string = '';
+                            let description:string = '';
                             let positionInRouteOfStore:string = '';
                             let differenceBetweenDayOperations:string|undefined = undefined;
                             let rateOfDiffferenceBetweenDates:number|undefined = undefined;
-
-                            const { id_route_transaction, id_store, date } = currentDayOperation;
+                            let dateOfTheOperation:string = '';
+                            let cardColorStyle:string = 'bg-orange-400';
+                            let totalSold:string = '$0';
                             
-                            if(routeTransactions[index + 1] !== undefined) {
-                                const nextDate:string = routeTransactions[index + 1].date;
+                            // Common fields
+                            const { date } = currentDayOperation;
+                            
+                            if (isTypeIInventoryOperation(currentDayOperation)) {
+                                console.log("Inventory operation")
+                                const { id_inventory_operation, id_inventory_operation_type } = currentDayOperation;
+                                idOfTheCard = id_inventory_operation;
+                                title = getNameOfOperationType(id_inventory_operation_type);
+                                totalSold = "";
+                                cardColorStyle = determineDayOperationTypeBackgroundColor(id_inventory_operation_type);
+                            }
+
+                            if (isTypeIRouteTransaction(currentDayOperation)) {
+                                console.log("Route transaction")
+                                const { id_route_transaction, id_store } = currentDayOperation;
+
+                                idOfTheCard = id_route_transaction;
+                                
+                                totalSold = formatToCurrency(0, "$");
+
+                                if (stores[id_store] !== undefined) {
+                                    const { store_name, position_in_route } = stores[id_store];
+                                    title = store_name;
+                                    description = getAddressOfStore(stores[id_store]);
+                                    if (position_in_route === -1) {
+                                        positionInRouteOfStore = '';
+                                    } else {
+                                        positionInRouteOfStore = position_in_route.toString();
+                                    }
+
+                                    cardColorStyle = determineStoreContextBackgroundColor(stores[id_store], false)
+                                }
+                            }
+                            
+
+
+                            // Calculating the difference of time between day operations
+                            if(dayOperations[index + 1] !== undefined) {
+                                const nextDate:string = dayOperations[index + 1].date;
                                 differenceBetweenDayOperations = differenceBetweenDatesWithFormat(date, nextDate);
                                 rateOfDiffferenceBetweenDates = differenceBetweenDatesInSeconds(date, nextDate);
                             }
 
-                            if (stores[id_store] !== undefined) {
-                                const { store_name, position_in_route } = stores[id_store];
-                                nameOfStore = store_name;
-                                addressOfStore = getAddressOfStore(stores[id_store]);
-                                if (position_in_route === -1) {
-                                    positionInRouteOfStore = '';
-                                } else {
-                                    positionInRouteOfStore = position_in_route.toString();
-                                }
-                            }
-
+                            // Getting the date of the operation day. 
+                            dateOfTheOperation = date;
                             
+
+                            console.log(cardColorStyle)
+
                             return (
                                 <CardRouteList
-                                    key={id_route_transaction} 
+                                    key={idOfTheCard} 
                                     firstColumn={positionInRouteOfStore}
-                                    seconColumn={nameOfStore}
-                                    descriptionSecondColumn={addressOfStore}
-                                    thirdColumn="$7000"
-                                    fourthColumn={cast_string_to_hour_format(date)}
+                                    seconColumn={title}
+                                    descriptionSecondColumn={description}
+                                    thirdColumn={totalSold}
+                                    fourthColumn={cast_string_to_hour_format(dateOfTheOperation)}
+                                    cardColorStyle={cardColorStyle}
                                     informationUpperCard={undefined}
                                     informationLowerCard={differenceBetweenDayOperations}
                                     rateOfDifferenceUpperCard={undefined}

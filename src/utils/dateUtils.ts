@@ -71,3 +71,18 @@ export function getColorDependingOnTheDifferenceOfDates(seconds:number):string {
  
    return `rgb(${red},${green},0)`;
 }
+
+
+export function isDateGreater(a:string, b:string):boolean {
+  const date1:Dayjs = dayjs(a);
+  const date2:Dayjs = dayjs(b);
+  let isGreater:boolean = false;
+
+  if (date1.isBefore(date2)) {
+    isGreater = false;
+  } else {
+    isGreater = true;
+  }
+
+  return isGreater;
+}
