@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 // Controllers
 import { getInventoryOperationsOfWorkDay } from "@/controllers/InventoryController";
 import { getInformationOfStores, getStoresFromRouteTransactions, getStoresOfRouteDay } from "@/controllers/StoreController";
-import { getRouteTransactionOperationDescriptionsFromWorkDay, getRouteTransactionOperationsFromWorkDay, getRouteTransactionsFromWorkDay } from "@/controllers/RouteTransactionsController";
+import { getRouteTransactionOperationDescriptionsFromWorkDay, getRouteTransactionOperationsFromWorkDay, getRouteTransactionsFromWorkDay, getTotalOfTypeOperationOfRouteTransaction } from "@/controllers/RouteTransactionsController";
 
 // Interface
 import { 
@@ -15,6 +15,8 @@ import {
     IRouteDay, 
     IRouteDayStores, 
     IRouteTransaction, 
+    IRouteTransactionOperation, 
+    IRouteTransactionOperationDescription, 
     IStore, 
     IStoreStatusDay, 
     IUser
@@ -47,6 +49,7 @@ import {
     determineStoreContextBackgroundColor 
 } from "@/utils/stylesUtils";
 import { formatToCurrency } from "@/utils/saleFunctionUtils";
+import DAYS_OPERATIONS from "@/utils/dayOperations";
 
 
 function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay }) {
@@ -61,10 +64,16 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
 
         // Related to route transaction
         const routeTransactions:IRouteTransaction[] = await getRouteTransactionsFromWorkDay(workDay);
+        const routeTransactionOperations:IRouteTransactionOperation[] = await getRouteTransactionOperationsFromWorkDay(routeTransactions);
+        const routeTransactionOperationDescriptions:IRouteTransactionOperationDescription[] = await getRouteTransactionOperationDescriptionsFromWorkDay(routeTransactionOperations);
+
         setRouteTransactions(routeTransactions);
+        setRouteTransactionOperations(routeTransactionOperations);
+        setRouteTransactionOperationDescriptions(routeTransactionOperationDescriptions);
 
         // Related to inventory operations
         const inventoryOperations:IInventoryOperation[] = await getInventoryOperationsOfWorkDay(workDay);
+
         setInventoryOperations(inventoryOperations);
 
         // Related to stores
@@ -156,6 +165,8 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
 
     // States related to route transactions
     const [routeTransactions, setRouteTransactions] = useState<IRouteTransaction[]|undefined>(undefined);
+    const [routeTransactionOperations, setRouteTransactionOperations] = useState<IRouteTransactionOperation[]|undefined>(undefined);
+    const [routeTransactionOperationDescriptions, setRouteTransactionOperationDescriptions] = useState<IRouteTransactionOperationDescription[]|undefined>(undefined);
     
     // States related to product inventory
     const [inventoryOperations, setInventoryOperations] = useState<IInventoryOperation[]|undefined>(undefined);
@@ -164,6 +175,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
     const [dayOperations, setDayOperations] = useState<(IRouteTransaction|IInventoryOperation)[] | undefined>(undefined);
 
     const { route_name, day_name, start_date, finish_date } = workDay;
+
 
     return (
         <div className="w-full h-1/2 flex flex-col items-center">
@@ -234,11 +246,21 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
 
                             if (isTypeIRouteTransaction(currentDayOperation)) {
                                 console.log("Route transaction")
-                                const { id_route_transaction, id_store } = currentDayOperation;
+                                const { id_route_transaction, id_store, state } = currentDayOperation;
 
                                 idOfTheCard = id_route_transaction;
                                 
-                                totalSold = formatToCurrency(0, "$");
+                                
+                                if (routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined && state === 1) {
+                                    totalSold = formatToCurrency(
+                                        getTotalOfTypeOperationOfRouteTransaction(DAYS_OPERATIONS.sales,
+                                            currentDayOperation,
+                                            routeTransactionOperations,
+                                            routeTransactionOperationDescriptions)
+                                            , "$");
+                                } else {
+                                    totalSold = formatToCurrency(0, "$");    
+                                }
 
                                 if (stores[id_store] !== undefined) {
                                     const { store_name, position_in_route } = stores[id_store];
@@ -288,6 +310,22 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                     }
                 </div>
             </div>
+            { routeTransactions && routeTransactionOperations && routeTransactionOperationDescriptions &&
+            <div className="w-full my-3 ml-3 flex flex-row text-xl italic">
+                <span>Total de venta del dia:</span>
+                <span className="ml-2 font-bold">
+                    {
+                        formatToCurrency(
+                            routeTransactions.reduce((acc:number, routeTransaction:IRouteTransaction) => {
+                                return acc + getTotalOfTypeOperationOfRouteTransaction(DAYS_OPERATIONS.sales, routeTransaction, routeTransactionOperations, routeTransactionOperationDescriptions);
+                            }, 0),
+                            "$"
+                        )
+                    }
+                </span>
+            </div>
+
+            }
         </div>
     )
 }
