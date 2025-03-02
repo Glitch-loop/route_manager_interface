@@ -29,9 +29,9 @@ export default function RootLayout({
         className={`
           ${geistSans.variable} ${geistMono.variable}
         bg-system-primary-background
-        w-screen h-screen flex flex-row`}
+        w-full h-full flex flex-row`}
       >
-        <div className="w-2/12 h-full">
+        <div className="w-2/12 h-screen">
           <Sidebar />
         </div>
         <div className="w-10/12 h-screen flex flex-col justify-center items-center">

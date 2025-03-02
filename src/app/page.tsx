@@ -102,19 +102,21 @@ export default function Home() {
   }
 
   return (
-    <div className="h-auto w-auto flex flex-row justify-center items-center">
-      <main className="h-auto w-full">
-        <div className={`w-full flex flex-row justify-center`}>
-          <div className="w-11/12">
+    <div className="w-full flex flex-row justify-center items-start overflow-y-hidden">
+      {/* <main className="w-full "> */}
+        <div className={`w-full h-5/6 flex flex-row justify-start items-start ml-3`}>
             { openWorkDays !== undefined &&
               openWorkDays.map((workday) => {
                 const { id_work_day } = workday;
-                return <RouteList key={id_work_day} workDay={workday}/>
+                return (
+                  <div key={id_work_day} className="w-3/6">
+                    <RouteList workDay={workday}/>
+                  </div>
+                )
               })
             }
-          </div>
         </div>
-      </main>
+      {/* </main> */}
     </div>
   );
 }

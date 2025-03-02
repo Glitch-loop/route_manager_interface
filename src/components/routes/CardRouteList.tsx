@@ -1,3 +1,5 @@
+import { getColorDependingOnTheDifferenceOfDates } from "@/utils/dateUtils";
+import { determineBackgroundColor } from "@/utils/stylesUtils";
 
 
 function CardRouteList({    
@@ -7,7 +9,9 @@ function CardRouteList({
     thirdColumn, 
     fourthColumn,
     informationUpperCard,
-    informationLowerCard
+    informationLowerCard,
+    rateOfDifferenceUpperCard,
+    rateOfDifferenceLowerCard,
     }:{
     firstColumn:string, 
     seconColumn:string, 
@@ -15,8 +19,26 @@ function CardRouteList({
     thirdColumn:string, 
     fourthColumn:string
     informationUpperCard?:string,
-    informationLowerCard?:string
+    informationLowerCard?:string,
+    rateOfDifferenceUpperCard?:number,
+    rateOfDifferenceLowerCard?:number,
     }) {
+        let colorUpperCard = '';
+        let colorLowerCard = '';
+
+        if (rateOfDifferenceUpperCard === undefined) {
+            colorUpperCard = determineBackgroundColor('info');
+        } else {
+            colorUpperCard = getColorDependingOnTheDifferenceOfDates(rateOfDifferenceUpperCard)
+        }
+
+
+        if (rateOfDifferenceLowerCard === undefined) {
+            colorLowerCard = determineBackgroundColor('info');
+        } else {
+            colorLowerCard = getColorDependingOnTheDifferenceOfDates(rateOfDifferenceLowerCard)
+        }
+
     return (
     <div className="w-full flex flex-row max-h-16 mt-3">
         <div className="text-lg flex flex-row basis-4/5 justify-center items-center p-3 bg-orange-400 rounded-md">
@@ -30,12 +52,16 @@ function CardRouteList({
         </div>
         <div className="relative flex flex-col basis-1/5 justify-start">
             { informationUpperCard !== undefined && informationUpperCard !== "" &&
-                <div className="relative right-6 bottom-5 h-fit w-fit p-2 bg-green-500 rounded-md">
+                <div
+                    style={{backgroundColor: colorUpperCard}} 
+                    className={`relative right-6 bottom-5 h-fit w-fit p-2 rounded-md`}>
                     {informationUpperCard}
                 </div>
             }
-            { informationUpperCard !== undefined && informationUpperCard !== "" &&
-                <div className="relative right-6 top-4 h-fit w-fit p-2 bg-red-500 rounded-md">
+            { informationLowerCard !== undefined && informationLowerCard !== "" &&
+                <div 
+                    style={{backgroundColor: colorLowerCard}} 
+                    className={`relative right-6 top-12 h-fit w-fit p-2 rounded-md`}>
                     {informationLowerCard}
                 </div>
             }

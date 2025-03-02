@@ -25,7 +25,7 @@ const Sidebar = () => {
     // ]
 
     return (
-        <aside className={`h-screen w-full
+        <aside className={`h-full w-full
             bg-system-secondary-background
             flex flex-col items-center 
             `}>

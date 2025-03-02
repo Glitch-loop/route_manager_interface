@@ -31,8 +31,14 @@ import { FaRegClipboard } from "react-icons/fa";
 import CardRouteList from "./CardRouteList";
 import ButtonWithNotification from "../general/ButtonWithNotificaion";
 import HeaderRouteList from "./HeaderRouteList";
-import { stringify } from "querystring";
-import { cast_string_to_date_hour_format, cast_string_to_hour_format } from "@/utils/dateUtils";
+
+// Utils
+import { 
+    cast_string_to_date_hour_format, 
+    cast_string_to_hour_format, 
+    differenceBetweenDatesInSeconds, 
+    differenceBetweenDatesWithFormat 
+} from "@/utils/dateUtils";
 import { getVendorById } from "@/controllers/VendorController";
 
 
@@ -141,7 +147,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
     const { route_name, day_name, start_date, finish_date } = workDay;
     console.log("finish_date: ", finish_date)
     return (
-        <div className="w-full flex flex-col items-center">
+        <div className="w-full h-1/2 flex flex-col items-center">
             {/* Information about the route */}
             <div className="w-full flex flex-row">
                 <div className="flex flex-col basis-4/5 items-start">
@@ -181,46 +187,54 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                     </IconButtonWithNotification>
                 </div>
             </div>
-            <div className="w-full flex flex-col my-3 justify-center items-center">
-                { routeTransactions !== undefined &&
-                    routeTransactions.map((routeTransaction) => {
-                        let nameOfStore:string = '';
-                        let addressOfStore:string = '';
-                        let positionInRouteOfStore:string = '';
+            <div className="w-full max-h-96 overflow-y-auto">
+                <div className="w-full my-3 flex flex-col justify-center items-center">
+                    { routeTransactions !== undefined &&
+                        routeTransactions.map((currentDayOperation, index:number) => {
+                            let nameOfStore:string = '';
+                            let addressOfStore:string = '';
+                            let positionInRouteOfStore:string = '';
+                            let differenceBetweenDayOperations:string|undefined = undefined;
+                            let rateOfDiffferenceBetweenDates:number|undefined = undefined;
 
-                        
-                        const { id_route_transaction, id_store, date } = routeTransaction;
-                        
-                        
-                        if (stores[id_store] !== undefined) {
-                            const { store_name, position_in_route } = stores[id_store];
-                            nameOfStore = store_name;
-                            addressOfStore = getAddressOfStore(stores[id_store]);
-                            console.log("Position of the store: ", position_in_route)
-                            if (position_in_route === -1) {
-                                positionInRouteOfStore = '';
-                            } else {
-                                positionInRouteOfStore = position_in_route.toString();
+                            const { id_route_transaction, id_store, date } = currentDayOperation;
+                            
+                            if(routeTransactions[index + 1] !== undefined) {
+                                const nextDate:string = routeTransactions[index + 1].date;
+                                differenceBetweenDayOperations = differenceBetweenDatesWithFormat(date, nextDate);
+                                rateOfDiffferenceBetweenDates = differenceBetweenDatesInSeconds(date, nextDate);
                             }
-                        }
 
-                        
-                        return (
-                            <CardRouteList
-                                key={id_route_transaction} 
-                                firstColumn={positionInRouteOfStore}
-                                seconColumn={nameOfStore}
-                                descriptionSecondColumn={addressOfStore}
-                                thirdColumn="$7000"
-                                fourthColumn={cast_string_to_hour_format(date)}
-                                informationUpperCard="08:00 am"
-                                informationLowerCard="09:00pm"
-                                />
-                        )
-                    })
-                }
+                            if (stores[id_store] !== undefined) {
+                                const { store_name, position_in_route } = stores[id_store];
+                                nameOfStore = store_name;
+                                addressOfStore = getAddressOfStore(stores[id_store]);
+                                if (position_in_route === -1) {
+                                    positionInRouteOfStore = '';
+                                } else {
+                                    positionInRouteOfStore = position_in_route.toString();
+                                }
+                            }
+
+                            
+                            return (
+                                <CardRouteList
+                                    key={id_route_transaction} 
+                                    firstColumn={positionInRouteOfStore}
+                                    seconColumn={nameOfStore}
+                                    descriptionSecondColumn={addressOfStore}
+                                    thirdColumn="$7000"
+                                    fourthColumn={cast_string_to_hour_format(date)}
+                                    informationUpperCard={undefined}
+                                    informationLowerCard={differenceBetweenDayOperations}
+                                    rateOfDifferenceUpperCard={undefined}
+                                    rateOfDifferenceLowerCard={rateOfDiffferenceBetweenDates}
+                                    />
+                            )
+                        })
+                    }
+                </div>
             </div>
-
         </div>
     )
 }
