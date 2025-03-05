@@ -72,15 +72,18 @@ function groupConceptsInTheirParentConcept<T>(arrConceptToGroup:T[]):Map<string,
   return groupedConcepts;
 }
 
-function getProductInventoryOfInventoryOperationType(inventoryOperationType:string, 
+function getProductInventoryOfInventoryOperationType(
+  inventoryOperationType:string, 
   inventoryOperations:IInventoryOperation[],
   inventoryDescriptions:Map<string, IInventoryOperationDescription[]>,
   inventory:IProductInventory[],
-  idInventoryOperation:string|undefined):IProductInventory[] {
+  idInventoryOperation:string|undefined
+):IProductInventory[] {
   let productInventory:IProductInventory[];
   const inventoryOftheOperation:IInventoryOperation|undefined = inventoryOperations.find((inventoryOperation) => { 
     let isOperation:boolean = false;
     const {state, id_inventory_operation, id_inventory_operation_type} = inventoryOperation;
+
     if (idInventoryOperation === undefined) {
       isOperation = (state === 1 && id_inventory_operation_type === inventoryOperationType); 
     } else {
@@ -90,11 +93,16 @@ function getProductInventoryOfInventoryOperationType(inventoryOperationType:stri
     return isOperation;
    })
 
+
+
   if (inventoryOftheOperation === undefined) {
+    console.log("inventory operation wasn't found")
     productInventory = [];
   } else {
+    console.log("+++++++++++++++++inventory operation found")
     const { id_inventory_operation } = inventoryOftheOperation;
     const inventoyDescriptions:IInventoryOperationDescription[]|undefined = inventoryDescriptions.get(id_inventory_operation);
+    console.log("inventoyDescriptions: ", inventoyDescriptions?.length)
     productInventory = convertInventoryOperationDescriptionToProductInventoryInterface(
       inventoyDescriptions,
       inventory
@@ -228,14 +236,27 @@ const TableInventoryVisualization = (
     const transactionOperationsByRouteTransactions:Map<string, IRouteTransactionOperation[]> = groupConceptsInTheirParentConcept<IRouteTransactionOperation>(routeTransactionOperations);
     const transactionDescriptionByTransactionOperation:Map<string, IRouteTransactionOperationDescription[]> = groupConceptsInTheirParentConcept<IRouteTransactionOperationDescription>(routeTransactionOperationDescriptions);
 
-    // Determining inventory operations    
+    // Determining inventory operations 
+    console.log("Looking for start shift operation")    
+    initialInventory = getProductInventoryOfInventoryOperationType(
+      DAYS_OPERATIONS.start_shift_inventory, 
+      inventoryOperations, 
+      inventoryOperationDescriptionByInventoryOperation, 
+      inventory.map((product) => { return {...product, amount: 0}}), 
+      undefined);
     
-    initialInventory = getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.start_shift_inventory, 
-      inventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory.map((product) => { return {...product, amount: 0}}), undefined);
-    
-    returnedInventory = getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.end_shift_inventory, 
-      inventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory.map((product) => { return {...product, amount: 0}}), undefined);
+
+    console.log("Looking for end shift operation")    
+    returnedInventory = getProductInventoryOfInventoryOperationType(
+      DAYS_OPERATIONS.end_shift_inventory, 
+      inventoryOperations, 
+      inventoryOperationDescriptionByInventoryOperation, 
+      inventory.map((product) => { return {...product, amount: 0}}), 
+      undefined);
   
+    console.log("initialInventory: ", initialInventory.length)
+    console.log("returnedInventory: ", returnedInventory.length)
+
     // Determining valid restock inventories
     const validRestockInventoryOperations:IInventoryOperation[] = inventoryOperations.filter((inventoryOperation:IInventoryOperation) => {
       const { state, id_inventory_operation_type } = inventoryOperation;
@@ -245,7 +266,12 @@ const TableInventoryVisualization = (
     restockInventories = validRestockInventoryOperations.reduce((matrixProductInventory:IProductInventory[][], inventoryOperation:IInventoryOperation) => {
       const { id_inventory_operation } = inventoryOperation;
       matrixProductInventory.push(
-        getProductInventoryOfInventoryOperationType(DAYS_OPERATIONS.restock_inventory, validRestockInventoryOperations, inventoryOperationDescriptionByInventoryOperation, inventory.map((product) => { return {...product, amount: 0}}), id_inventory_operation)
+        getProductInventoryOfInventoryOperationType(
+          DAYS_OPERATIONS.restock_inventory, 
+          validRestockInventoryOperations, 
+          inventoryOperationDescriptionByInventoryOperation, 
+          inventory.map((product) => { return {...product, amount: 0}}), 
+          id_inventory_operation)
       )
       return matrixProductInventory;
     }, []);

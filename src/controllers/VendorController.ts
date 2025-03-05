@@ -38,3 +38,11 @@ export async function getVendorById(id_vendor:string):Promise<IUser> {
 }
 
 
+export async function getAllUsers() {};
+
+export async function insertUser() {};
+
+export async function updateUser() {}; 
+
+export async function deleteUser() {};
+

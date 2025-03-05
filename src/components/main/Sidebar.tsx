@@ -51,7 +51,21 @@ const Sidebar = () => {
                         label={"Consultar información"}
                         href={"/consult_information"}/>
                 </div>
-
+                <div className="my-2 w-11/12">
+                    <ButtonWithNotification 
+                        label={"Administración de rutas"}
+                        href={"/vendors"}/>
+                </div>
+                <div className="my-2 w-11/12">
+                    <ButtonWithNotification 
+                        label={"Administración de productos"}
+                        href={"/products"}/>
+                </div>
+                <div className="my-2 w-11/12">
+                    <ButtonWithNotification 
+                        label={"Administración de vendedores"}
+                        href={"/vendors"}/>
+                </div>
         </aside>
     )
 }
