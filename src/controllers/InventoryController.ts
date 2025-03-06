@@ -55,15 +55,6 @@ export async function getInventoryOperationDescriptionsOfWorkDay(inventoryOperat
     return allInventoryOperationDescriptions;
 }
 
-export async function getAllConceptOfProducts():Promise<IProduct[]> {
-    const allConceptOfProductsResponse:IResponse<IProduct[]> = await repository.getAllProducts();
-
-    const allConceptOfProducts:IProduct[] = getDataFromApiResponse(allConceptOfProductsResponse);
-
-    return allConceptOfProducts
-}
-
-
 export function getTotalInventoriesOfAllStoresByIdOperationType(
     id_day_operation:string,
     stores:IStore[],

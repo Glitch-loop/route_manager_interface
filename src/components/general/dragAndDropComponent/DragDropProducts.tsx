@@ -21,9 +21,10 @@ import { SortableItem } from "./SortableItem";
 interface DragDropProductsProps {
   products: IProduct[];
   onSave: (updatedProducts: IProduct[]) => void;
+  title:  string;
 }
 
-export default function DragDropProducts({ products, onSave }: DragDropProductsProps) {
+export default function DragDropProducts({ products, onSave, title }: DragDropProductsProps) {
   const [orderedProducts, setOrderedProducts] = useState<IProduct[]>(products);
 
   const sensors = useSensors(
@@ -51,7 +52,15 @@ export default function DragDropProducts({ products, onSave }: DragDropProductsP
   };
 
   return (
-    <div className="w-full p-4">
+    <div className="relative w-full p-4">
+      <div className="sticky top-0 z-10 bg-system-primary-background py-2 flex flex-row justify-around">
+        <span className="text-center align-middle flex items-center">{title}</span>
+        <div>
+          <Button variant="contained" color="primary" className="mt-4" onClick={handleSave}>
+            Guardar orden
+          </Button>
+        </div>
+      </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={orderedProducts.map((p) => p.id_product)} strategy={verticalListSortingStrategy}>
           <Paper className="p-4">
@@ -62,9 +71,7 @@ export default function DragDropProducts({ products, onSave }: DragDropProductsP
         </SortableContext>
       </DndContext>
 
-      <Button variant="contained" color="primary" className="mt-4" onClick={handleSave}>
-        Save Order
-      </Button>
+
     </div>
   );
 }

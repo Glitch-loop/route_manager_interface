@@ -24,6 +24,9 @@ export interface IRepository {
   
   // Related to products
   getAllProducts(): Promise<IResponse<IProduct[]>>;
+  insertProduct(product:IProduct): Promise<IResponse<IProduct>>;
+  updateProduct(product:IProduct): Promise<IResponse<IProduct>>;
+  // deleteProduct(product:IProduct): Promise<IResponse<IProduct>>; // Hard delete doesn't exists
 
   // Related stores
   getAllStoresInARouteDay(id_route_day:string): Promise<IResponse<IRouteDayStores[]>>;

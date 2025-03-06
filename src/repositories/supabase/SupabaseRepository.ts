@@ -25,6 +25,7 @@ import {
 // Utils
 import { createApiResponse } from '../../utils/responseUtils';
 import { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+import { stringify } from 'querystring';
 
 /*
   Converts the SQL code error to the most appropiate
@@ -96,22 +97,6 @@ export class SupabaseRepository implements IRepository {
     }
   }
 
-  async getAllProducts():Promise<IResponse<IProduct[]>> {
-    try {
-      const { data, error } = await supabase.from(TABLES.PRODUCTS)
-                                            .select()
-                                            .order('order_to_show');
-      if (error) {
-        return createApiResponse<IProduct[]>(500, [], null,
-          'Failed getting all products.');
-      } else {
-        return createApiResponse<IProduct[]>(200, data, null);
-      }
-    } catch(error) {
-      return createApiResponse<IProduct[]>(500, [], null, 'Failed getting all products.');
-    }
-  }
-
   async getAllStoresInARouteDay(id_route_day:string):Promise<IResponse<IRouteDayStores[]>> {
     try {
       const { data, error } = await supabase.from(TABLES.ROUTE_DAY_STORES)
@@ -144,6 +129,131 @@ export class SupabaseRepository implements IRepository {
       }
     } catch(error) {
       return createApiResponse<IStore[]>(500, [], null, 'Failed getting stores information.');
+    }
+  }
+
+
+  // Related to products
+  async getAllProducts():Promise<IResponse<IProduct[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.PRODUCTS)
+                                            .select()
+                                            .order('order_to_show');
+      if (error) {
+        return createApiResponse<IProduct[]>(500, [], null,
+          'Failed getting all products.');
+      } else {
+        return createApiResponse<IProduct[]>(200, data, null);
+      }
+    } catch(error) {
+      return createApiResponse<IProduct[]>(500, [], null, 'Failed getting all products.');
+    }
+  }
+
+    // Related to products (inventory operations)
+  async insertProduct(product:IProduct):Promise<IResponse<IProduct>> {
+    console.log("DB: ", product)
+    try {
+      const {
+        product_name,
+        barcode,
+        weight,
+        unit,
+        comission,
+        price,
+        product_status,
+        order_to_show,
+      } = product;
+
+      const { data, error } = await supabase.from(TABLES.PRODUCTS)
+      .insert({
+        product_name: product_name,
+        barcode: barcode,
+        weight: weight,
+        unit: unit,
+        comission: comission,
+        price: price,
+        product_status: product_status,
+        order_to_show: order_to_show,
+      });
+
+      if (error) {
+        return createApiResponse<IProduct>(
+          determinigSQLSupabaseError(error),
+          product,
+          error.details,
+          'Failed inserting the product' 
+        );
+      } else {
+        return createApiResponse<IProduct>(
+          201,
+          product,
+          null,
+          'Product inserted successfully.'
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IProduct>(
+        500,
+        product,
+        null,
+        'Failed inserting the product: ' + error
+      );
+    }
+  }
+  
+  async updateProduct(product:IProduct):Promise<IResponse<IProduct>> {
+    console.log("HELLO worls")
+    try {
+      const {
+        id_product,
+        product_name,
+        barcode,
+        weight,
+        unit,
+        comission,
+        price,
+        product_status,
+        order_to_show,
+      } = product;
+
+      const { data, error } = await supabase.from(TABLES.PRODUCTS)
+      .update({
+        product_name: product_name,
+        barcode: barcode,
+        weight: weight,
+        unit: unit,
+        comission: comission,
+        price: price,
+        product_status: product_status,
+        order_to_show: order_to_show,
+      })
+      .eq('id_product', id_product);
+      console.log("error database: ", error)
+
+      if (error) {
+        return createApiResponse<IProduct>(
+          determinigSQLSupabaseError(error),
+          product,
+          error.hint,
+          'Failed updating the product.'
+        );
+      } else {
+        return createApiResponse<IProduct>(
+          201,
+          product,
+          null,
+          'Product updated successfully.'
+        );
+      }
+    } catch(error) {
+      console.log("error: ", error)
+      return createApiResponse<IProduct>(
+        500,
+        product,
+        null,
+        'Failed updating the product.'
+      );
     }
   }
 
@@ -411,7 +521,6 @@ export class SupabaseRepository implements IRepository {
         state,
       } = inventoryOperation;
 
-      console.log("SUPABASE: ", id_inventory_operation)
       const { data, error } = await supabase.from(TABLES.INVENTORY_OPERATIONS)
       .insert({
         id_inventory_operation: id_inventory_operation,
@@ -422,10 +531,8 @@ export class SupabaseRepository implements IRepository {
         id_work_day: id_work_day,
         state: state,
       });
-      console.log("id_work_day: ", id_work_day)
-      console.log("Insert inventory operation (data): ", data)
+
       if (error) {
-        console.log("Insert inventory operation (error): ", error)
         return createApiResponse<null>(
           determinigSQLSupabaseError(error),
           null,
@@ -441,7 +548,6 @@ export class SupabaseRepository implements IRepository {
         );
       }
     } catch(error) {
-      console.log("Insert inventory operation (error): ", error)
       return createApiResponse<null>(
         500,
         null,
@@ -641,7 +747,7 @@ export class SupabaseRepository implements IRepository {
         500,
         [],
         null,
-        'Failed getting all inventory operations of the day.'
+        'Failed getting all inventory operations of the day: ' + error
       );
     }
   }

@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
 import { IProduct } from "@/interfaces/interfaces";
-import { getAllProducts, insertProduct, updateProduct, deleteProduct } from "@/controllers/ProductController";
+import { insertProduct, updateProduct, deleteProduct, getAllConceptOfProducts } from "@/controllers/ProductController";
 
-import { getAllConceptOfProducts } from "@/controllers/InventoryController";
+
 
 import DragDropProducts from "@/components/general/dragAndDropComponent/DragDropProducts";
 
@@ -45,11 +45,11 @@ export default function ProductPage() {
       }
     
     if (name === "comission_to_pay") {
-    if (formData.price > 0) {
-        newFormData.comission = (x * 100) / formData.price; // Calculate comission
-    } else if (formData.comission > 0) {        
-        newFormData.price = (x * 100) / formData.comission; // Calculate price
-    }
+        if (formData.price > 0) {
+            newFormData.comission = (x * 100) / formData.price; // Calculate comission
+        } else if (formData.comission > 0) {        
+            newFormData.price = (x * 100) / formData.comission; // Calculate price
+        }
     }
     
     setFormData({ ...newFormData  });
@@ -57,25 +57,41 @@ export default function ProductPage() {
 
   const handleRowDoubleClick = (product: IProduct) => {
     setSelectedProduct(product);
-    setFormData(product);
+    const comissionToPay:number = (product.price * product.comission) / 100;
+    setFormData({...product, comission_to_pay: comissionToPay});
   };
 
   const handleInsert = async () => {
-    await insertProduct(formData);
+
+    let lastPosition:number = 0;
+
+    if (products === undefined) {
+        lastPosition = 0;
+    } else {
+        products.forEach((product:IProduct) => {
+            if (product.order_to_show > lastPosition) {
+                lastPosition = product.order_to_show
+            }
+        })
+
+        lastPosition += 1;
+    }
+
+    await insertProduct({...formData, order_to_show: lastPosition, comission: formData.comission / 100});
     fetchProducts();
     handleCancel();
   };
 
   const handleUpdate = async () => {
     if (!selectedProduct) return;
-    await updateProduct(formData);
+    await updateProduct({...formData, comission: formData.comission / 100})
     fetchProducts();
     handleCancel();
   };
 
   const handleDelete = async () => {
     if (!selectedProduct) return;
-    await deleteProduct(selectedProduct.id_product);
+    await deleteProduct(selectedProduct);
     fetchProducts();
     handleCancel();
   };
@@ -96,9 +112,30 @@ export default function ProductPage() {
     });
   };
 
+  const handleUpdateOrder = async (items:IProduct[]) => {
+    for (let i = 0; i < items.length; i++) {
+        const currentProduct:IProduct = items[i];
+        if (products !== undefined) {
+            const productFound:IProduct|undefined = products.find((candidateProduct:IProduct) => { return candidateProduct.id_product === currentProduct.id_product;})
+    
+            if(productFound) {
+                if(productFound.order_to_show === currentProduct.order_to_show) {
+                    /* Do nothing */
+                } else {
+                    await updateProduct(currentProduct);
+                }
+            } else {
+                await updateProduct(currentProduct);
+            }
+        }
+    }
+
+    fetchProducts();
+  }
+
   return (
-    <div className="w-full h-full flex  flex-col p-4">
-        <div className="flex flex-row w-full">
+    <div className="w-full h-full flex flex-col p-4 overflow-hidden">
+        <div className="w-full flex flex-row">
             {/* Left Side - Table */}
             <div className="flex-1 basis-1/3 p-2 ">
                 <Paper  sx={{width: '100%', overflow: 'hidden'}}>
@@ -106,9 +143,9 @@ export default function ProductPage() {
                     <Table stickyHeader>
                         <TableHead>
                         <TableRow>
-                            <TableCell>Product Name</TableCell>
-                            <TableCell>Price</TableCell>
-                            <TableCell>Comission</TableCell>
+                            <TableCell>Nombre del producto</TableCell>
+                            <TableCell>Precio</TableCell>
+                            <TableCell>Comisión</TableCell>
                         </TableRow>
                         </TableHead>
                         { products &&
@@ -134,20 +171,20 @@ export default function ProductPage() {
                 
                 <div className="flex flex-row justify-around">
                     <TextField 
-                        label="Peso" name="weight" value={formData.weight} onChange={handleInputChange} />
+                        label="Peso" name="weight" type="number" value={formData.weight} onChange={handleInputChange} />
                     <TextField label="Unidad" name="unit" value={formData.unit} onChange={handleInputChange}  />
                 </div>
                 <div className="flex flex-row justify-around">
                     <div className="flex flex-row items-center">
-                        <span className="mr-2 text-2xl">$</span>
+                        <span className="mr-2 text-xl">$</span>
                         <TextField label="Precio" name="price" type="number" value={formData.price} onChange={handleInputChange} />
                     </div>
-                    <div className="flex flex-row items-center">
+                    <div className="flex flex-row items-center mx-2">
                         <TextField label="Comision" name="comission" type="number" value={formData.comission} onChange={handleInputChange} />
-                        <span className="ml-2 text-2xl">%</span>
+                        <span className="ml-2 text-xl">%</span>
                     </div>
                     <div className="flex flex-row items-center">
-                        <span className="mr-2 text-2xl">$</span>
+                        <span className="mr-2 text-xl">$</span>
                         <TextField label="Comision a pagar" name="comission_to_pay" type="number" value={formData.comission_to_pay} onChange={handleInputChange} />
                     </div>
 
@@ -156,20 +193,20 @@ export default function ProductPage() {
 
                 {/* Buttons */}
                 <div className="flex gap-4">
-                <Button variant="contained" color="warning" onClick={handleCancel}>Cancel</Button>
-                <Button variant="contained" color="primary" onClick={handleInsert} disabled={!!selectedProduct}>Insert</Button>
-                <Button variant="contained" color="secondary" onClick={handleUpdate} disabled={!selectedProduct}>Update</Button>
-                <Button variant="contained" color="error" onClick={handleDelete} disabled={!selectedProduct}>Delete</Button>
+                <Button variant="contained" color="warning" onClick={handleCancel}>Cancelar</Button>
+                <Button variant="contained" color="success" onClick={handleInsert} disabled={!!selectedProduct}>Insertar</Button>
+                <Button variant="contained" color="info" onClick={handleUpdate} disabled={!selectedProduct}>Actualizar</Button>
+                <Button variant="contained" color="error" onClick={handleDelete} disabled={!selectedProduct}>Eliminar</Button>
                 </div>
             </div>
         </div>
-        <div>
-            {products &&
-                <DragDropProducts 
-                products={products}
-                onSave={(items) => {console.log(items)}}/>
-
-            }
+        <div className="w-1/2 flex flex-row basis-1/2 overflow-y-auto">
+        {products &&
+            <DragDropProducts 
+            title={"En este orden apareceran los productos"}
+            products={products}
+            onSave={(items:IProduct[]) => {handleUpdateOrder(items)}}/>
+        }
         </div>
     </div>
   );
