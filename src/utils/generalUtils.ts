@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from "uuid";
+
 import { 
   isTypeIInventoryOperation,
   isTypeIInventoryOperationDescription,
@@ -7,6 +9,10 @@ import {
     isTypeIRouteTransactionOperationDescription, 
     isTypeIStore
 } from "./guards";
+
+
+
+export const generateUUIDv4 = (): string => uuidv4();
 
 
 export function capitalizeFirstLetter(input: string|undefined|null): string {
