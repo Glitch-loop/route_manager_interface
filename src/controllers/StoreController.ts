@@ -9,8 +9,13 @@ import { getDataFromApiResponse } from "@/utils/responseUtils";
 //Initializing database repository
 const repository = RepositoryFactory.createRepository('supabase');
 
+export async function getAllStores():Promise<IStore[]> {
+    const informationOfTheStoresResponse:IResponse<IStore[]> = await repository.getAllStores();
+
+    return getDataFromApiResponse(informationOfTheStoresResponse);
+}
+
 export async function getInformationOfStores(arrIdStores:string[]):Promise<IStore[]> {
-    console.log("ID array stores: ", arrIdStores)
     const informationOfTheStoresResponse:IResponse<IStore[]> = await repository.getStoresByArrID(arrIdStores);
 
     return getDataFromApiResponse(informationOfTheStoresResponse);

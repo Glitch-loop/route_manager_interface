@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { IProduct } from "@/interfaces/interfaces";
+import { ICatalogItem } from "@/interfaces/interfaces";
 import { Button, Paper } from "@mui/material";
 import {
   DndContext,
@@ -18,14 +18,14 @@ import {
 } from "@dnd-kit/sortable";
 import { SortableItem } from "./SortableItem";
 
-interface DragDropProductsProps {
-  products: IProduct[];
-  onSave: (updatedProducts: IProduct[]) => void;
+interface DragDropCatalogItemsProps {
+  catalogItems: ICatalogItem[];
+  onSave: (updatedCatalogItems: ICatalogItem[]) => void;
   title:  string;
 }
 
-export default function DragDropProducts({ products, onSave, title }: DragDropProductsProps) {
-  const [orderedProducts, setOrderedProducts] = useState<IProduct[]>(products);
+export default function DragDropCatalogItems({ catalogItems, onSave, title }: DragDropCatalogItemsProps) {
+  const [orderedCatalogItems, setOrderedCatalogItems] = useState<ICatalogItem[]>(catalogItems);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -36,19 +36,19 @@ export default function DragDropProducts({ products, onSave, title }: DragDropPr
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
-    const oldIndex = orderedProducts.findIndex((p) => p.id_product === active.id);
-    const newIndex = orderedProducts.findIndex((p) => p.id_product === over.id);
+    const oldIndex = orderedCatalogItems.findIndex((p) => p.id_item === active.id);
+    const newIndex = orderedCatalogItems.findIndex((p) => p.id_item === over.id);
 
-    const updatedList = arrayMove(orderedProducts, oldIndex, newIndex).map((product, index) => ({
+    const updatedList = arrayMove(orderedCatalogItems, oldIndex, newIndex).map((product, index) => ({
       ...product,
       order_to_show: index + 1,
     }));
 
-    setOrderedProducts(updatedList);
+    setOrderedCatalogItems(updatedList);
   };
 
   const handleSave = () => {
-    onSave(orderedProducts);
+    onSave(orderedCatalogItems);
   };
 
   return (
@@ -62,10 +62,10 @@ export default function DragDropProducts({ products, onSave, title }: DragDropPr
         </div>
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <SortableContext items={orderedProducts.map((p) => p.id_product)} strategy={verticalListSortingStrategy}>
+        <SortableContext items={orderedCatalogItems.map((p) => p.id_item)} strategy={verticalListSortingStrategy}>
           <Paper className="p-4">
-            {orderedProducts.map((product) => (
-              <SortableItem key={product.id_product} id={product.id_product} name={product.product_name} />
+            {orderedCatalogItems.map((product) => (
+              <SortableItem key={product.id_item} id={product.id_item} name={product.item_name} />
             ))}
           </Paper>
         </SortableContext>

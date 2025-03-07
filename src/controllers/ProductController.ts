@@ -2,18 +2,8 @@ import { RepositoryFactory } from "@/repositories/RepositoryFactory";
 
 // Interfaces
 import {
-    IDay,
-    IDayGeneralInformation,
-    IInventoryOperation,
-    IInventoryOperationDescription,
     IProduct,
-    IProductInventory,
     IResponse,
-    IRoute,
-    IRouteTransaction,
-    IRouteTransactionOperation,
-    IRouteTransactionOperationDescription,
-    IStore,
 } from '@/interfaces/interfaces';
 
 // Utils

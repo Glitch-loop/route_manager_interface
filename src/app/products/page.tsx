@@ -1,10 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
-import { IProduct } from "@/interfaces/interfaces";
+import { ICatalogItem, IProduct } from "@/interfaces/interfaces";
 import { insertProduct, updateProduct, deleteProduct, getAllConceptOfProducts } from "@/controllers/ProductController";
-
-
 
 import DragDropProducts from "@/components/general/dragAndDropComponent/DragDropProducts";
 
@@ -112,20 +110,24 @@ export default function ProductPage() {
     });
   };
 
-  const handleUpdateOrder = async (items:IProduct[]) => {
+  const handleUpdateOrder = async (items:ICatalogItem[]) => {
     for (let i = 0; i < items.length; i++) {
-        const currentProduct:IProduct = items[i];
+        const currentProduct:ICatalogItem = items[i];
+        const { id_item, order_to_show} = currentProduct;
         if (products !== undefined) {
-            const productFound:IProduct|undefined = products.find((candidateProduct:IProduct) => { return candidateProduct.id_product === currentProduct.id_product;})
+            const productFound:IProduct|undefined = products.find((candidateProduct:IProduct) => { return candidateProduct.id_product === id_item;})
     
             if(productFound) {
                 if(productFound.order_to_show === currentProduct.order_to_show) {
                     /* Do nothing */
                 } else {
-                    await updateProduct(currentProduct);
+                    await updateProduct({
+                        ...productFound,
+                        order_to_show: order_to_show 
+                    });
                 }
             } else {
-                await updateProduct(currentProduct);
+                    /* Product wasn't found. Do nothing*/
             }
         }
     }
@@ -204,8 +206,8 @@ export default function ProductPage() {
         {products &&
             <DragDropProducts 
             title={"En este orden apareceran los productos"}
-            products={products}
-            onSave={(items:IProduct[]) => {handleUpdateOrder(items)}}/>
+            catalogItems={products.map((product:IProduct) => { return {id_item: product.id_product, item_name: product.product_name, order_to_show: product.order_to_show}})}
+            onSave={(items:ICatalogItem[]) => {handleUpdateOrder(items)}}/>
         }
         </div>
     </div>

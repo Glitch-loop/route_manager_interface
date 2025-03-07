@@ -214,7 +214,8 @@ export interface IConceptOption {
   }>;
 }
 
-
-export interface IMapConcepts {
-  
+export interface ICatalogItem {
+  id_item: string,
+  item_name: string,
+  order_to_show: number,
 }

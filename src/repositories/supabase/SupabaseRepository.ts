@@ -97,42 +97,6 @@ export class SupabaseRepository implements IRepository {
     }
   }
 
-  async getAllStoresInARouteDay(id_route_day:string):Promise<IResponse<IRouteDayStores[]>> {
-    try {
-      const { data, error } = await supabase.from(TABLES.ROUTE_DAY_STORES)
-                                            .select()
-                                            .eq('id_route_day', id_route_day)
-                                            .order('position_in_route');
-      if (error) {
-        console.log(error)
-        return createApiResponse<IRouteDayStores[]>(500, [], null,
-          'Failed getting all stores in a route day.');
-      } else {
-        return createApiResponse<IRouteDayStores[]>(200, data, null);
-      }
-    } catch(error) {
-      return createApiResponse<IRouteDayStores[]>(500, [], null, 'Failed getting all stores in a route day');
-    }
-  }
-
-  async getStoresByArrID(arr_id_stores: string[]):Promise<IResponse<IStore[]>> {
-    try {
-      console.log("database: ", arr_id_stores)
-      const { data, error } = await supabase.from(TABLES.STORES)
-                                    .select().in('id_store', arr_id_stores);
-
-      if (error) {
-        console.log("Error getting stores by ID", error)
-        return createApiResponse<IStore[]>(500, [], null,'Failed getting stores information.');
-      } else {
-        return createApiResponse<IStore[]>(200, data, null);
-      }
-    } catch(error) {
-      return createApiResponse<IStore[]>(500, [], null, 'Failed getting stores information.');
-    }
-  }
-
-
   // Related to products
   async getAllProducts():Promise<IResponse<IProduct[]>> {
     try {
@@ -150,7 +114,6 @@ export class SupabaseRepository implements IRepository {
     }
   }
 
-    // Related to products (inventory operations)
   async insertProduct(product:IProduct):Promise<IResponse<IProduct>> {
     console.log("DB: ", product)
     try {
@@ -254,6 +217,54 @@ export class SupabaseRepository implements IRepository {
         null,
         'Failed updating the product.'
       );
+    }
+  }
+
+  // Related to stores
+  async getAllStoresInARouteDay(id_route_day:string):Promise<IResponse<IRouteDayStores[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.ROUTE_DAY_STORES)
+                                            .select()
+                                            .eq('id_route_day', id_route_day)
+                                            .order('position_in_route');
+      if (error) {
+        console.log(error)
+        return createApiResponse<IRouteDayStores[]>(500, [], null,
+          'Failed getting all stores in a route day.');
+      } else {
+        return createApiResponse<IRouteDayStores[]>(200, data, null);
+      }
+    } catch(error) {
+      return createApiResponse<IRouteDayStores[]>(500, [], null, 'Failed getting all stores in a route day');
+    }
+  }
+
+  async getStoresByArrID(arr_id_stores: string[]):Promise<IResponse<IStore[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.STORES)
+                                    .select().in('id_store', arr_id_stores);
+
+      if (error) {
+        return createApiResponse<IStore[]>(500, [], null,'Failed getting stores information.');
+      } else {
+        return createApiResponse<IStore[]>(200, data, null);
+      }
+    } catch(error) {
+      return createApiResponse<IStore[]>(500, [], null, 'Failed getting stores information.');
+    }
+  }
+
+  async getAllStores():Promise<IResponse<IStore[]>>{
+    try {
+      const { data, error } = await supabase.from(TABLES.STORES).select();
+
+      if (error) {
+        return createApiResponse<IStore[]>(500, [], null,'Failed getting stores information.');
+      } else {
+        return createApiResponse<IStore[]>(200, data, null);
+      }
+    } catch(error) {
+      return createApiResponse<IStore[]>(500, [], null, 'Failed getting stores information.');
     }
   }
 
