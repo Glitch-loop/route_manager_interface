@@ -32,4 +32,8 @@ export async function getAllRoutes():Promise<IRoute[]> {
     return allRoutes;
 }
 
+export async function insertRoute() {};
 
+export async function updateRoute() {}; 
+
+export async function deleteRoute() {};

@@ -54,7 +54,7 @@ const Sidebar = () => {
                 <div className="my-2 w-11/12">
                     <ButtonWithNotification 
                         label={"Administración de rutas"}
-                        href={"/vendors"}/>
+                        href={"/routes"}/>
                 </div>
                 <div className="my-2 w-11/12">
                     <ButtonWithNotification 

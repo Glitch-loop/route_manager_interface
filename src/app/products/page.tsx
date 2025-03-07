@@ -205,26 +205,12 @@ export default function ProductPage() {
             </div>
         </div>
         <div className="w-1/2 flex flex-row basis-1/2 overflow-y-auto">
-        {/* {products &&
+        {products &&
             <DragDropCatalogItems 
             title={"En este orden apareceran los productos"}
-            catalogItems={products.map((product:IProduct) => { return {id_item: product.id_product, item_name: product.product_name, order_to_show: product.order_to_show}})}
+            catalogItems={products.map((product:IProduct) => { return {id_item_in_container: generateUUIDv4(), id_item: product.id_product, item_name: product.product_name, order_to_show: product.order_to_show}})}
             onSave={(items:ICatalogItem[]) => {handleUpdateOrder(items)}}/>
-        } */}
-        {products &&
-            <MultiContainerDragDrop 
-            catalogTitles={["En este orden apareceran los productos", "En este orden apareceran los productos 2"]}
-            catalogMatrix={
-                [
-                    products.map((product:IProduct) => { return {id_item_in_container: generateUUIDv4(), id_item: product.id_product, item_name: product.product_name, order_to_show: product.order_to_show}}),
-                    products.map((product:IProduct) => { return {id_item_in_container: generateUUIDv4(), id_item: product.id_product, item_name: product.product_name, order_to_show: product.order_to_show}}),
-                    products.map((product:IProduct) => { return {id_item_in_container: generateUUIDv4(), id_item: product.id_product, item_name: product.product_name, order_to_show: product.order_to_show}}),
-                ]
-            }
-            onSave={(items:ICatalogItem[][]) => {handleUpdateOrder(items)}}/>
         }
-
-
         </div>
     </div>
   );

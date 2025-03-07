@@ -25,11 +25,11 @@ function ButtonWithNotification(
             { href === undefined ?
                 <button
                 onClick={handlerPress}
-                className={`w-full bg-system-third-background p-3 rounded-md hover:opacity-75 duration-200`}>
+                className={`w-full bg-system-third-background text-center p-3 rounded-md hover:opacity-75 duration-200`}>
                     <span>{label}</span>
                 </button> :
                 <Link
-                    className={`w-full flex basis-full justify-center bg-system-third-background p-3 rounded-md hover:opacity-75 duration-200`}
+                    className={`w-full flex basis-full justify-center bg-system-third-background text-center p-3 rounded-md hover:opacity-75 duration-200`}
                     href={href}>
                         {label}
                 </Link>

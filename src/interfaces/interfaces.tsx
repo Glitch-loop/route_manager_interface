@@ -79,7 +79,7 @@ export interface IRoute {
   id_route: string;
   route_name: string;
   description?: string;
-  route_status: string;
+  route_status: number;
   id_vendor: string;
 }
 
