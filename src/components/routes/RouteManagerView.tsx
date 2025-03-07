@@ -1,18 +1,24 @@
 "use client";
+// Libraries
 import { useState, useEffect } from "react";
-import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Switch, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from "@mui/material";
-import { 
-    IRoute,
-    IUser
- } from "@/interfaces/interfaces";
 
+// Interfaces
+import { 
+  IRoute,
+  IUser
+} from "@/interfaces/interfaces";
+
+// Controllers
 import { getAllRoutes, insertRoute, updateRoute, deleteRoute } from "@/controllers/RoutesController";
 import { getAllVendors } from "@/controllers/VendorController";
+
+// Utils
 import { capitalizeFirstLetter } from "@/utils/generalUtils";
 
-import { RouteDayManagerView } from "@/components/routes/RouteDayManagerView"
+// Components
+import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Switch, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from "@mui/material";
 
-export default function RoutesPage() {
+export default function RouteManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
   const [users, setUsers] = useState<IUser[]>([]);
   const [selectedRoute, setSelectedRoute] = useState<IRoute | null>(null);

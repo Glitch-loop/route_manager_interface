@@ -20,6 +20,7 @@ export interface IRepository {
   // Related to route
   getAllDays(): Promise<IResponse<IDay[]>>;
   getAllDaysByRoute(id_route:string): Promise<IResponse<IRouteDay[]>>;
+  getAllRouteDays(): Promise<IResponse<IRouteDay[]>>;
   getAllRoutesByVendor(id_vendor:string): Promise<IResponse<IRoute[]>>;
   
   // Related to products

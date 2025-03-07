@@ -37,3 +37,19 @@ export async function insertRoute() {};
 export async function updateRoute() {}; 
 
 export async function deleteRoute() {};
+
+// Related to route days
+export async function getRouteDays():Promise<IRouteDay[]> {
+  const allRouteDaysResponse:IResponse<IRouteDay[]> = await repository.getAllRouteDays();
+  return getDataFromApiResponse(allRouteDaysResponse);
+};
+
+export async function getStoresOfRouteDay(routeDay:IRouteDay):Promise<IRouteDayStores[]> {
+  const { id_route_day } = routeDay;
+  const allStoresInRoutedayResponse:IResponse<IRouteDayStores[]> = await repository.getAllStoresInARouteDay(id_route_day);
+  return getDataFromApiResponse(allStoresInRoutedayResponse);
+};
+
+export async function updateRouteDay() {};
+
+
