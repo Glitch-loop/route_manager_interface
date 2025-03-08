@@ -24,6 +24,10 @@ export default function StoreMap({ stores, onSelectStore }: StoreMapProps) {
 
   if (!isLoaded) return <p>Loading Google Maps...</p>;
 
+  const pinBackGround = new PinElement({
+    background: '#FBBC04',    
+  })
+
   return (
     <GoogleMap 
         mapContainerStyle={containerStyle} center={stores[0] ? { lat: parseFloat(stores[0].latitude), lng: parseFloat(stores[0].longuitude) } : defaultCenter} zoom={12}>
@@ -35,6 +39,7 @@ export default function StoreMap({ stores, onSelectStore }: StoreMapProps) {
             setSelectedStore(store);
             onSelectStore(store);
           }}
+          
         />
       ))}
     </GoogleMap>

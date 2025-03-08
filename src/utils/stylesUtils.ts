@@ -99,6 +99,44 @@ const determineDayOperationTypeBackgroundColor = (id_operation_type:string):stri
     return backgroundColor;
 }
 
+// Convert HEX to RGB
+export const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
+    hex = hex.replace("#", "");
+    const bigint = parseInt(hex, 16);
+    return { 
+      r: (bigint >> 16) & 255, 
+      g: (bigint >> 8) & 255, 
+      b: bigint & 255 
+    };
+  };
+  
+export const getGradientColor = (baseHex: string, position: number, total: number) => {
+    const maxStores = 50;
+    const adjustedTotal = Math.min(total, maxStores); // Cap at 50 stores
+  
+    // Reduce brightness proportionally (making it darker as position increases)
+    const factor = position / adjustedTotal; // 0 (light) → 1 (dark)
+    
+    // Convert base HEX to RGB
+    const baseColor = hexToRgb(baseHex);
+  
+    const r = Math.max(0, Math.floor(baseColor.r * (1 - factor))); // Reduce R
+    const g = Math.max(0, Math.floor(baseColor.g * (1 - factor))); // Reduce G
+    const b = Math.max(0, Math.floor(baseColor.b * (1 - factor))); // Reduce B
+  
+    return `rgb(${r}, ${g}, ${b})`;
+  };
+  
+export const createCustomMarker = (color: string) => ({
+    url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">
+        <path fill="${color}" stroke="black" stroke-width="2" d="M12 2C8 2 5 5 5 9c0 5 7 11 7 11s7-6 7-11c0-4-3-7-7-7z"/>
+        <circle cx="12" cy="9" r="2.5" fill="white"/>
+      </svg>
+    `)}`,
+    scaledSize: { width: 40, height: 40 },
+  });
+
 export {
     deterimneIconSize,
     determineBackgroundColor,
