@@ -27,6 +27,7 @@ import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper
 import MultiContainerDragDrop from "@/components/general/dragAndDropComponent/multiDragAndDropComponent/MultiContainerDragDrop";
 import StoreMap from "@/components/general/mapComponent/StoreMap";
 import RouteMap from "../general/mapComponent/RouteMap";
+import InfoStoreHover from "../store/map/InfoStoreHover";
 
 export default function RouteDayManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -35,7 +36,7 @@ export default function RouteDayManagerView() {
   const [routeDayStores, setRouteDayStores] = useState<IRouteDayStores[]>([]);
   const [selectedRouteDay, setSelectedRouteDay] = useState<IRouteDay | null>(null);
   const [storeJson, setStoreJson] = useState<Record<string, IStore>>({});
-  const [storesOfSelectedRouteDay, setStoresOfSelectedRouteDay] = useState<IStore[]>([]);
+  const [storesOfSelectedRouteDay, setStoresOfSelectedRouteDay] = useState<(IStore&IRouteDayStores)[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -55,7 +56,7 @@ export default function RouteDayManagerView() {
   };
 
   const handleRouteDaySelection = async (routeDay: IRouteDay) => {
-    const storesOfTheRouteDay:IStore[] = [];  
+    const storesOfTheRouteDay:(IStore&IRouteDayStores)[] = [];  
     setSelectedRouteDay(routeDay);
     const routeDayStoresData = await getStoresOfRouteDay(routeDay);
     setRouteDayStores(routeDayStoresData);
@@ -65,7 +66,7 @@ export default function RouteDayManagerView() {
         const { id_store } = routeDayStore;
         if(storeJson[id_store] !== undefined) {
             const currentStore:IStore = storeJson[id_store]
-            storesOfTheRouteDay.push(currentStore); 
+            storesOfTheRouteDay.push({...currentStore, ...routeDayStore}); 
         }
     })
 
@@ -120,7 +121,9 @@ export default function RouteDayManagerView() {
       {/* Right Side - Store Map */}
       <div className="flex-1 basis-1/2 p-4">
         <RouteMap stores={storesOfSelectedRouteDay} 
-        onSelectStore={(store) => console.log("Selected Store:", store)} />
+        onSelectStore={(store) => console.log("Selected Store:", store)} 
+        hoverComponent={(store_name:string, position_in_route:string) => {return <InfoStoreHover store_name={store_name} position_in_route={position_in_route}/>}}
+        />
         {/* <StoreMap stores={storesOfSelectedRouteDay} 
         onSelectStore={(store) => console.log("Selected Store:", store)} /> */}
       </div>

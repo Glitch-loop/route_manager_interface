@@ -1,20 +1,21 @@
 "use client";
 import { useState } from "react";
 import { APIProvider, Map, Marker, InfoWindow } from "@vis.gl/react-google-maps";
-import { IStore } from "@/interfaces/interfaces";
+import { IRouteDayStores, IStore } from "@/interfaces/interfaces";
 import { createCustomMarker, getGradientColor } from "@/utils/stylesUtils";
 
 
 interface StoreMapProps {
-  stores: IStore[];
+  stores: (IStore&IRouteDayStores|IStore)[];
   onSelectStore: (store: IStore) => void;
+  hoverComponent: () => React.ReactNode
 }
 
 
 const containerStyle = { width: "100%", height: "500px" };
 const defaultCenter = { lat: 20.648043093256433, lng: -105.21612612535338 }; // Default: Mexico City
  
-export default function RouteMap({ stores, onSelectStore }: StoreMapProps) {
+export default function RouteMap({ stores, onSelectStore, hoverComponent }: StoreMapProps) {
   const [selectedStore, setSelectedStore] = useState<IStore | null>(null);
   const [hoveredPosition, setHoveredPosition] = useState<IStore | null>(null);
 
@@ -36,43 +37,32 @@ export default function RouteMap({ stores, onSelectStore }: StoreMapProps) {
               setSelectedStore(store);
               onSelectStore(store);
             }}
-            onMouseOver={() => {
-              console.log("showing something")
-              setHoveredPosition(store)}}
-            onMouseOut={() => 
-              setTimeout(() => {
-                setHoveredPosition(null)
-              }, 10000)
-
-            }
+            onMouseOver={() => { setHoveredPosition(store)}}
+            onMouseOut={() => setTimeout(() => { setHoveredPosition(null) }, 10000) }
           />
         )})}
-          {/* Hover Info */}
-          {hoveredPosition && (
+        {/* Hover Info */}
+        {hoveredPosition && (
           <InfoWindow
             position={{ lat: parseFloat(hoveredPosition.latitude), lng: parseFloat(hoveredPosition.longuitude) }}
             onCloseClick={() => setHoveredPosition(null)}
           >
-            <div>
-              <p><strong>Store Position:</strong> 1
-              {stores.find(s => s.id_store === hoveredPosition.id_store)?.store_name}
-              </p>
-            </div>
+            {hoverComponent()}
           </InfoWindow>
         )}
         {/* Show store info when clicked */}
         {selectedStore && (
-        <InfoWindow
-          position={{ lat: parseFloat(selectedStore.latitude), lng: parseFloat(selectedStore.longuitude) }}
-          onCloseClick={() => setSelectedStore(null)}
-        >
-          <div>
-            <h3>{selectedStore.store_name}</h3>
-            <p><strong>Address:</strong> {selectedStore.street}, {selectedStore.colony}</p>
-            <p><strong>Owner:</strong> {selectedStore.owner_name || "N/A"}</p>
-            {/* <p><strong>Position in Route:</strong> {stores.find(s => s.id_store === selectedStore.id_store)?.position_in_route}</p> */}
-          </div>
-        </InfoWindow>
+          <InfoWindow
+            position={{ lat: parseFloat(selectedStore.latitude), lng: parseFloat(selectedStore.longuitude) }}
+            onCloseClick={() => setSelectedStore(null)}
+          >
+            <div>
+              <h3>{selectedStore.store_name}</h3>
+              <p><strong>Address:</strong> {selectedStore.street}, {selectedStore.colony}</p>
+              <p><strong>Owner:</strong> {selectedStore.owner_name || "N/A"}</p>
+              {/* <p><strong>Position in Route:</strong> {stores.find(s => s.id_store === selectedStore.id_store)?.position_in_route}</p> */}
+            </div>
+          </InfoWindow>
         )}
       </Map>
     </APIProvider>

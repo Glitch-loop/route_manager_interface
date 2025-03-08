@@ -111,23 +111,23 @@ export default function Home() {
   return (
     <div className="w-full h-full flex flex-row justify-center items-start overflow-y-hidden">
       {/* <main className="w-full "> */}
-        {/* <div className={`w-full h-5/6 flex flex-row justify-start items-start ml-3`}>
+        <div className={`w-full h-5/6 flex flex-row justify-start items-start ml-3 overflow-x-auto`}>
             { openWorkDays !== undefined &&
               openWorkDays.map((workday) => {
                 const { id_work_day } = workday;
                 return (
-                  <div key={id_work_day} className="w-3/6">
+                  <div key={id_work_day} className="flex flex-row basis-1/2 w-96">
                     <RouteList workDay={workday}/>
                   </div>
                 )
               })
             }
-        </div> */}
-        <div className="w-full h-full flex flex-row items-center justify-center">
+        </div>
+        {/* <div className="w-full h-full flex flex-row items-center justify-center">
             { stores !== undefined &&
               <StoreMap stores={stores} onSelectStore={(item) => console.log(item)}/>
             }
-        </div>
+        </div> */}
       {/* </main> */}
     </div>
   );

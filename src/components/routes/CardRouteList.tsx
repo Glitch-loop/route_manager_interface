@@ -59,7 +59,7 @@ function CardRouteList({
                 <span className="text-sm">{descriptionSecondColumn}</span>
             </div>
             <span className="flex basis-1/6 justify-center">{thirdColumn}</span>
-            <span className="flex basis-1/6 justify-center">{fourthColumn}</span>
+            <span className="flex basis-1/6 justify-center ml-1">{fourthColumn}</span>
         </div>
         <div className="relative flex flex-col basis-1/5 justify-start">
             { informationUpperCard !== undefined && informationUpperCard !== "" &&
