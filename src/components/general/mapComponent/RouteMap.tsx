@@ -48,7 +48,7 @@ export default function RouteMap({ markers, onSelectStore }: StoreMapProps) {
         defaultZoom={13}
       >
         {markers.map((marker, index) =>  {
-           const color = getGradientColor("#64C8FF", index, markers.length);
+           const color = getGradientColor(marker.color_item, index, markers.length);
           return (<Marker
             key={marker.id_item}
             icon={createCustomMarker(color)}

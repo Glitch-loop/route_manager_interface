@@ -126,7 +126,35 @@ export const getGradientColor = (baseHex: string, position: number, total: numbe
   
     return `rgb(${r}, ${g}, ${b})`;
   };
+
+// Function to generate a light color based on an index
+export const generateLightColor = (index: number, totalRoutes: number) => {
+    const hue = (index * (360 / totalRoutes)) % 360; // Spread colors evenly in the spectrum
+    const saturation = 60; // Keep colors vibrant but not too strong
+    const lightness = 75; // High lightness for soft colors
   
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+  };
+
+  // Convert HSL to HEX
+export const hslToHex = (h: number, s: number, l: number) => {
+    s /= 100;
+    l /= 100;
+    const k = (n: number) => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = (n: number) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
+    return `#${f(0).toString(16).padStart(2, "0")}${f(8).toString(16).padStart(2, "0")}${f(4).toString(16).padStart(2, "0")}`;
+  };
+
+export  const generateRandomLightColor = (): string => {
+    const hue = Math.floor(Math.random() * 360); // Random hue (0-360)
+    const saturation = Math.floor(Math.random() * 30) + 50; // Keep saturation between 50-80%
+    const lightness = Math.floor(Math.random() * 30) + 70; // Keep lightness between 70-100% (light colors)
+  
+    return hslToHex(hue, saturation, lightness);
+  };
+  
+
 export const createCustomMarker = (color: string) => ({
     url: `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(`
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="48" height="48">

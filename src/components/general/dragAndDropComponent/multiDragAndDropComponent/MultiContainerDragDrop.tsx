@@ -31,6 +31,8 @@ export default function MultiContainerDragDrop({ catalogMatrix, catalogTitles, o
 
   const sensors = useSensors(useSensor(PointerSensor));
 
+  console.log("catalogMatrix: ", catalogMatrix)
+
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
     
@@ -80,15 +82,17 @@ export default function MultiContainerDragDrop({ catalogMatrix, catalogTitles, o
     <div className="relative w-full p-4">
       <div className="sticky top-0 z-10 bg-system-primary-background py-2 flex flex-row justify-around">
         <Button variant="contained" color="primary" className="mt-4" onClick={() => onSave(catalogs)}>
-          Save Changes
+          Save Changes {"matrix: ", catalogs?.length}
         </Button>
       </div>
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-        <div className="flex flex-row gap-4">
-          {catalogs.map((items, index) => (
-            <DroppableContainer key={index} id={index.toString()} title={catalogTitles[index]} items={items} />
-          ))}
+        <div className="w-full flex flex-row gap-4">
+          {catalogs.map((items, index) => {
+            console.log("items: ", items)
+            return (
+              <DroppableContainer key={index} id={index.toString()} title={catalogTitles[index]} items={items} />
+            )})}
         </div>
       </DndContext>
 
