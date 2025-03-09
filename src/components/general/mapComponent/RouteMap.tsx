@@ -1,44 +1,65 @@
 "use client";
 import { useState } from "react";
 import { APIProvider, Map, Marker, InfoWindow } from "@vis.gl/react-google-maps";
-import { IRouteDayStores, IStore } from "@/interfaces/interfaces";
+import { IMapMarker, IRouteDayStores, IStore } from "@/interfaces/interfaces";
 import { createCustomMarker, getGradientColor } from "@/utils/stylesUtils";
 
 
 interface StoreMapProps {
-  stores: (IStore&IRouteDayStores|IStore)[];
-  onSelectStore: (store: IStore) => void;
-  hoverComponent: () => React.ReactNode
+  markers: IMapMarker[];
+  onSelectStore: (store: IMapMarker) => void;
 }
 
 
 const containerStyle = { width: "100%", height: "500px" };
 const defaultCenter = { lat: 20.648043093256433, lng: -105.21612612535338 }; // Default: Mexico City
  
-export default function RouteMap({ stores, onSelectStore, hoverComponent }: StoreMapProps) {
-  const [selectedStore, setSelectedStore] = useState<IStore | null>(null);
-  const [hoveredPosition, setHoveredPosition] = useState<IStore | null>(null);
+export default function RouteMap({ markers, onSelectStore }: StoreMapProps) {
+  const [selectedStore, setSelectedStore] = useState<IMapMarker | null>(null);
+  const [hoveredPosition, setHoveredPosition] = useState<IMapMarker | null>(null);
+  const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
 
+  const handleMouseOver = (store: IMapMarker) => {
+    // Set a timeout to delay the appearance of the InfoWindow
+    const timer = setTimeout(() => {
+      setHoveredPosition(store);
+    }, 1000); // 3 seconds delay
+
+    setHoverTimer(timer);
+  };
+
+  const handleMouseOut = () => {
+    // Clear the timeout if the user moves the pointer before 3 seconds
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+      setHoverTimer(null);
+    }
+
+    setTimeout(() => {
+      setHoveredPosition(null);
+    }, 3000)
+  };
 
   return (
     <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string}>
       <Map 
         style={containerStyle}
-        defaultCenter={stores.length ? { lat: parseFloat(stores[0].latitude), lng: parseFloat(stores[0].longuitude) } : defaultCenter}
+        defaultCenter={markers.length ? { lat: parseFloat(markers[0].latitude), lng: parseFloat(markers[0].longuitude) } : defaultCenter}
         defaultZoom={13}
       >
-        {stores.map((store, index) =>  {
-           const color = getGradientColor("#64C8FF", index, stores.length);
+        {markers.map((marker, index) =>  {
+           const color = getGradientColor("#64C8FF", index, markers.length);
           return (<Marker
-            key={store.id_store}
+            key={marker.id_item}
             icon={createCustomMarker(color)}
-            position={{ lat: parseFloat(store.latitude), lng: parseFloat(store.longuitude) }}
+            position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longuitude) }}
             onClick={() => {
-              setSelectedStore(store);
-              onSelectStore(store);
+              setSelectedStore(marker);
+              onSelectStore(marker);
+              setHoveredPosition(null);
             }}
-            onMouseOver={() => { setHoveredPosition(store)}}
-            onMouseOut={() => setTimeout(() => { setHoveredPosition(null) }, 10000) }
+            onMouseOver={() => handleMouseOver(marker)}
+            onMouseOut={() => handleMouseOut() }
           />
         )})}
         {/* Hover Info */}
@@ -47,7 +68,7 @@ export default function RouteMap({ stores, onSelectStore, hoverComponent }: Stor
             position={{ lat: parseFloat(hoveredPosition.latitude), lng: parseFloat(hoveredPosition.longuitude) }}
             onCloseClick={() => setHoveredPosition(null)}
           >
-            {hoverComponent()}
+            {hoveredPosition.hoverComponent}
           </InfoWindow>
         )}
         {/* Show store info when clicked */}
@@ -56,12 +77,7 @@ export default function RouteMap({ stores, onSelectStore, hoverComponent }: Stor
             position={{ lat: parseFloat(selectedStore.latitude), lng: parseFloat(selectedStore.longuitude) }}
             onCloseClick={() => setSelectedStore(null)}
           >
-            <div>
-              <h3>{selectedStore.store_name}</h3>
-              <p><strong>Address:</strong> {selectedStore.street}, {selectedStore.colony}</p>
-              <p><strong>Owner:</strong> {selectedStore.owner_name || "N/A"}</p>
-              {/* <p><strong>Position in Route:</strong> {stores.find(s => s.id_store === selectedStore.id_store)?.position_in_route}</p> */}
-            </div>
+            {selectedStore.clickComponent}
           </InfoWindow>
         )}
       </Map>

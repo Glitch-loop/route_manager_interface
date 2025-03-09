@@ -4,6 +4,9 @@ import {
   isTypeIInventoryOperation,
   isTypeIInventoryOperationDescription,
   isTypeIProductInventory,
+    isTypeIRoute,
+    isTypeIRouteDay,
+    isTypeIRouteDayStore,
     isTypeIRouteTransaction, 
     isTypeIRouteTransactionOperation, 
     isTypeIRouteTransactionOperationDescription, 
@@ -57,6 +60,12 @@ export function convertArrayInJsonUsingInterfaces(arrayToConvert:unknown[]):Reco
           convertedArray[item.id_product_operation_description] = item;
         } else if (isTypeIProductInventory(item)) {
           convertedArray[item.id_product] = item;
+        } else if (isTypeIRoute(item)) {
+          convertedArray[item.id_route] = item;
+        } else if (isTypeIRouteDay(item)) {
+          convertedArray[item.id_route_day] = item;
+        } else if (isTypeIRouteDayStore(item)) {
+          convertedArray[item.id_route_day_store] = item;
         }
     })
 

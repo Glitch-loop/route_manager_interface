@@ -116,9 +116,12 @@ export default function Home() {
               openWorkDays.map((workday) => {
                 const { id_work_day } = workday;
                 return (
-                  <div key={id_work_day} className="flex flex-row basis-1/2 w-96">
-                    <RouteList workDay={workday}/>
+                  <div key={id_work_day} className="w-full">
+                    <div  className="w-full">
+                      <RouteList workDay={workday}/>
+                    </div>
                   </div>
+
                 )
               })
             }

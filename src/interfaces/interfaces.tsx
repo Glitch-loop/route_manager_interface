@@ -228,4 +228,6 @@ export interface IMapMarker{
   clickComponent: React.ReactNode;
   color_item: string,
   id_group: string,
+  latitude: string;
+  longuitude: string;
 }

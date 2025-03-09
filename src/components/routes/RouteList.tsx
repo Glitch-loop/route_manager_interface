@@ -318,7 +318,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                         formatToCurrency(
                             routeTransactions.reduce((acc:number, routeTransaction:IRouteTransaction) => {
                                 let resultado:number = 0;
-                                if(routeTransaction.state === 1) {
+                                if(routeTransaction.state === 0) {
                                     resultado = acc + 0;
                                 } else {
                                     resultado = acc + getTotalOfTypeOperationOfRouteTransaction(DAYS_OPERATIONS.sales, routeTransaction, routeTransactionOperations, routeTransactionOperationDescriptions);

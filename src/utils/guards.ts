@@ -84,6 +84,22 @@ obj is IRouteTransactionOperationDescription {
   return 'id_route_transaction_operation_description' in obj;
 }
 
+// Related to routes
+export function isTypeIRoute(obj: any):
+obj is IRoute {
+  return 'id_route' in obj;
+}
+
+export function isTypeIRouteDay(obj: any):
+obj is IRouteDay {
+  return 'id_route_day' in obj && 'id_route_day' in obj;
+}
+
+export function isTypeIRouteDayStore(obj: any):
+obj is IRouteDayStores {
+  return 'id_route_day_store' in obj && 'position_in_route' in obj;
+}
+
 // Intersection guards
 // Related to work day
 export function isTypeWorkDayInstersection(obj: any): obj is
