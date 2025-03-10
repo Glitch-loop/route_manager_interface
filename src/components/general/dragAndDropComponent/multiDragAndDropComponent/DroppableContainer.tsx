@@ -14,10 +14,9 @@ interface DroppableContainerProps {
   onSave: () => void;
   onClose: () => void;
   onAddItem: (item: ICatalogItem | null) => void;
-  onRemoveItem: (itemId: ICatalogItem) => void;
 }
 
-export default function DroppableContainer({ id, title, items, allItems, onRemoveItem, onAddItem, onSave, onClose }: DroppableContainerProps) {
+export default function DroppableContainer({ id, title, items, allItems, onAddItem, onSave, onClose }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
   const [isSaveDisabled, setIsSaveDisabled] = useState<boolean>(true);
   const [confirmDialog, setConfirmDialog] = useState<boolean>(false);
@@ -92,8 +91,7 @@ export default function DroppableContainer({ id, title, items, allItems, onRemov
           <SortableItem 
             key={item.id_item_in_container} 
             id={item.id_item_in_container} 
-            name={item.item_name} 
-            onRemove={() => onRemoveItem(item)} // Pass remove function 
+            name={item.item_name}
           />
         ))}
       </SortableContext>

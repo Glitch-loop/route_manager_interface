@@ -8,15 +8,18 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  UniqueIdentifier,
 } from "@dnd-kit/core";
 import {
   arrayMove,
   SortableContext,
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { SortableItem } from "@/components/general/dragAndDropComponent/SortableItem";
+
 import DroppableContainer from "@/components/general/dragAndDropComponent/multiDragAndDropComponent/DroppableContainer";
 import { generateUUIDv4 } from "@/utils/generalUtils";
+// import { Dialog, DialogActions, DialogContent, DialogTitle, Button } from "@mui/material";
+import ConfirmDialog from "../../ConfirmDialog";
 
 interface MultiContainerDragDropProps {
   catalogMatrix: ICatalogItem[][]; // Matrix of catalog items
@@ -38,8 +41,11 @@ export default function MultiContainerDragDrop({
   const [catalogs, setCatalogs] = useState<ICatalogItem[][]>(catalogMatrix);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [pendingTransfer, setPendingTransfer] = useState<{ item: ICatalogItem; fromIndex: number; toIndex: number } | null>(null);
+  const [selectedItem, setSelectedItem] = useState<string|null>(null);
+  const [showDialogDeleteItem, setShowDialogDeleteItem] = useState<boolean>(false);
 
   const sensors = useSensors(useSensor(PointerSensor));
+
 
   // Handle Drag & Drop Movement
   const handleDragEnd = (event: any) => {
@@ -87,18 +93,40 @@ export default function MultiContainerDragDrop({
   };
 
   // Remove Item from Container
-  const handleRemoveItem = (containerIndex: number, itemToDelete: ICatalogItem) => {
+  const handleCleanDeleteItemsStates = () => {
+    setSelectedItem(null);
+    setShowDialogDeleteItem(false);
+  }
+  const handlerSelectItem = (idItem:string) => {
+    if(selectedItem === null) { // First time the user selects an item
+      setSelectedItem(idItem);
+      setShowDialogDeleteItem(false);
+    } else {
+      if (selectedItem === idItem) { // Second time the user selects an item
+        setShowDialogDeleteItem(true);
+      } else {
+        handleCleanDeleteItemsStates();
+      }
+    }
+  }
+
+  const handleRemoveItem = (id_item_container_to_delete:string|null) => {
     console.log("Removing item")
-    onModifyCatalogMatrix((prev) => {
-      const newCatalogs = [...prev];
-      newCatalogs[containerIndex] = newCatalogs[containerIndex].filter((item:ICatalogItem) => item.id_item_in_container !== itemToDelete.id_item_in_container);
+    
+    onModifyCatalogMatrix((prev:ICatalogItem[][]) => {
+      // const newCatalogs = [...prev];
+      // newCatalogs[containerIndex] = newCatalogs[containerIndex].filter((item:ICatalogItem) => item.id_item_in_container !== itemToDelete.id_item_in_container);
+
+      const newCatalogs = prev.map((currentCatalog) => currentCatalog.filter((item:ICatalogItem) => item.id_item_in_container !== id_item_container_to_delete))
       return newCatalogs;
     });
+
+    handleCleanDeleteItemsStates();
+    
   };
 
   // Add New Item via Search
   const handleAddItem = (containerIndex: number, item: ICatalogItem | null) => {
-    console.log("Adding item")
     if (!item) return
     onModifyCatalogMatrix((prev) => {
       const newCatalogs = [...prev];
@@ -120,7 +148,7 @@ export default function MultiContainerDragDrop({
   return (
     <div className="relative w-full p-4">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} 
-      onDragOver={() => console.log("AAAAAAAA")}>
+      onDragOver={(event) => { handlerSelectItem(event.active.id.toString()); }}>
         <div className="w-full flex flex-row gap-4">
           {catalogMatrix.map((items, index) => (
             <DroppableContainer
@@ -132,27 +160,36 @@ export default function MultiContainerDragDrop({
               onSave={() => handleSaveContainer(index)}
               onClose={() => handleCloseWithoutSave(index)}
               onAddItem={(item) => handleAddItem(index, item)}
-              onRemoveItem={(item) => handleRemoveItem(index, item)}
+              // onRemoveItem={(item) => handleRemoveItem(index, item)}
               />
           ))}
         </div>
       </DndContext>
 
       {/* Confirmation Dialog */}
-      <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
-        <DialogTitle>Mover tienda</DialogTitle>
-        <DialogContent>
-          <p>¿Quiere convervar tambien la tienda en la ruta actual?</p>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => confirmTransfer(true)} color="primary">
-            Mantener tienda
-          </Button>
-          <Button onClick={() => confirmTransfer(false)} color="secondary">
-            Borrarla de la ruta original
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+      <ConfirmDialog 
+        open={dialogOpen}
+        title={"Mover tienda"}
+        question={"¿Quieres conservar tambien la tienda en la ruta actual?"}
+        leftText={"Mantener tienda"}
+        rightText={"Borrarla de la ruta original"}
+        onLeftClick={() => confirmTransfer(true)} 
+        onRightClick={() => confirmTransfer(false)} 
+        onClose={() => setDialogOpen(false)}
+      />
+
+      <ConfirmDialog 
+        open={showDialogDeleteItem}
+        title={"Eliminar tienda"}
+        question={"¿Quieres eliminar la tienda de la ruta actual?"}
+        leftText={"Mantener tienda"}
+        rightText={"Borrar tienda"}
+        onLeftClick={() => handleCleanDeleteItemsStates()} 
+        onRightClick={() => handleRemoveItem(selectedItem)} 
+        onClose={() => handleCleanDeleteItemsStates() }
+      />
+      
     </div>
   );
 }

@@ -189,6 +189,8 @@ export default function RouteDayManagerView() {
         }
     })
 
+    console.log("Route of the day: ", catalogOfTheRouteDay)
+
     setSelectedRouteDay(routeDay);
     setRouteDayStores(routeDayStoresData);
 
