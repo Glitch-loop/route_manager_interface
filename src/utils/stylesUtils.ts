@@ -109,7 +109,29 @@ export const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
       b: bigint & 255 
     };
   };
-  
+
+// Convert HSL to HEX
+export const hslToHex = (h: number, s: number, l: number) => {
+  s /= 100;
+  l /= 100;
+  const k = (n: number) => (n + h / 30) % 12;
+  const a = s * Math.min(l, 1 - l);
+  const f = (n: number) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
+  return `#${f(0).toString(16).padStart(2, "0")}${f(8).toString(16).padStart(2, "0")}${f(4).toString(16).padStart(2, "0")}`;
+};
+
+export const rgbToHex = (rgb: string): string => {
+  const match = rgb.match(/\d+/g); // Extract numbers from "rgb(r, g, b)"
+  if (!match || match.length < 3) return "#000000"; // Default to black if invalid
+
+  const [r, g, b] = match.map(Number);
+
+  // Convert each color component to a two-digit HEX string
+  const toHex = (value: number) => value.toString(16).padStart(2, "0");
+
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
+};
+
 export const getGradientColor = (baseHex: string, position: number, total: number) => {
     const maxStores = 50;
     const adjustedTotal = Math.max(total, maxStores); // Cap at 50 stores
@@ -129,12 +151,11 @@ export const getGradientColor = (baseHex: string, position: number, total: numbe
 
 export const getLightestMarker = (markers: IMapMarker[]): IMapMarker | null => {
     if (markers.length === 0) return null;
-  
     // Function to extract RGB values and convert to HSL lightness
     const getLightness = (rgb: string): number => {
       const match = rgb.match(/\d+/g); // Extract numbers from "rgb(r, g, b)"
       if (!match || match.length < 3) return 0;
-  
+      console.log(rgb)
       const [r, g, b] = match.map(Number);
   
       // Convert to HSL and return lightness (L)
@@ -159,15 +180,7 @@ export const generateLightColor = (index: number, totalRoutes: number) => {
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
   };
 
-  // Convert HSL to HEX
-export const hslToHex = (h: number, s: number, l: number) => {
-    s /= 100;
-    l /= 100;
-    const k = (n: number) => (n + h / 30) % 12;
-    const a = s * Math.min(l, 1 - l);
-    const f = (n: number) => Math.round(255 * (l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1))));
-    return `#${f(0).toString(16).padStart(2, "0")}${f(8).toString(16).padStart(2, "0")}${f(4).toString(16).padStart(2, "0")}`;
-  };
+
 
 export  const generateRandomLightColor = (): string => {
     const hue = Math.floor(Math.random() * 360); // Random hue (0-360)

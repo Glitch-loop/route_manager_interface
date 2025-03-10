@@ -25,14 +25,14 @@ import { getAllStores } from "@/controllers/StoreController";
 import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, convertArrayInJsonUsingInterfaces, generateUUIDv4 } from "@/utils/generalUtils";
 
 // Components
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, rgbToHex } from "@mui/material";
 import MultiContainerDragDrop from "@/components/general/dragAndDropComponent/multiDragAndDropComponent/MultiContainerDragDrop";
 import StoreMap from "@/components/general/mapComponent/StoreMap";
 import RouteMap from "../general/mapComponent/RouteMap";
 import InfoStoreHover from "../store/map/InfoStoreHover";
 import InfoStoreClick from "../store/map/InfoStoreClick";
 import DAYS from "@/utils/days";
-import { createCustomMarker, generateLightColor, generateRandomLightColor, getGradientColor, getLightestMarker } from "@/utils/stylesUtils";
+import { createCustomMarker, generateLightColor, generateRandomLightColor, getGradientColor, getLightestMarker, hexToRgb } from "@/utils/stylesUtils";
 
 export default function RouteDayManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -145,7 +145,8 @@ export default function RouteDayManagerView() {
     // Related to map component
     const markerOfTheRouteDay:IMapMarker[] = [];
     const colorOfRoute:string = generateRandomLightColor();
-    
+    console.log(colorOfRoute)
+    console.log(hexToRgb(colorOfRoute))
     // Verifying the user didn't choose before the route day.
     if (catalogsRoutes) {
       catalogsRoutes.forEach((catalog:ICatalogItem[]) => {
@@ -268,14 +269,13 @@ export default function RouteDayManagerView() {
 
       if(currentCatalog[0]) {
         const { id_group } = currentCatalog[0];
-        console.log("markersToShow: ", markersToShow)
-        console.log(markersToShow.filter((marker) => {return marker.id_group === id_group}))
         const lightestMarker:IMapMarker|null = getLightestMarker(
           markersToShow.filter((marker) => {return marker.id_group === id_group}));
         
         if (lightestMarker){
-          colorOfRoute = lightestMarker.color_item;
-          console.log(colorOfRoute)
+          colorOfRoute = rgbToHex(lightestMarker.color_item);
+          console.log("RGB: ", lightestMarker.color_item)
+          console.log("colorOfRoute: ", colorOfRoute)
         }
 
       }
