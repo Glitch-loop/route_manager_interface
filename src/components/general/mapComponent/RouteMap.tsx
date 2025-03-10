@@ -48,10 +48,9 @@ export default function RouteMap({ markers, onSelectStore }: StoreMapProps) {
         defaultZoom={13}
       >
         {markers.map((marker, index) =>  {
-           const color = getGradientColor(marker.color_item, index, markers.length);
           return (<Marker
             key={marker.id_item}
-            icon={createCustomMarker(color)}
+            icon={createCustomMarker(marker.color_item)}
             position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longuitude) }}
             onClick={() => {
               setSelectedStore(marker);

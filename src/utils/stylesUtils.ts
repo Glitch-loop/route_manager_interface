@@ -115,7 +115,7 @@ export const getGradientColor = (baseHex: string, position: number, total: numbe
     const adjustedTotal = Math.min(total, maxStores); // Cap at 50 stores
   
     // Reduce brightness proportionally (making it darker as position increases)
-    const factor = position / adjustedTotal; // 0 (light) → 1 (dark)
+    const factor = Math.pow(position / adjustedTotal, 1); // Slows the darkening effect
     
     // Convert base HEX to RGB
     const baseColor = hexToRgb(baseHex);
