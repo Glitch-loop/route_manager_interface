@@ -1,5 +1,5 @@
 // Database
-import { IResponse, IRouteDay, IRouteDayStores, IRouteTransaction, IStore } from "@/interfaces/interfaces";
+import { IMapMarker, IResponse, IRouteDay, IRouteDayStores, IRouteTransaction, IStore } from "@/interfaces/interfaces";
 import { RepositoryFactory } from "@/repositories/RepositoryFactory";
 import { getDataFromApiResponse } from "@/utils/responseUtils";
 

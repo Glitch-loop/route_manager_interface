@@ -217,6 +217,7 @@ export interface IConceptOption {
 export interface ICatalogItem {
   id_item: string,
   id_item_in_container: string,
+  id_group: string,
   item_name: string,
   order_to_show: number,
 }

@@ -156,7 +156,7 @@ export default function RouteDayManagerView() {
         if(storeJson[id_store] !== undefined) {
           const colorAccordingThePosition:string = getGradientColor(colorOfRoute, position_in_route, totalstoresInRouteDay );
           
-          const currentStore:IStore = storeJson[id_store]
+          const currentStore:IStore = storeJson[id_store];
           const { store_name, latitude, longuitude } = currentStore;
 
           storesOfTheRouteDay.push({...currentStore, ...routeDayStore}); 
@@ -177,6 +177,7 @@ export default function RouteDayManagerView() {
             id_item_in_container: generateUUIDv4(),
             item_name: capitalizeFirstLetterOfEachWord(store_name),
             order_to_show: position_in_route,
+            id_group: id_route_day,
           });
 
           if(mapRoutes[id_route]) {
@@ -199,10 +200,8 @@ export default function RouteDayManagerView() {
     setNameOfRouteCatalog([nameOfTheRoute, ...nameOfRoutesCatalog]);
 
     if (catalogsRoutes) {
-      console.log("Ya existe")
       setCatalogsRoutes([[...catalogOfTheRouteDay], ...catalogsRoutes])
     } else {
-      console.log("No existe")
       setCatalogsRoutes([[...catalogOfTheRouteDay]])
     }
   };
@@ -220,11 +219,15 @@ export default function RouteDayManagerView() {
 
   const handleClose = (column: number) => {
     const updatedMatrix:ICatalogItem[][] = [];
-
+    let id_group_to_delete:string|null = null;
     if (catalogsRoutes) {
       for(let i = 0; i < catalogsRoutes.length; i++) {
         if (i !== column) {
           updatedMatrix.push(catalogsRoutes[i]);
+        } else {
+          if (catalogsRoutes[i][0]) {
+            id_group_to_delete = catalogsRoutes[i][0].id_group;
+          }
         }
       }
       
@@ -233,7 +236,56 @@ export default function RouteDayManagerView() {
       } else {
         setCatalogsRoutes(null)
       }
+
+      if (id_group_to_delete) {
+        setMarkerToShow(markersToShow.filter((marker) => marker.id_group !== id_group_to_delete))
+      }
+
     }
+  }
+
+  const handlerCatalogRoutes = (matrix:ICatalogItem[][]) => {
+    const markerOfTheRouteDay:IMapMarker[] = [];
+
+    console.log("AAAAAAAAAA; ", matrix)
+    matrix.forEach((currentCatalog:ICatalogItem[]) => {
+      let colorOfRoute:string = "#fff";
+      const totalItemsInCatalog:number = currentCatalog.length;
+
+      if(currentCatalog[0]) {
+        const firstItem = currentCatalog[0];
+        const markerInGroup:IMapMarker = markersToShow.find((marker) => marker.id_group === firstItem.id_group);
+
+        colorOfRoute = markerInGroup.color_item;
+      }
+
+      currentCatalog.forEach((currentItem:ICatalogItem) => {
+        const {id_item, id_group, order_to_show  } = currentItem;
+        
+        if(storeJson[id_item] !== undefined) {
+          const currentStore:IStore = storeJson[id_item];
+          const { store_name, latitude, longuitude } = currentStore;
+          const colorAccordingThePosition:string = getGradientColor(colorOfRoute, order_to_show, totalItemsInCatalog);
+          markerOfTheRouteDay.push({
+            id_marker: generateUUIDv4(),
+            id_item: id_item,
+            hoverComponent: <InfoStoreHover store_name={store_name} position_in_route={order_to_show.toString()}/>,
+            clickComponent: <InfoStoreClick store={currentStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
+            color_item: colorAccordingThePosition,
+            id_group: id_group,
+            latitude: latitude,
+            longuitude: longuitude
+          });
+  
+        }
+      })
+
+    })
+
+    setCatalogsRoutes(matrix);
+    
+    setMarkerToShow([ ...markerOfTheRouteDay ]);
+
   }
 
   return (
@@ -277,7 +329,7 @@ export default function RouteDayManagerView() {
             allItems={catalogStores}
             onSave={(column:number) => {handleSaveRouteDay(column)}}
             onClose={(column:number) => {handleClose(column)}}
-            onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {setCatalogsRoutes(matrix)}}
+            onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {handlerCatalogRoutes(matrix)}}
           />
         )}
       </div>

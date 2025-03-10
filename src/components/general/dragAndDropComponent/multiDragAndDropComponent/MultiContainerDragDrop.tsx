@@ -1,19 +1,15 @@
 "use client";
 import { useState } from "react";
 import { ICatalogItem } from "@/interfaces/interfaces";
-import { Button, Paper, Dialog, DialogActions, DialogContent, DialogTitle, TextField, Autocomplete } from "@mui/material";
 import {
   DndContext,
   closestCenter,
   PointerSensor,
   useSensor,
   useSensors,
-  UniqueIdentifier,
 } from "@dnd-kit/core";
 import {
   arrayMove,
-  SortableContext,
-  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 
 import DroppableContainer from "@/components/general/dragAndDropComponent/multiDragAndDropComponent/DroppableContainer";
@@ -65,12 +61,13 @@ export default function MultiContainerDragDrop({
       const updatedList = arrayMove(catalogMatrix[fromIndex], active.data.current.sortable.index, over.data.current.sortable.index)
         .map((item, index) => ({ ...item, order_to_show: index + 1 }));
 
-      onModifyCatalogMatrix((prev) => {
-        const newCatalogs = [...prev];
-        newCatalogs[fromIndex] = updatedList;
-        return newCatalogs;
-      });
+
+        onModifyCatalogMatrix(catalogMatrix.map((catalog, index) => 
+          index === fromIndex ? updatedList : catalog
+        ));
     }
+
+    handleCleanDeleteItemsStates();
   };
 
   // Confirm Transfer Between Containers
@@ -79,14 +76,15 @@ export default function MultiContainerDragDrop({
 
     const { item, fromIndex, toIndex } = pendingTransfer;
 
-    onModifyCatalogMatrix((prev) => {
-      const newCatalogs = [...prev];
-      newCatalogs[toIndex] = [...newCatalogs[toIndex], { ...item, id_item_in_container: generateUUIDv4(), order_to_show: newCatalogs[toIndex].length + 1 }];
-      if (!keepOriginal) {
-        newCatalogs[fromIndex] = newCatalogs[fromIndex].filter((i) => i.id_item_in_container !== item.id_item_in_container);
+    onModifyCatalogMatrix(catalogMatrix.map((catalog, index) => {
+      if (index === toIndex) {
+        return [...catalog, { ...item, id_item_in_container: generateUUIDv4(), order_to_show: catalog.length + 1 }];
       }
-      return newCatalogs;
-    });
+      if (!keepOriginal && index === fromIndex) {
+        return catalog.filter((i) => i.id_item_in_container !== item.id_item_in_container);
+      }
+      return catalog;
+    }));
 
     setDialogOpen(false);
     setPendingTransfer(null);
@@ -113,13 +111,9 @@ export default function MultiContainerDragDrop({
   const handleRemoveItem = (id_item_container_to_delete:string|null) => {
     console.log("Removing item")
     
-    onModifyCatalogMatrix((prev:ICatalogItem[][]) => {
-      // const newCatalogs = [...prev];
-      // newCatalogs[containerIndex] = newCatalogs[containerIndex].filter((item:ICatalogItem) => item.id_item_in_container !== itemToDelete.id_item_in_container);
-
-      const newCatalogs = prev.map((currentCatalog) => currentCatalog.filter((item:ICatalogItem) => item.id_item_in_container !== id_item_container_to_delete))
-      return newCatalogs;
-    });
+    onModifyCatalogMatrix(catalogMatrix.map((catalog) =>
+      catalog.filter((item) => item.id_item_in_container !== id_item_container_to_delete)
+    ));
 
     handleCleanDeleteItemsStates();
     
@@ -128,11 +122,11 @@ export default function MultiContainerDragDrop({
   // Add New Item via Search
   const handleAddItem = (containerIndex: number, item: ICatalogItem | null) => {
     if (!item) return
-    onModifyCatalogMatrix((prev) => {
-      const newCatalogs = [...prev];
-      newCatalogs[containerIndex] = [...newCatalogs[containerIndex], { ...item, id_item_in_container: generateUUIDv4(), order_to_show: newCatalogs[containerIndex].length + 1 }];
-      return newCatalogs;
-    });
+    onModifyCatalogMatrix(catalogMatrix.map((catalog, index) =>
+      index === containerIndex
+        ? [...catalog, { ...item, id_item_in_container: generateUUIDv4(), order_to_show: catalog.length + 1 }]
+        : catalog
+    ));
   };
 
   // Handle Container Save
@@ -148,7 +142,7 @@ export default function MultiContainerDragDrop({
   return (
     <div className="relative w-full p-4">
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} 
-      onDragOver={(event) => { handlerSelectItem(event.active.id.toString()); }}>
+      onDragStart={(event) => { handlerSelectItem(event.active.id.toString()); }}>
         <div className="w-full flex flex-row gap-4">
           {catalogMatrix.map((items, index) => (
             <DroppableContainer
