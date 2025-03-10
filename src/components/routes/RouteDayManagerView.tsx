@@ -32,7 +32,7 @@ import RouteMap from "../general/mapComponent/RouteMap";
 import InfoStoreHover from "../store/map/InfoStoreHover";
 import InfoStoreClick from "../store/map/InfoStoreClick";
 import DAYS from "@/utils/days";
-import { createCustomMarker, generateLightColor, generateRandomLightColor, getGradientColor } from "@/utils/stylesUtils";
+import { createCustomMarker, generateLightColor, generateRandomLightColor, getGradientColor, getLightestMarker } from "@/utils/stylesUtils";
 
 export default function RouteDayManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -132,10 +132,13 @@ export default function RouteDayManagerView() {
     setStoreJson(convertArrayInJsonUsingInterfaces(storesData));
   };
 
+  // Related to the table
   const handleAddRouteDay = async (routeDay: IRouteDay) => {
-    // Related to drag and drop component
-    const storesOfTheRouteDay:(IStore&IRouteDayStores)[] = [];  
+    // Variables to prevent route duplication.
+    let routeSelectedPreviously:boolean = false;
     
+    // Variables related to drag and drop component
+    const storesOfTheRouteDay:(IStore&IRouteDayStores)[] = [];  
     const catalogOfTheRouteDay:ICatalogItem[] = [];
     let nameOfTheRoute:string = "";
     
@@ -143,10 +146,22 @@ export default function RouteDayManagerView() {
     const markerOfTheRouteDay:IMapMarker[] = [];
     const colorOfRoute:string = generateRandomLightColor();
     
-    
+    // Verifying the user didn't choose before the route day.
+    if (catalogsRoutes) {
+      catalogsRoutes.forEach((catalog:ICatalogItem[]) => {
+        if(catalog[0]) {
+          if(catalog[0].id_group === routeDay.id_route_day) {
+            routeSelectedPreviously = true;
+            return;
+          }
+        }
+      })
+    }
+
+    if(routeSelectedPreviously) return;
+
+    // Retriving information of the route day
     const routeDayStoresData = await getStoresOfRouteDay(routeDay);
-
-
     const totalstoresInRouteDay:number = routeDayStoresData.length;
     const { id_route, id_day } = routeDay;
 
@@ -164,7 +179,7 @@ export default function RouteDayManagerView() {
           markerOfTheRouteDay.push({
             id_marker: generateUUIDv4(),
             id_item: id_store,
-            hoverComponent: <InfoStoreHover store_name={store_name} position_in_route={position_in_route.toString()}/>,
+            hoverComponent: <InfoStoreHover store={currentStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes} />,
             clickComponent: <InfoStoreClick store={currentStore} routeDayStores={[routeDayStore]} routeDays={mapRouteDays} routes={mapRoutes} />,
             color_item: colorAccordingThePosition,
             id_group: id_route_day,
@@ -190,8 +205,6 @@ export default function RouteDayManagerView() {
         }
     })
 
-    console.log("Route of the day: ", catalogOfTheRouteDay)
-
     setSelectedRouteDay(routeDay);
     setRouteDayStores(routeDayStoresData);
 
@@ -206,6 +219,7 @@ export default function RouteDayManagerView() {
     }
   };
 
+  // Related drag and drop component
   const handleSaveRouteDay = async (column: number) => {
     if (!selectedRouteDay) return;
 
@@ -247,16 +261,23 @@ export default function RouteDayManagerView() {
   const handlerCatalogRoutes = (matrix:ICatalogItem[][]) => {
     const markerOfTheRouteDay:IMapMarker[] = [];
 
-    console.log("AAAAAAAAAA; ", matrix)
+
     matrix.forEach((currentCatalog:ICatalogItem[]) => {
-      let colorOfRoute:string = "#fff";
+      let colorOfRoute:string = generateRandomLightColor();
       const totalItemsInCatalog:number = currentCatalog.length;
 
       if(currentCatalog[0]) {
-        const firstItem = currentCatalog[0];
-        const markerInGroup:IMapMarker = markersToShow.find((marker) => marker.id_group === firstItem.id_group);
+        const { id_group } = currentCatalog[0];
+        console.log("markersToShow: ", markersToShow)
+        console.log(markersToShow.filter((marker) => {return marker.id_group === id_group}))
+        const lightestMarker:IMapMarker|null = getLightestMarker(
+          markersToShow.filter((marker) => {return marker.id_group === id_group}));
+        
+        if (lightestMarker){
+          colorOfRoute = lightestMarker.color_item;
+          console.log(colorOfRoute)
+        }
 
-        colorOfRoute = markerInGroup.color_item;
       }
 
       currentCatalog.forEach((currentItem:ICatalogItem) => {
@@ -264,12 +285,18 @@ export default function RouteDayManagerView() {
         
         if(storeJson[id_item] !== undefined) {
           const currentStore:IStore = storeJson[id_item];
-          const { store_name, latitude, longuitude } = currentStore;
+          const { latitude, longuitude } = currentStore;
           const colorAccordingThePosition:string = getGradientColor(colorOfRoute, order_to_show, totalItemsInCatalog);
+          const routeDayStore:IRouteDayStores = {
+            id_route_day_store: "",
+            position_in_route: order_to_show,
+            id_route_day: id_group,
+            id_store: id_item
+          }
           markerOfTheRouteDay.push({
             id_marker: generateUUIDv4(),
             id_item: id_item,
-            hoverComponent: <InfoStoreHover store_name={store_name} position_in_route={order_to_show.toString()}/>,
+            hoverComponent: <InfoStoreHover store={currentStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
             clickComponent: <InfoStoreClick store={currentStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
             color_item: colorAccordingThePosition,
             id_group: id_group,

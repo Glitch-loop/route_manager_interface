@@ -8,7 +8,6 @@ interface InfoStoreClickProps {
     routeDayStores: IRouteDayStores[],
     routeDays: Record<string, IRouteDay>,
     routes: Record<string, IRoute>,
-
 }
 
 export default function InfoStoreClick({ store, routeDayStores, routeDays, routes }: InfoStoreClickProps) {

@@ -1,12 +1,33 @@
-import { capitalizeFirstLetterOfEachWord } from "@/utils/generalUtils";
+import { IRoute, IRouteDay, IRouteDayStores, IStore } from "@/interfaces/interfaces";
+import DAYS from "@/utils/days";
+import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord } from "@/utils/generalUtils";
 
+interface InfoStoreHoverInterface {
+        store: IStore,
+        routeDayStore: IRouteDayStores,
+        routeDays: Record<string, IRouteDay>,
+        routes: Record<string, IRoute>,
+}
 
+export default function InfoStoreHover({store, routeDayStore, routeDays, routes}: InfoStoreHoverInterface) {
+    const { store_name } = store;
 
-export default function InfoStoreHover({store_name, position_in_route}:{store_name:string, position_in_route:string}) {
+    const { id_route_day, position_in_route } = routeDayStore;  
+
+    const { id_day, id_route } = routeDays[id_route_day];
+
+    const { route_name } = routes[id_route];
+
+    const dayName:string = DAYS[id_day].day_name
+
     return (
         <div className="flex flex-col">
             <span className="text-xl">Nombre: {capitalizeFirstLetterOfEachWord(store_name)}</span>
-            <span className="text-lg font-bold">Posición de la tienda: {position_in_route}</span>
+            <div className="flex flex-row text-base">
+                <span className="flex basis-1/4">{ capitalizeFirstLetter(route_name) } </span>
+                <span className="mx-2 flex basis-1/4">{ capitalizeFirstLetter(dayName) }</span>
+                <span className="flex basis-2/4">Posición: { position_in_route }</span>
+            </div>
         </div>
     )
 }

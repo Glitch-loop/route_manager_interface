@@ -1,6 +1,6 @@
 import { enumStoreStates } from "@/interfaces/enumStoreStates"
 import { colorTypes, sizeTypes } from "../interfaces/typesSystem"
-import { IStore, IStoreStatusDay } from "@/interfaces/interfaces"
+import { IMapMarker, IStore, IStoreStatusDay } from "@/interfaces/interfaces"
 import DAYS_OPERATIONS from "./dayOperations"
 
 function deterimneIconSize(colorSelected:sizeTypes){
@@ -112,7 +112,7 @@ export const hexToRgb = (hex: string): { r: number; g: number; b: number } => {
   
 export const getGradientColor = (baseHex: string, position: number, total: number) => {
     const maxStores = 50;
-    const adjustedTotal = Math.min(total, maxStores); // Cap at 50 stores
+    const adjustedTotal = Math.max(total, maxStores); // Cap at 50 stores
   
     // Reduce brightness proportionally (making it darker as position increases)
     const factor = Math.pow(position / adjustedTotal, 1); // Slows the darkening effect
@@ -125,6 +125,29 @@ export const getGradientColor = (baseHex: string, position: number, total: numbe
     const b = Math.max(0, Math.floor(baseColor.b * (1 - factor))); // Reduce B
   
     return `rgb(${r}, ${g}, ${b})`;
+  };
+
+export const getLightestMarker = (markers: IMapMarker[]): IMapMarker | null => {
+    if (markers.length === 0) return null;
+  
+    // Function to extract RGB values and convert to HSL lightness
+    const getLightness = (rgb: string): number => {
+      const match = rgb.match(/\d+/g); // Extract numbers from "rgb(r, g, b)"
+      if (!match || match.length < 3) return 0;
+  
+      const [r, g, b] = match.map(Number);
+  
+      // Convert to HSL and return lightness (L)
+      const rNorm = r / 255, gNorm = g / 255, bNorm = b / 255;
+      const max = Math.max(rNorm, gNorm, bNorm);
+      const min = Math.min(rNorm, gNorm, bNorm);
+      return (max + min) / 2 * 100; // Lightness percentage (0-100)
+    };
+  
+    // Find the marker with the highest lightness value
+    return markers.reduce((lightest, marker) => 
+      getLightness(marker.color_item) > getLightness(lightest.color_item) ? marker : lightest
+    , markers[0]);
   };
 
 // Function to generate a light color based on an index
