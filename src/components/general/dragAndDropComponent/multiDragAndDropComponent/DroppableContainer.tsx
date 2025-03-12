@@ -86,7 +86,7 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
         onChange={(event, newValue) => { onAddItem(newValue) }}
         renderOption={(props, option) => (
           <li
-            key={option.id_item}
+            key={option.id_item_in_container}
             {...props}
             onMouseEnter={() => onHoverOption(option)} // Detect hover
             onMouseLeave={() => onHoverOption(null)} // Detect hover

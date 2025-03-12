@@ -54,7 +54,9 @@ export default function RouteDayManagerView() {
   // Maps
   const [mapRoutes, setMapRoutes] = useState<Record<string, IRoute>>({});
   const [mapRouteDays, setMapRouteDays] = useState<Record<string, IRouteDay>>({});
+  const [temporalMarkers, setTemporalMarkers] = useState<IMapMarker[]>([]);
   const [storeHoverd, setStoreHovered] = useState<IMapMarker[]>([]);
+  const [storeSelected, setSelectedStore] = useState<IMapMarker[]>([]);
   // const [mapRouteDayStores, setMapRouteDayStores] = useState<Record<string, IRouteDayStores>>({});
 
   useEffect(() => {
@@ -328,25 +330,66 @@ export default function RouteDayManagerView() {
   }
 
   const handleHoverItem = (item:ICatalogItem|null) => {
+    const updatedHoveredStores:IMapMarker[] = [];
 
     if (item) {
       const foundStore:undefined|IStore = stores.find((store) => store.id_store === item.id_item);
       
       if (foundStore) {
-        setStoreHovered([{
-          id_marker: generateUUIDv4(),
-          id_item: foundStore.id_store,
-          hoverComponent: <div></div>,
-          clickComponent: <div></div>,
-          color_item: '#F08080'	,
-          id_group: '',
-          latitude: foundStore.latitude,
-          longuitude: foundStore.longuitude,
-        }])
+        updatedHoveredStores.push(
+          {
+            id_marker: generateUUIDv4(),
+            id_item: foundStore.id_store,
+            hoverComponent: <div></div>,
+            clickComponent: <div></div>,
+            color_item: '#F08080'	,
+            id_group: '',
+            latitude: foundStore.latitude,
+            longuitude: foundStore.longuitude,
+          },
+        )
       }
     } else {
-      setStoreHovered([]);
+      /* Do nothing */
     }
+
+    setStoreHovered(updatedHoveredStores);
+    setTemporalMarkers([...updatedHoveredStores, ...storeSelected])
+  }
+
+  const handleSelectItem = (selectedItem:ICatalogItem) => {
+    console.log(selectedItem)
+    let updatedSelectedStores:IMapMarker[] = [];
+    const foundMarker:undefined|IMapMarker = storeSelected.find((marker) => marker.id_item === selectedItem.id_item);
+
+    console.log("foundMarker: ", foundMarker)
+    if (foundMarker === undefined) {
+      const foundStore:undefined|IStore = stores.find((store) => store.id_store === selectedItem.id_item);
+      
+      updatedSelectedStores = storeSelected.filter((marker) => marker.id_group !== selectedItem.id_group);
+      
+      console.log("foundStore: ", foundStore)
+        if (foundStore) {
+          updatedSelectedStores.push(
+            {
+              id_marker: generateUUIDv4(),
+              id_item: foundStore.id_store,
+              hoverComponent: <div></div>,
+              clickComponent: <div></div>,
+              color_item: '#FF9980'	,
+              id_group: selectedItem.id_group,
+              latitude: foundStore.latitude,
+              longuitude: foundStore.longuitude,
+            }
+          );
+        }
+    } else {
+      updatedSelectedStores.filter((marker) => marker.id_item !== foundMarker.id_item);
+    }
+
+      setTemporalMarkers([...storeHoverd, ...updatedSelectedStores])
+      setSelectedStore([ ...updatedSelectedStores ]);
+    
   }
 
   return (
@@ -378,7 +421,7 @@ export default function RouteDayManagerView() {
         <div className="flex basis-1/2 p-4 max-h-96 overflow-hidden">
           <RouteMap 
             markers={markersToShow}
-            temporalMarkers={[...storeHoverd]}
+            temporalMarkers={temporalMarkers}
             onSelectStore={(store) => console.log("Selected Store:", store)
 
           } 
@@ -395,7 +438,9 @@ export default function RouteDayManagerView() {
             onSave={(column:number) => {handleSaveRouteDay(column)}}
             onClose={(column:number) => {handleClose(column)}}
             onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {handlerMondifyCatalogRoutes(matrix)}}
-            onHoverOption={(item:ICatalogItem) => { handleHoverItem(item) }}
+            onHoverOption={(item:ICatalogItem|null) => { handleHoverItem(item) }}
+            onSelectExistingItem={(id_item:string) => {handleSelectItem(id_item)}}
+            
           />
         )}
       </div>

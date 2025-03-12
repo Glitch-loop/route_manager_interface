@@ -25,6 +25,7 @@ interface MultiContainerDragDropProps {
   onClose:(column: number) => void;
   onModifyCatalogMatrix: (updatedMatrix:ICatalogItem[][]) => void;
   onHoverOption: (item: ICatalogItem | null) => void;
+  onSelectExistingItem: (selectedItem: ICatalogItem) => void;
 }
 
 export default function MultiContainerDragDrop({ 
@@ -34,7 +35,8 @@ export default function MultiContainerDragDrop({
   onSave, 
   onClose,
   onModifyCatalogMatrix,
-  onHoverOption
+  onHoverOption,
+  onSelectExistingItem,
 }: MultiContainerDragDropProps) {
   const [catalogs, setCatalogs] = useState<ICatalogItem[][]>(catalogMatrix);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -129,6 +131,16 @@ export default function MultiContainerDragDrop({
     ));
   };
 
+  const handlerSelectingExistingItem = (idItemInContinaer:string) => {
+    const catalogItem: ICatalogItem | undefined = catalogMatrix
+    .find((catalog) => catalog.some((item) => item.id_item_in_container === idItemInContinaer))
+    ?.find((item) => item.id_item_in_container === idItemInContinaer);
+    console.log("Ok: ", catalogItem)
+    if (catalogItem) {
+      onSelectExistingItem(catalogItem)
+    }
+  }
+
   // Handle Container Save
   const handleSaveContainer = (index: number) => {
     onSave(index);
@@ -141,8 +153,11 @@ export default function MultiContainerDragDrop({
 
   return (
     <div className="relative w-full p-4">
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd} 
-      onDragStart={(event) => { handlerSelectItem(event.active.id.toString()); }}>
+      <DndContext sensors={sensors} 
+        collisionDetection={closestCenter} 
+        onDragEnd={handleDragEnd} 
+        onDragOver={(event) => handlerSelectingExistingItem(event.active.id.toString())}
+        onDragStart={(event) => { handlerSelectItem(event.active.id.toString()); }}>
         <div className="w-full flex flex-row gap-4">
           {catalogMatrix.map((items, index) => (
             <DroppableContainer
