@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { ICatalogItem } from "@/interfaces/interfaces";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { Paper, Button, Autocomplete, TextField, Dialog, DialogActions, DialogContent, DialogTitle, AutocompleteRenderInputParams } from "@mui/material";
+import { Paper, Button, Autocomplete, TextField, Dialog, DialogActions, DialogContent, DialogTitle } from "@mui/material";
 import { SortableItem } from "@/components/general/dragAndDropComponent/SortableItem";
 
 interface DroppableContainerProps {
@@ -14,14 +14,14 @@ interface DroppableContainerProps {
   onSave: () => void;
   onClose: () => void;
   onAddItem: (item: ICatalogItem | null) => void;
+  onHoverOption: (item: ICatalogItem | null) => void;
 }
 
-export default function DroppableContainer({ id, title, items, allItems, onAddItem, onSave, onClose }: DroppableContainerProps) {
+export default function DroppableContainer({ id, title, items, allItems, onAddItem, onSave, onClose, onHoverOption }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
   const [isSaveDisabled, setIsSaveDisabled] = useState<boolean>(true);
   const [confirmDialog, setConfirmDialog] = useState<boolean>(false);
   const [isSave, setIsSave] = useState<boolean>(false);
-
 
   // Disable save if there are no items
   useEffect(() => {
@@ -47,6 +47,7 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
       onClose(); // Directly close if empty
     }
   };
+
 
   // Handle Confirmed validation
   const handleConfirm = () => {
@@ -82,7 +83,18 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
         options={allItems.map((item) => { return { id: item.id_item_in_container, ...item }})}
         getOptionKey={(option) => option.id_item_in_container}
         getOptionLabel={(option) => option.item_name}
-        onChange={(event, newValue) => onAddItem(newValue)}
+        onChange={(event, newValue) => { onAddItem(newValue) }}
+        renderOption={(props, option) => (
+          <li
+            key={option.id_item}
+            {...props}
+            onMouseEnter={() => onHoverOption(option)} // Detect hover
+            onMouseLeave={() => onHoverOption(null)} // Detect hover
+          >
+            {option.item_name}
+          </li>
+        )}
+
         renderInput={(params) => <TextField {...params} label="Add Item" />}
       />
 

@@ -155,7 +155,6 @@ export const getLightestMarker = (markers: IMapMarker[]): IMapMarker | null => {
     const getLightness = (rgb: string): number => {
       const match = rgb.match(/\d+/g); // Extract numbers from "rgb(r, g, b)"
       if (!match || match.length < 3) return 0;
-      console.log(rgb)
       const [r, g, b] = match.map(Number);
   
       // Convert to HSL and return lightness (L)

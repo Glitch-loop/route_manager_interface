@@ -24,6 +24,7 @@ interface MultiContainerDragDropProps {
   onSave: (column:number) => void;
   onClose:(column: number) => void;
   onModifyCatalogMatrix: (updatedMatrix:ICatalogItem[][]) => void;
+  onHoverOption: (item: ICatalogItem | null) => void;
 }
 
 export default function MultiContainerDragDrop({ 
@@ -33,6 +34,7 @@ export default function MultiContainerDragDrop({
   onSave, 
   onClose,
   onModifyCatalogMatrix,
+  onHoverOption
 }: MultiContainerDragDropProps) {
   const [catalogs, setCatalogs] = useState<ICatalogItem[][]>(catalogMatrix);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -152,6 +154,7 @@ export default function MultiContainerDragDrop({
               onSave={() => handleSaveContainer(index)}
               onClose={() => handleCloseWithoutSave(index)}
               onAddItem={(item) => handleAddItem(index, item, catalogTitles[index])}
+              onHoverOption={(item) => onHoverOption(item)}
               // onRemoveItem={(item) => handleRemoveItem(index, item)}
               />
           ))}

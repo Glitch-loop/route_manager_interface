@@ -7,6 +7,7 @@ import { createCustomMarker, getGradientColor } from "@/utils/stylesUtils";
 
 interface StoreMapProps {
   markers: IMapMarker[];
+  temporalMarkers: IMapMarker[];
   onSelectStore: (store: IMapMarker) => void;
 }
 
@@ -14,7 +15,7 @@ interface StoreMapProps {
 const containerStyle = { width: "100%", height: "500px" };
 const defaultCenter = { lat: 20.648043093256433, lng: -105.21612612535338 }; // Default: Mexico City
  
-export default function RouteMap({ markers, onSelectStore }: StoreMapProps) {
+export default function RouteMap({ markers, temporalMarkers, onSelectStore }: StoreMapProps) {
   const [selectedStore, setSelectedStore] = useState<IMapMarker | null>(null);
   const [hoveredPosition, setHoveredPosition] = useState<IMapMarker | null>(null);
   const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
@@ -48,6 +49,20 @@ export default function RouteMap({ markers, onSelectStore }: StoreMapProps) {
         defaultZoom={13}
       >
         {markers.map((marker, index) =>  {
+          return (<Marker
+            key={marker.id_item}
+            icon={createCustomMarker(marker.color_item)}
+            position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longuitude) }}
+            onClick={() => {
+              setSelectedStore(marker);
+              onSelectStore(marker);
+              setHoveredPosition(null);
+            }}
+            onMouseOver={() => handleMouseOver(marker)}
+            onMouseOut={() => handleMouseOut() }
+          />
+        )})}
+        {temporalMarkers.map((marker, index) =>  {
           return (<Marker
             key={marker.id_item}
             icon={createCustomMarker(marker.color_item)}

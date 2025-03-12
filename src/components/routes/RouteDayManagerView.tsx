@@ -32,7 +32,7 @@ import RouteMap from "../general/mapComponent/RouteMap";
 import InfoStoreHover from "../store/map/InfoStoreHover";
 import InfoStoreClick from "../store/map/InfoStoreClick";
 import DAYS from "@/utils/days";
-import { createCustomMarker, generateLightColor, generateRandomLightColor, getGradientColor, getLightestMarker, hexToRgb } from "@/utils/stylesUtils";
+import { generateRandomLightColor, getGradientColor, getLightestMarker } from "@/utils/stylesUtils";
 
 export default function RouteDayManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -54,6 +54,7 @@ export default function RouteDayManagerView() {
   // Maps
   const [mapRoutes, setMapRoutes] = useState<Record<string, IRoute>>({});
   const [mapRouteDays, setMapRouteDays] = useState<Record<string, IRouteDay>>({});
+  const [storeHoverd, setStoreHovered] = useState<IMapMarker[]>([]);
   // const [mapRouteDayStores, setMapRouteDayStores] = useState<Record<string, IRouteDayStores>>({});
 
   useEffect(() => {
@@ -326,6 +327,28 @@ export default function RouteDayManagerView() {
 
   }
 
+  const handleHoverItem = (item:ICatalogItem|null) => {
+
+    if (item) {
+      const foundStore:undefined|IStore = stores.find((store) => store.id_store === item.id_item);
+      
+      if (foundStore) {
+        setStoreHovered([{
+          id_marker: generateUUIDv4(),
+          id_item: foundStore.id_store,
+          hoverComponent: <div></div>,
+          clickComponent: <div></div>,
+          color_item: '#F08080'	,
+          id_group: '',
+          latitude: foundStore.latitude,
+          longuitude: foundStore.longuitude,
+        }])
+      }
+    } else {
+      setStoreHovered([]);
+    }
+  }
+
   return (
     <div className="w-full h-full p-4 flex flex-col">
       <div className="flex-1 flex flex-row">
@@ -353,8 +376,12 @@ export default function RouteDayManagerView() {
         </div>
         {/* Right Side - Store Map */}
         <div className="flex basis-1/2 p-4 max-h-96 overflow-hidden">
-          <RouteMap markers={markersToShow} 
-          onSelectStore={(store) => console.log("Selected Store:", store)} 
+          <RouteMap 
+            markers={markersToShow}
+            temporalMarkers={[...storeHoverd]}
+            onSelectStore={(store) => console.log("Selected Store:", store)
+
+          } 
           />
         </div>
       </div>
@@ -368,6 +395,7 @@ export default function RouteDayManagerView() {
             onSave={(column:number) => {handleSaveRouteDay(column)}}
             onClose={(column:number) => {handleClose(column)}}
             onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {handlerMondifyCatalogRoutes(matrix)}}
+            onHoverOption={(item:ICatalogItem) => { handleHoverItem(item) }}
           />
         )}
       </div>
