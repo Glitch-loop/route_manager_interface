@@ -14,6 +14,9 @@ export default function InfoStoreHover({store, routeDayStore, routeDays, routes}
 
     const { id_route_day, position_in_route } = routeDayStore;  
 
+    console.log("id_route_day: ", id_route_day)
+    console.log("routeDays: ", routeDays)
+    console.log("routeDays[id_route_day]: ", routeDays[id_route_day])
     const { id_day, id_route } = routeDays[id_route_day];
 
     const { route_name } = routes[id_route];

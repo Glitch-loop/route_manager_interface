@@ -11,7 +11,10 @@ interface InfoStoreClickProps {
 }
 
 export default function InfoStoreClick({ store, routeDayStores, routeDays, routes }: InfoStoreClickProps) {
-    const { store_name, street, ext_number, colony, owner_name, address_reference, postal_code } = store;
+    const { id_store, store_name, street, ext_number, colony, owner_name, address_reference, postal_code } = store;
+
+    const routeDaysStoreAppear:IRouteDayStores[] = routeDayStores.filter((routeDayStore:IRouteDayStores) => routeDayStore.id_store === id_store);
+
     return (
         <div className="flex flex-col">
             <span className="text-2xl font-bold">{capitalizeFirstLetterOfEachWord(store_name)}</span>
@@ -30,7 +33,7 @@ export default function InfoStoreClick({ store, routeDayStores, routeDays, route
             <div className="mt-3">
                 <span className="text-lg">Rutas asignadas:</span>
                 
-                { routeDayStores.map((routeDayStore:IRouteDayStores) => {
+                { routeDaysStoreAppear.map((routeDayStore:IRouteDayStores) => {
                     const { id_route_day_store, position_in_route, id_route_day } = routeDayStore;
                     let dayName:string = "";
                     let routeName:string = "";

@@ -49,7 +49,7 @@ export default function RouteDayManagerView() {
   // Drag and drop component
   const [catalogsRoutes, setCatalogsRoutes] = useState<ICatalogItem[][]|null>(null);
   const [catalogStores, setCatalogStores] = useState<ICatalogItem[]>([]);
-  const [nameOfRoutesCatalog, setNameOfRouteCatalog] = useState<string[]>([]);
+  const [nameOfRoutesCatalog, setNameOfRouteCatalog] = useState<ICatalogItem[]>([]);
   
   // Maps
   const [mapRoutes, setMapRoutes] = useState<Record<string, IRoute>>({});
@@ -125,6 +125,7 @@ export default function RouteDayManagerView() {
       id_item: id_store,
       id_item_in_container: generateUUIDv4(),
       item_name: store_name,
+      id_group: '',
       order_to_show: 0,
     }}))
 
@@ -140,13 +141,18 @@ export default function RouteDayManagerView() {
     // Variables related to drag and drop component
     const storesOfTheRouteDay:(IStore&IRouteDayStores)[] = [];  
     const catalogOfTheRouteDay:ICatalogItem[] = [];
-    let nameOfTheRoute:string = "";
-    
+    const catalogRoute:ICatalogItem = {
+      id_item: '',
+      id_item_in_container: '',
+      id_group: '',
+      item_name: '',
+      order_to_show: 0,
+    }
+
     // Related to map component
     const markerOfTheRouteDay:IMapMarker[] = [];
     const colorOfRoute:string = generateRandomLightColor();
-    console.log(colorOfRoute)
-    console.log(hexToRgb(colorOfRoute))
+
     // Verifying the user didn't choose before the route day.
     if (catalogsRoutes) {
       catalogsRoutes.forEach((catalog:ICatalogItem[]) => {
@@ -166,7 +172,7 @@ export default function RouteDayManagerView() {
     const totalstoresInRouteDay:number = routeDayStoresData.length;
     const { id_route, id_day } = routeDay;
 
-    // Get stores of stores from the route day
+    // Get stores position from the route day
     routeDayStoresData.forEach((routeDayStore:IRouteDayStores) => {
         const { id_store, id_route_day, position_in_route } = routeDayStore;
         if(storeJson[id_store] !== undefined) {
@@ -196,12 +202,15 @@ export default function RouteDayManagerView() {
             id_group: id_route_day,
           });
 
+
+          catalogRoute.id_item = id_route_day;
+
           if(mapRoutes[id_route]) {
-            nameOfTheRoute = capitalizeFirstLetter(mapRoutes[id_route].route_name) + ' - ';
+            catalogRoute.item_name = capitalizeFirstLetter(mapRoutes[id_route].route_name) + ' - ';
           }
 
           if(DAYS[id_day]) {
-            nameOfTheRoute = nameOfTheRoute + DAYS[id_day].day_name;
+            catalogRoute.item_name = catalogRoute.item_name + DAYS[id_day].day_name;
           }
         }
     })
@@ -211,7 +220,7 @@ export default function RouteDayManagerView() {
 
     setStoresOfSelectedRouteDay([...storesOfTheRouteDay, ...storesOfSelectedRouteDay]);
     setMarkerToShow([...markerOfTheRouteDay, ...markersToShow]);
-    setNameOfRouteCatalog([nameOfTheRoute, ...nameOfRoutesCatalog]);
+    setNameOfRouteCatalog([{ ...catalogRoute }, ...nameOfRoutesCatalog]);
 
     if (catalogsRoutes) {
       setCatalogsRoutes([[...catalogOfTheRouteDay], ...catalogsRoutes])
@@ -253,13 +262,15 @@ export default function RouteDayManagerView() {
       }
 
       if (id_group_to_delete) {
-        setMarkerToShow(markersToShow.filter((marker) => marker.id_group !== id_group_to_delete))
+        setMarkerToShow(markersToShow.filter((marker) => marker.id_group !== id_group_to_delete));
       }
+
+      setNameOfRouteCatalog(nameOfRoutesCatalog.filter((routeName, index) => index !== column));
 
     }
   }
 
-  const handlerCatalogRoutes = (matrix:ICatalogItem[][]) => {
+  const handlerMondifyCatalogRoutes = (matrix:ICatalogItem[][]) => {
     const markerOfTheRouteDay:IMapMarker[] = [];
 
 
@@ -267,6 +278,7 @@ export default function RouteDayManagerView() {
       let colorOfRoute:string = generateRandomLightColor();
       const totalItemsInCatalog:number = currentCatalog.length;
 
+      // Extracting color of the route
       if(currentCatalog[0]) {
         const { id_group } = currentCatalog[0];
         const lightestMarker:IMapMarker|null = getLightestMarker(
@@ -274,12 +286,11 @@ export default function RouteDayManagerView() {
         
         if (lightestMarker){
           colorOfRoute = rgbToHex(lightestMarker.color_item);
-          console.log("RGB: ", lightestMarker.color_item)
-          console.log("colorOfRoute: ", colorOfRoute)
         }
 
       }
 
+      // Making route
       currentCatalog.forEach((currentItem:ICatalogItem) => {
         const {id_item, id_group, order_to_show  } = currentItem;
         
@@ -356,7 +367,7 @@ export default function RouteDayManagerView() {
             allItems={catalogStores}
             onSave={(column:number) => {handleSaveRouteDay(column)}}
             onClose={(column:number) => {handleClose(column)}}
-            onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {handlerCatalogRoutes(matrix)}}
+            onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {handlerMondifyCatalogRoutes(matrix)}}
           />
         )}
       </div>

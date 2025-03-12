@@ -19,7 +19,7 @@ import ConfirmDialog from "../../ConfirmDialog";
 
 interface MultiContainerDragDropProps {
   catalogMatrix: ICatalogItem[][]; // Matrix of catalog items
-  catalogTitles: string[]; // Titles for each container
+  catalogTitles: ICatalogItem[]; // Titles for each container
   allItems: ICatalogItem[]; // All possible items for search
   onSave: (column:number) => void;
   onClose:(column: number) => void;
@@ -108,9 +108,7 @@ export default function MultiContainerDragDrop({
     }
   }
 
-  const handleRemoveItem = (id_item_container_to_delete:string|null) => {
-    console.log("Removing item")
-    
+  const handleRemoveItem = (id_item_container_to_delete:string|null) => {    
     onModifyCatalogMatrix(catalogMatrix.map((catalog) =>
       catalog.filter((item) => item.id_item_in_container !== id_item_container_to_delete)
     ));
@@ -120,11 +118,11 @@ export default function MultiContainerDragDrop({
   };
 
   // Add New Item via Search
-  const handleAddItem = (containerIndex: number, item: ICatalogItem | null) => {
+  const handleAddItem = (containerIndex: number, item: ICatalogItem | null, catalogThatBelongs: ICatalogItem) => {
     if (!item) return
     onModifyCatalogMatrix(catalogMatrix.map((catalog, index) =>
       index === containerIndex
-        ? [...catalog, { ...item, id_item_in_container: generateUUIDv4(), order_to_show: catalog.length + 1 }]
+        ? [...catalog, { ...item, id_item_in_container: generateUUIDv4(), order_to_show: catalog.length + 1, id_group: catalogThatBelongs.id_item }]
         : catalog
     ));
   };
@@ -148,12 +146,12 @@ export default function MultiContainerDragDrop({
             <DroppableContainer
               key={index}
               id={index.toString()}
-              title={catalogTitles[index]}
+              title={catalogTitles[index].item_name}
               items={items}
               allItems={allItems}
               onSave={() => handleSaveContainer(index)}
               onClose={() => handleCloseWithoutSave(index)}
-              onAddItem={(item) => handleAddItem(index, item)}
+              onAddItem={(item) => handleAddItem(index, item, catalogTitles[index])}
               // onRemoveItem={(item) => handleRemoveItem(index, item)}
               />
           ))}

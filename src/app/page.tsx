@@ -117,7 +117,7 @@ export default function Home() {
                 const { id_work_day } = workday;
                 return (
                   <div key={id_work_day} className="w-full">
-                    <div  className="w-full">
+                    <div  className="w-full min-w-96">
                       <RouteList workDay={workday}/>
                     </div>
                   </div>
