@@ -42,6 +42,8 @@ export interface IRepository {
 
   // Related to routes
   getAllRoutes():Promise<IResponse<IRoute[]>>;
+  insertRouteDays(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]):Promise<IResponse<IRouteDayStores[]>>;
+  deleteRouteDays(routeDay:IRouteDay):Promise<IResponse<null>>;
 
   // related to users
   getUserDataByCellphone(user:IUser):Promise<IResponse<IUser>>;

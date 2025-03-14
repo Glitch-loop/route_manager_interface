@@ -32,7 +32,9 @@ import {
     getRouteTransactionOperationsFromWorkDay,
     getRouteTransactionOperationDescriptionsFromWorkDay,
 } from '@/controllers/RouteTransactionsController';
-import { getInventoryOperationsOfWorkDay, getInventoryOperationDescriptionsOfWorkDay, getAllConceptOfProducts, getTotalInventoriesOfAllStoresByIdOperationType } from '@/controllers/InventoryController';
+import { getInventoryOperationsOfWorkDay, getInventoryOperationDescriptionsOfWorkDay, getTotalInventoriesOfAllStoresByIdOperationType } from '@/controllers/InventoryController';
+
+import { getAllConceptOfProducts } from '@/controllers/ProductController';
 
 // Components
 import DateRangePicker from '@/components/general/DateRangePicker';
@@ -254,7 +256,7 @@ function ConsultInformation() {
                     />
 
                 }
-                { (workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
+                {/* { (workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
                     && routeTransactionOperationDescriptions !== undefined && inventoryOperations !== undefined && inventoryOperationDescriptions !== undefined) &&
                     <SummarizeDayComission
                         workday={workday}
@@ -264,7 +266,7 @@ function ConsultInformation() {
                         inventoryOperations={inventoryOperations}
                         inventoryOperationDescriptions={inventoryOperationDescriptions}
                     />
-                }
+                } */}
             </div>
             {/* Summarize of product of the day */}
             { ( productsInventory !== undefined && 

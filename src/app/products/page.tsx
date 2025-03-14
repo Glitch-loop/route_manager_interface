@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from "@mui/material";
+import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment } from "@mui/material";
 import { ICatalogItem, IProduct } from "@/interfaces/interfaces";
 import { insertProduct, updateProduct, deleteProduct, getAllConceptOfProducts } from "@/controllers/ProductController";
 
@@ -170,28 +170,41 @@ export default function ProductPage() {
 
             {/* Right Side - Form */}
             <div className="flex-1 basis-2/3 p-4 flex flex-col gap-4">
-                <TextField label="Nombre de producto" name="product_name" value={formData.product_name} onChange={handleInputChange} fullWidth />
-                <TextField label="Barcode" name="barcode" value={formData.barcode} onChange={handleInputChange} fullWidth />
+                <TextField label="Nombre de producto" name="product_name" value={formData.product_name || ""} onChange={handleInputChange} fullWidth />
+                <TextField label="Barcode" name="barcode" value={formData.barcode || ""} onChange={handleInputChange} fullWidth />
                 
                 <div className="flex flex-row justify-around">
                     <TextField 
-                        label="Peso" name="weight" type="number" value={formData.weight} onChange={handleInputChange} />
-                    <TextField label="Unidad" name="unit" value={formData.unit} onChange={handleInputChange}  />
+                        label="Peso" 
+                        name="weight" 
+                        type="number" 
+                        value={formData.weight || 0} 
+                        onChange={handleInputChange} 
+                        slotProps={{input: { startAdornment: <InputAdornment position="start">$</InputAdornment>}}}/>
+                    <TextField label="Unidad" name="unit" value={formData.unit || ""} onChange={handleInputChange}  />
                 </div>
                 <div className="flex flex-row justify-around">
-                    <div className="flex flex-row items-center">
-                        <span className="mr-2 text-xl">$</span>
-                        <TextField label="Precio" name="price" type="number" value={formData.price} onChange={handleInputChange} />
-                    </div>
-                    <div className="flex flex-row items-center mx-2">
-                        <TextField label="Comision" name="comission" type="number" value={formData.comission} onChange={handleInputChange} />
-                        <span className="ml-2 text-xl">%</span>
-                    </div>
-                    <div className="flex flex-row items-center">
-                        <span className="mr-2 text-xl">$</span>
-                        <TextField label="Comision a pagar" name="comission_to_pay" type="number" value={formData.comission_to_pay} onChange={handleInputChange} />
-                    </div>
-
+                    <TextField 
+                        label="Precio" 
+                        name="price" 
+                        type="number"  
+                        value={formData.price || 0} 
+                        onChange={handleInputChange} 
+                        slotProps={{input: { startAdornment: <InputAdornment position="start">$</InputAdornment>}}} />
+                    <TextField 
+                        label="Comision" 
+                        name="comission" 
+                        type="number" 
+                        value={formData.comission || 0} 
+                        onChange={handleInputChange} 
+                        slotProps={{input: { endAdornment: <InputAdornment position="start">%</InputAdornment>}}} />
+                    <TextField 
+                        label="Comision a pagar" 
+                        name="comission_to_pay" 
+                        type="number" 
+                        value={formData.comission_to_pay || 0} 
+                        onChange={handleInputChange} 
+                        slotProps={{input: { startAdornment: <InputAdornment position="start">$</InputAdornment>}}}/>
                 </div>
                 {/* <TextField label="Order to Show" name="order_to_show" type="number" value={formData.order_to_show} onChange={handleInputChange} fullWidth /> */}
 
@@ -208,7 +221,13 @@ export default function ProductPage() {
         {products &&
             <DragDropCatalogItems 
             title={"En este orden apareceran los productos"}
-            catalogItems={products.map((product:IProduct) => { return {id_item_in_container: generateUUIDv4(), id_item: product.id_product, item_name: product.product_name, order_to_show: product.order_to_show}})}
+            catalogItems={products.map((product:IProduct) => { return {
+                id_item: product.id_product, 
+                id_item_in_container: generateUUIDv4(), 
+                id_group: '0', 
+                item_name: product.product_name, 
+                order_to_show: product.order_to_show
+            }})}
             onSave={(items:ICatalogItem[]) => {handleUpdateOrder(items)}}/>
         }
         </div>

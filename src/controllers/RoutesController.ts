@@ -50,6 +50,9 @@ export async function getStoresOfRouteDay(routeDay:IRouteDay):Promise<IRouteDayS
   return getDataFromApiResponse(allStoresInRoutedayResponse);
 };
 
-export async function updateRouteDay() {};
+export async function updateRouteDayStores(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]) {
+  
+
+};
 
 

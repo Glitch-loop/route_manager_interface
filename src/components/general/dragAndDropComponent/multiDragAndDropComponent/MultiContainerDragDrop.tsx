@@ -21,7 +21,7 @@ interface MultiContainerDragDropProps {
   catalogMatrix: ICatalogItem[][]; // Matrix of catalog items
   catalogTitles: ICatalogItem[]; // Titles for each container
   allItems: ICatalogItem[]; // All possible items for search
-  onSave: (column:number) => void;
+  onSave: (column:number, catalogItem:ICatalogItem) => void;
   onClose:(column: number) => void;
   onModifyCatalogMatrix: (updatedMatrix:ICatalogItem[][]) => void;
   onHoverOption: (item: ICatalogItem | null) => void;
@@ -135,15 +135,14 @@ export default function MultiContainerDragDrop({
     const catalogItem: ICatalogItem | undefined = catalogMatrix
     .find((catalog) => catalog.some((item) => item.id_item_in_container === idItemInContinaer))
     ?.find((item) => item.id_item_in_container === idItemInContinaer);
-    console.log("Ok: ", catalogItem)
     if (catalogItem) {
       onSelectExistingItem(catalogItem)
     }
   }
 
   // Handle Container Save
-  const handleSaveContainer = (index: number) => {
-    onSave(index);
+  const handleSaveContainer = (index: number, catalogItem:ICatalogItem) => {
+    onSave(index, catalogItem);
   };
 
   // Handle Close Without Saving
@@ -166,7 +165,7 @@ export default function MultiContainerDragDrop({
               title={catalogTitles[index].item_name}
               items={items}
               allItems={allItems}
-              onSave={() => handleSaveContainer(index)}
+              onSave={() => handleSaveContainer(index, catalogTitles[index])}
               onClose={() => handleCloseWithoutSave(index)}
               onAddItem={(item) => handleAddItem(index, item, catalogTitles[index])}
               onHoverOption={(item) => onHoverOption(item)}

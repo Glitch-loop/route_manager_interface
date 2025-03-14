@@ -16,16 +16,17 @@ import {
 import { 
     getAllRoutes,
     getRouteDays, 
-    updateRouteDay, 
+    updateRouteDayStores, 
     getStoresOfRouteDay
  } from "@/controllers/RoutesController";
+
 import { getAllStores } from "@/controllers/StoreController";
 
 // Utils
 import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, convertArrayInJsonUsingInterfaces, generateUUIDv4 } from "@/utils/generalUtils";
 
 // Components
-import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Button, rgbToHex } from "@mui/material";
+import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, rgbToHex } from "@mui/material";
 import MultiContainerDragDrop from "@/components/general/dragAndDropComponent/multiDragAndDropComponent/MultiContainerDragDrop";
 import StoreMap from "@/components/general/mapComponent/StoreMap";
 import RouteMap from "../general/mapComponent/RouteMap";
@@ -233,13 +234,35 @@ export default function RouteDayManagerView() {
   };
 
   // Related drag and drop component
-  const handleSaveRouteDay = async (column: number) => {
-    if (!selectedRouteDay) return;
+  const handleSaveRouteDay = async (column: number, routeCatalogItem:ICatalogItem) => {
+    // the list that lists the route day will be taken as the truth table.
 
-    await updateRouteDay({
-      ...selectedRouteDay,
-      stores: updatedStores,
-    });
+    if (catalogsRoutes) {
+      if(catalogsRoutes[column]) {
+
+        if (!selectedRouteDay) return;
+        
+        const routeDay:IRouteDay = {
+          id_route_day: routeCatalogItem.id_item,
+          id_route: '',
+          id_day: ''
+        }
+
+        const routeDayStores:IRouteDayStores[] = catalogsRoutes[column].map((itemCatalog:ICatalogItem) => {
+          const { id_item, id_group, order_to_show} = itemCatalog;
+          return {
+            id_route_day_store: '',
+            position_in_route: order_to_show,
+            id_route_day: id_group,
+            id_store: id_item
+          }
+        })
+
+        await updateRouteDayStores(routeDay, routeDayStores);
+      }
+
+    }
+
 
     fetchData();
   };
@@ -331,17 +354,25 @@ export default function RouteDayManagerView() {
 
   const handleHoverItem = (item:ICatalogItem|null) => {
     const updatedHoveredStores:IMapMarker[] = [];
-
+    
     if (item) {
+      const { order_to_show, id_group, id_item } = item;
       const foundStore:undefined|IStore = stores.find((store) => store.id_store === item.id_item);
-      
+
       if (foundStore) {
+        const routeDayStore:IRouteDayStores = {
+          id_route_day_store: "",
+          position_in_route: order_to_show,
+          id_route_day: id_group,
+          id_store: id_item
+        }
+
         updatedHoveredStores.push(
           {
             id_marker: generateUUIDv4(),
             id_item: foundStore.id_store,
-            hoverComponent: <div></div>,
-            clickComponent: <div></div>,
+            hoverComponent: <InfoStoreHover store={foundStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
+            clickComponent: <InfoStoreClick store={foundStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
             color_item: '#F08080'	,
             id_group: '',
             latitude: foundStore.latitude,
@@ -358,24 +389,30 @@ export default function RouteDayManagerView() {
   }
 
   const handleSelectItem = (selectedItem:ICatalogItem) => {
-    console.log(selectedItem)
     let updatedSelectedStores:IMapMarker[] = [];
+    const { order_to_show, id_group, id_item } = selectedItem;
+    const routeDayStore:IRouteDayStores = {
+      id_route_day_store: "",
+      position_in_route: order_to_show,
+      id_route_day: id_group,
+      id_store: id_item
+    }
+
     const foundMarker:undefined|IMapMarker = storeSelected.find((marker) => marker.id_item === selectedItem.id_item);
 
-    console.log("foundMarker: ", foundMarker)
+
     if (foundMarker === undefined) {
       const foundStore:undefined|IStore = stores.find((store) => store.id_store === selectedItem.id_item);
       
       updatedSelectedStores = storeSelected.filter((marker) => marker.id_group !== selectedItem.id_group);
       
-      console.log("foundStore: ", foundStore)
         if (foundStore) {
           updatedSelectedStores.push(
             {
               id_marker: generateUUIDv4(),
               id_item: foundStore.id_store,
-              hoverComponent: <div></div>,
-              clickComponent: <div></div>,
+              hoverComponent: <InfoStoreHover store={foundStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
+              clickComponent: <InfoStoreClick store={foundStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
               color_item: '#FF9980'	,
               id_group: selectedItem.id_group,
               latitude: foundStore.latitude,
@@ -394,11 +431,11 @@ export default function RouteDayManagerView() {
 
   return (
     <div className="w-full h-full p-4 flex flex-col">
-      <div className="flex-1 flex flex-row">
+      <div className="h-1/2 flex flex-row">
         {/* Left Side */}
         {/* Route Days Table */}
-        <div className="flex basis-1/2">
-          <TableContainer component={Paper} className="max-h-96 overflow-y-auto">
+        <div className="basis-1/2 overflow-hidden">
+          <TableContainer component={Paper} className="overflow-y-auto max-h-full">
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
@@ -418,28 +455,26 @@ export default function RouteDayManagerView() {
           </TableContainer>
         </div>
         {/* Right Side - Store Map */}
-        <div className="flex basis-1/2 p-4 max-h-96 overflow-hidden">
+        <div className="basis-1/2 ml-2 overflow-hidden">
           <RouteMap 
             markers={markersToShow}
             temporalMarkers={temporalMarkers}
-            onSelectStore={(store) => console.log("Selected Store:", store)
-
-          } 
+            onSelectStore={(store) => console.log("Selected Store:", store)} 
           />
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto">
+      <div className="h-1/2 mt-3 flex basis-2/3 overflow-y-auto">
         {/* MultiContainerDragDrop for Route Stores */}
         {catalogsRoutes && (
           <MultiContainerDragDrop
             catalogMatrix={catalogsRoutes}
             catalogTitles={nameOfRoutesCatalog}
             allItems={catalogStores}
-            onSave={(column:number) => {handleSaveRouteDay(column)}}
+            onSave={(column:number, catalogItem:ICatalogItem) => {handleSaveRouteDay(column, catalogItem)}}
             onClose={(column:number) => {handleClose(column)}}
             onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {handlerMondifyCatalogRoutes(matrix)}}
             onHoverOption={(item:ICatalogItem|null) => { handleHoverItem(item) }}
-            onSelectExistingItem={(id_item:string) => {handleSelectItem(id_item)}}
+            onSelectExistingItem={(id_item:ICatalogItem) => {handleSelectItem(id_item)}}
             
           />
         )}

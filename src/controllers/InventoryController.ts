@@ -122,7 +122,7 @@ export function getTotalInventoriesOfAllStoresByIdOperationType(
             if (id_route_transaction_operation_type === id_day_operation) {
               if (dictRouteTransactions[id_route_transaction] !== undefined) {
                 const { id_store, state } = dictRouteTransactions[id_route_transaction];
-                // Verifyng the store exists and the transaction is acive
+                // Verifying the store exists and the transaction is acive
                 if (dictStores[id_store] !== undefined && state === 1) {
                   const { dictProductInventory } = dictStores[id_store];
                   dictStores[id_store].dictProductInventory = addingInformationParticularFieldOfObject(

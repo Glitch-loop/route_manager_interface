@@ -15,9 +15,11 @@ import {
 import { 
     formatToCurrency,
     isOperationDescriptionEqualToMovement,
+    isRouteOperationDescriptionValid,
  } from "@/utils/saleFunctionUtils";
 import { useEffect } from "react";
 import { convertArrayInJsonUsingInterfaces } from "@/utils/generalUtils";
+
 
 
 function SummarizeOfTheDay({
@@ -38,17 +40,17 @@ function SummarizeOfTheDay({
 
     const totalConceptProductDevolution:number = (routeTransactionOperationDescriptions
         .reduce((acc, item) => 
-            { return (isOperationDescriptionEqualToMovement(item, jsonRouteTransactionOperations, product_devolution) ? item.amount * item.price_at_moment : 0)  + acc}, 0)) * -1;
+            { return (isRouteOperationDescriptionValid(item, jsonRouteTransactionOperations, product_devolution, jsonRouteTransactions) ? item.amount * item.price_at_moment : 0)  + acc}, 0)) * -1;
 
     const totalConceptProductReposition:number = routeTransactionOperationDescriptions
         .reduce((acc, item) => 
-            { return (isOperationDescriptionEqualToMovement(item, jsonRouteTransactionOperations, product_reposition) ? item.amount * item.price_at_moment : 0)  + acc}, 0);
+            { return (isRouteOperationDescriptionValid(item, jsonRouteTransactionOperations, product_reposition, jsonRouteTransactions) ? item.amount * item.price_at_moment : 0)  + acc}, 0);
         
     const productDevolutionBalance:number = totalConceptProductReposition + totalConceptProductDevolution 
         
     const totalConceptSales:number = routeTransactionOperationDescriptions
         .reduce((acc, item) => 
-            { return (isOperationDescriptionEqualToMovement(item, jsonRouteTransactionOperations, sales) ? item.amount * item.price_at_moment : 0)  + acc}, 0);
+            { return (isRouteOperationDescriptionValid(item, jsonRouteTransactionOperations, sales, jsonRouteTransactions) ? item.amount * item.price_at_moment : 0)  + acc}, 0);
 
     const greatTotal:number = totalConceptSales + productDevolutionBalance;
 
@@ -56,7 +58,7 @@ function SummarizeOfTheDay({
 
     const pittyCash:number = workday.start_petty_cash;
 
-    const cashToDeliver:number = sellingInCash - pittyCash;
+    const cashToDeliver:number = sellingInCash + pittyCash;
 
     const deliveredCash:number = workday.final_petty_cash;
 
@@ -121,7 +123,7 @@ function SummarizeOfTheDay({
             isSeparateLine: false,
         },
         {
-            message: "Total venta realizada en efectivo: ",
+            message: "Total dinero a tener en efectivo: ",
             value: formatToCurrency(greatTotal),
             isUnderline: false,
             isBold: true,

@@ -24,7 +24,7 @@ import {
 
 // Utils
 import { createApiResponse } from '../../utils/responseUtils';
-import { RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
+import { PostgrestError, RealtimeChannel, SupabaseClient } from '@supabase/supabase-js';
 import { stringify } from 'querystring';
 
 /*
@@ -435,6 +435,79 @@ export class SupabaseRepository implements IRepository {
     } catch(error) {
       return createApiResponse<IRoute[]>(500, [], null, 'Failed getting work days by date range.');
     }
+  }
+
+  async insertRouteDays(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]):Promise<IResponse<IRouteDayStores[]>> {
+    try {
+      let supabaseError:null|PostgrestError = '';
+      const {
+        id_route_day,
+      } = routeDay;
+
+      for (let i = 0; i < routeDayStores.length; i++) {
+        const routeDayStore:IRouteDayStores = routeDayStores[i];
+
+        const { id_store, position_in_route } = routeDayStore;
+        const { data, error } = await supabase.from(TABLES.ROUTE_DAY_STORES)
+        .insert({
+          id_route_day: id_route_day,    
+          position_in_route: position_in_route,
+          id_store: id_store
+        });
+        
+        if (error) {
+          supabaseError = error
+          break;
+        }
+      }
+
+
+      if (supabaseError) {
+        return createApiResponse<IRouteDayStores[]>(
+          determinigSQLSupabaseError(supabaseError),
+          routeDayStores,
+          null,
+          'Failed inserting route day stores operation.'
+        );
+      } else {
+        return createApiResponse<IRouteDayStores[]>(
+          201,
+          routeDayStores,
+          null,
+          'Route days store inserted successfully.'
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IRouteDayStores[]>(
+        500,
+        routeDayStores,
+        null,
+        'Failed inserting the store in the route days.'
+      );
+    }
+  }
+
+  async deleteRouteDays(routeDay:IRouteDay):Promise<IResponse<null>> {
+    try {
+      const { id_route_day } = routeDay;
+      const { data, error } = await supabase.from(TABLES.ROUTE_DAY_STORES)
+      .delete()
+      .eq('id_route_day', id_route_day)
+  
+      if (error) {
+        return createApiResponse<null>(500, null, null,'Failed deleting stores of a route day.');
+      } else {
+        return createApiResponse<null>(200, null, null, 'Stores inserted successfully in the route day.');
+      }
+
+    } catch (error) {
+      return createApiResponse<null>(
+        500,
+        null,
+        null,
+        'Failed inserting the inventory operation.'
+      );    
+    } 
   }
 
   //Related to users

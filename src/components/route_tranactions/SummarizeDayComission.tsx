@@ -62,7 +62,7 @@ function SummarizeDayComission({
 
     const pittyCash:number = workday.start_petty_cash;
 
-    const cashToDeliver:number = sellingInCash - pittyCash;
+    const cashToDeliver:number = sellingInCash + pittyCash;
 
     const deliveredCash:number = workday.final_petty_cash;
 
@@ -147,7 +147,7 @@ function SummarizeDayComission({
         },
         {
             message: "Total a descontar: ",
-            value: "-$120",
+            value: "-$0",
             isUnderline: false,
             isBold: false,
             isItalic: false,

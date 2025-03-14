@@ -12,7 +12,7 @@ interface StoreMapProps {
 }
 
 
-const containerStyle = { width: "100%", height: "500px" };
+const containerStyle = { width: "100%", height: "100%" };
 const defaultCenter = { lat: 20.648043093256433, lng: -105.21612612535338 }; // Default: Mexico City
  
 export default function RouteMap({ markers, temporalMarkers, onSelectStore }: StoreMapProps) {
