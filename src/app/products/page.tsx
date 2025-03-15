@@ -1,12 +1,21 @@
 "use client";
+// Libraries
 import { useState, useEffect } from "react";
-import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment } from "@mui/material";
-import { ICatalogItem, IProduct } from "@/interfaces/interfaces";
+import { generateUUIDv4 } from "@/utils/generalUtils";
+import "react-toastify/dist/ReactToastify.css";
+
+// Interfaces
+import { ICatalogItem, IProduct, IResponse } from "@/interfaces/interfaces";
+
+// Controllers
 import { insertProduct, updateProduct, deleteProduct, getAllConceptOfProducts } from "@/controllers/ProductController";
 
+// Components
+import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment } from "@mui/material";
 import DragDropCatalogItems from "@/components/general/dragAndDropComponent/DragDropCatalogItems";
-import MultiContainerDragDrop from "@/components/general/dragAndDropComponent/multiDragAndDropComponent/MultiContainerDragDrop";
-import { generateUUIDv4 } from "@/utils/generalUtils";
+import { ToastContainer, toast } from "react-toastify";
+import { apiResponseStatus } from "@/utils/responseUtils";
+
 
 export default function ProductPage() {
   const [products, setProducts] = useState<IProduct[]|undefined>(undefined);
@@ -24,7 +33,6 @@ export default function ProductPage() {
     comission_to_pay: 0
   });
 
-
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -33,6 +41,7 @@ export default function ProductPage() {
     const data = await getAllConceptOfProducts();
     setProducts(data);
   };
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const {name, value} = e.target;
@@ -57,36 +66,82 @@ export default function ProductPage() {
 
   const handleRowDoubleClick = (product: IProduct) => {
     setSelectedProduct(product);
-    const comissionToPay:number = (product.price * product.comission) / 100;
-    setFormData({...product, comission_to_pay: comissionToPay});
+    const comission:number = product.comission * 100
+    const comissionToPay:number = (product.price * comission) / 100;
+    setFormData({...product, comission: comission, comission_to_pay: comissionToPay});
   };
+
+    const validateCorrectProductInputs = (product:IProduct & { comission_to_pay: number }):void => {
+        if (product.product_name === "") toast.error("El 'nombre del producto' no puede ir vacío.", { position: 'top-right' });
+        if (product.comission < 0) toast.error("La comisión a pagar no puede ser negativa.", { position: 'top-right' });
+        if (product.price < 0) toast.error("El precio a pagar no puede ser negativo.", { position: 'top-right' });
+    }
+
+    const isProductInputCorrect = (product:IProduct & { comission_to_pay: number }):boolean => {
+        let result:boolean = true;
+        if (product.product_name === "") result = false;
+        if (product.comission < 0) result = false;
+        if (product.price < 0) result = false;
+
+        return result;
+    }
+
 
   const handleInsert = async () => {
 
-    let lastPosition:number = 0;
+    validateCorrectProductInputs(formData);
 
-    if (products === undefined) {
-        lastPosition = 0;
+    if (isProductInputCorrect(formData)) {
+        let lastPosition:number = 0;
+    
+        if (products === undefined) {
+            lastPosition = 0;
+        } else {
+            products.forEach((product:IProduct) => {
+                if (product.order_to_show > lastPosition) {
+                    lastPosition = product.order_to_show
+                }
+            })
+    
+            lastPosition += 1;
+        }
+    
+        const response:IResponse<IProduct> = await insertProduct({...formData, order_to_show: lastPosition, comission: formData.comission / 100});
+
+        if (apiResponseStatus(response, 201)) {
+            toast.success("El producto se a agregado correctamente", { position: 'top-right' })
+        } else {
+            toast.error("Hubo un error al momento de agregar el producto. Intente nuevamente", { position: 'top-right' })
+        }
+
+        fetchProducts();
+        handleCancel();
     } else {
-        products.forEach((product:IProduct) => {
-            if (product.order_to_show > lastPosition) {
-                lastPosition = product.order_to_show
-            }
-        })
-
-        lastPosition += 1;
+        /* Do nothing */
     }
-
-    await insertProduct({...formData, order_to_show: lastPosition, comission: formData.comission / 100});
-    fetchProducts();
-    handleCancel();
   };
 
   const handleUpdate = async () => {
+    console.log("UPDATE")
     if (!selectedProduct) return;
-    await updateProduct({...formData, comission: formData.comission / 100})
-    fetchProducts();
-    handleCancel();
+    console.log("validate")
+    validateCorrectProductInputs(formData);
+
+    if (isProductInputCorrect(formData)) {
+        const responseUpdate:IResponse<IProduct> = await updateProduct({...formData, comission: formData.comission / 100});
+
+        if (apiResponseStatus(responseUpdate, 201)) {
+            toast.success("El producto se a agregado correctamente", { position: 'top-right' })
+        } else {
+            toast.error("Hubo un error al momento de agregar el producto. Intente nuevamente", { position: 'top-right' })
+        }
+
+        fetchProducts();
+        handleCancel();
+    } else {
+        /* Do nothing */
+    }
+
   };
 
   const handleDelete = async () => {
@@ -139,6 +194,7 @@ export default function ProductPage() {
 
   return (
     <div className="w-full h-full flex flex-col p-4 overflow-hidden">
+        <ToastContainer />
         <div className="w-full flex flex-row">
             {/* Left Side - Table */}
             <div className="flex-1 basis-1/3 p-2 ">
@@ -180,7 +236,7 @@ export default function ProductPage() {
                         type="number" 
                         value={formData.weight || 0} 
                         onChange={handleInputChange} 
-                        slotProps={{input: { startAdornment: <InputAdornment position="start">$</InputAdornment>}}}/>
+                        slotProps={{input: { endAdornment: <InputAdornment position="start"></InputAdornment>}}}/>
                     <TextField label="Unidad" name="unit" value={formData.unit || ""} onChange={handleInputChange}  />
                 </div>
                 <div className="flex flex-row justify-around">
