@@ -20,6 +20,7 @@ import {
   apiResponseStatus,
   getDataFromApiResponse,
 } from '@/utils/responseUtils';
+import DAYS from "@/utils/days";
 
 // Initializing database repository.
 const repository = RepositoryFactory.createRepository('supabase');
@@ -32,11 +33,70 @@ export async function getAllRoutes():Promise<IRoute[]> {
     return allRoutes;
 }
 
-export async function insertRoute() {};
+export async function createRouteDays(route:IRoute):Promise<IResponse<IRouteDay[]>> {
+  const routeDaysOfRoute:IRouteDay[] = [];
+  const { id_route } = route;
+  for (const key in DAYS) {
+    routeDaysOfRoute.push({
+      id_route_day: '',
+      id_route: id_route,
+      id_day: key,
+    });
+  }
 
-export async function updateRoute() {}; 
+  return await repository.insertDaysOfRoute(routeDaysOfRoute);
 
-export async function deleteRoute() {};
+
+}
+
+export async function insertRoute(routeToInsert:IRoute):Promise<IResponse<IRoute>> {
+  // Active routes always have route_status of 1
+  const record:IRoute = {
+    ...routeToInsert,
+    route_status: 1,
+  }
+
+
+  const reponseInsertRoute:IResponse<IRoute> = await repository.insertRoute(record);
+
+  if (apiResponseStatus(reponseInsertRoute, 201)) {
+    const insertedRoute:IRoute = getDataFromApiResponse(reponseInsertRoute);
+    const responseInsertRouteDays = await createRouteDays(insertedRoute);
+    
+    reponseInsertRoute.responseCode = responseInsertRouteDays.responseCode;
+
+    if (!apiResponseStatus(reponseInsertRoute, 201)) {
+      hardDeleteRoute(insertedRoute);
+    }
+  }  else {
+    /* There is not instrucctions. */
+  }
+
+
+
+  return reponseInsertRoute;
+};
+
+export async function updateRoute(routeToUpdate:IRoute):Promise<IResponse<IRoute>> {
+  const reponseUpdateRoute:IResponse<IRoute> = await repository.updateRoute(routeToUpdate);
+
+  return reponseUpdateRoute;
+}; 
+
+export async function hardDeleteRoute(routeToDelete:IRoute):Promise<IResponse<null>> {
+  const reponseDeleteRoute:IResponse<null> = await repository.deleteRoute(routeToDelete);
+
+  return reponseDeleteRoute;
+}
+
+export async function deleteRoute(routeToUpdate:IRoute):Promise<IResponse<IRoute>> {
+  const record:IRoute = {
+    ...routeToUpdate,
+    route_status: 0,
+  }
+  const reponseUpdateRoute:IResponse<IRoute> = await repository.updateRoute(record);
+  return reponseUpdateRoute;
+};
 
 // Related to route days
 export async function getRouteDays():Promise<IRouteDay[]> {
@@ -51,7 +111,7 @@ export async function getStoresOfRouteDay(routeDay:IRouteDay):Promise<IRouteDayS
 };
 
 export async function updateRouteDayStores(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]) {
-  
+
 
 };
 

@@ -17,12 +17,9 @@ import {
 } from '../../interfaces/interfaces';
 
 export interface IRepository {
-  // Related to route
+  // Related to general information
   getAllDays(): Promise<IResponse<IDay[]>>;
-  getAllDaysByRoute(id_route:string): Promise<IResponse<IRouteDay[]>>;
-  getAllRouteDays(): Promise<IResponse<IRouteDay[]>>;
-  getAllRoutesByVendor(id_vendor:string): Promise<IResponse<IRoute[]>>;
-  
+
   // Related to products
   getAllProducts(): Promise<IResponse<IProduct[]>>;
   insertProduct(product:IProduct): Promise<IResponse<IProduct>>;
@@ -44,8 +41,15 @@ export interface IRepository {
   getAllRoutes():Promise<IResponse<IRoute[]>>;
   insertRouteDays(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]):Promise<IResponse<IRouteDayStores[]>>;
   deleteRouteDays(routeDay:IRouteDay):Promise<IResponse<null>>;
+  getAllDaysByRoute(id_route:string): Promise<IResponse<IRouteDay[]>>;
+  getAllRouteDays(): Promise<IResponse<IRouteDay[]>>;
+  getAllRoutesByVendor(id_vendor:string): Promise<IResponse<IRoute[]>>;
+  insertRoute(route:IRoute): Promise<IResponse<IRoute>>;
+  updateRoute(route:IRoute): Promise<IResponse<IRoute>>;
+  insertDaysOfRoute(routeDays:IRouteDay[]): Promise<IResponse<IRouteDay[]>>;
+  deleteRoute(route:IRoute): Promise<IResponse<null>>;
 
-  // related to users
+  // Related to users
   getUserDataByCellphone(user:IUser):Promise<IResponse<IUser>>;
   getUserDataById(id_vendor:string):Promise<IResponse<IUser>>;
   getAllUsers():Promise<IResponse<IUser[]>>;

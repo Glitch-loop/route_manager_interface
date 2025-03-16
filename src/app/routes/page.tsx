@@ -1,23 +1,29 @@
 "use client";
-import { useState, useEffect } from "react";
-import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Switch, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from "@mui/material";
-import { 
-    IRoute,
-    IUser
- } from "@/interfaces/interfaces";
+// Libraries
+import { useState } from "react";
 
-import { getAllRoutes, insertRoute, updateRoute, deleteRoute } from "@/controllers/RoutesController";
-import { getAllVendors } from "@/controllers/VendorController";
-import { capitalizeFirstLetter } from "@/utils/generalUtils";
-
+// Components
 import RouteDayManagerView  from "@/components/routes/RouteDayManagerView"
+import RouteManagerView from "@/components/routes/RouteManagerView";
+import { Button } from "@mui/material";
 
 export default function RoutesPage() {
-
+  const [switchToRouteDayManager, setSwitchToRouteDayManager] = useState<boolean>(false);
 
   return (
-    <div className="flex w-full h-full p-4">
-        <RouteDayManagerView/>
+    <div className="w-full h-full p-4 flex flex-col">
+      <div>
+        <Button variant="contained" color="info" onClick={() => setSwitchToRouteDayManager(!switchToRouteDayManager)}>
+          { switchToRouteDayManager ?
+              'Cambiar a administrador de rutas' :
+              'Camiar a administrador de tiendas en ruta'
+          }
+        </Button>
+      </div>
+      { switchToRouteDayManager ?
+        <RouteDayManagerView /> :
+        <RouteManagerView />
+      }
     </div>
   );
 }

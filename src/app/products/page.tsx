@@ -2,6 +2,8 @@
 // Libraries
 import { useState, useEffect } from "react";
 import { generateUUIDv4 } from "@/utils/generalUtils";
+
+// Styles
 import "react-toastify/dist/ReactToastify.css";
 
 // Interfaces
@@ -13,7 +15,7 @@ import { insertProduct, updateProduct, deleteProduct, getAllConceptOfProducts } 
 // Components
 import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, InputAdornment } from "@mui/material";
 import DragDropCatalogItems from "@/components/general/dragAndDropComponent/DragDropCatalogItems";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import { apiResponseStatus } from "@/utils/responseUtils";
 
 
@@ -197,7 +199,6 @@ export default function ProductPage() {
 
   return (
     <div className="w-full h-full flex flex-col p-4 overflow-hidden">
-        <ToastContainer />
         <div className="w-full flex flex-row mb-3">
             {/* Left Side - Table */}
             <div className="flex-1 basis-1/3 p-2 ">

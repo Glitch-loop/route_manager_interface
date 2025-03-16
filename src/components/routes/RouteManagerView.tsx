@@ -4,9 +4,13 @@ import { useState, useEffect } from "react";
 
 // Interfaces
 import { 
+  IResponse,
   IRoute,
   IUser
 } from "@/interfaces/interfaces";
+
+// Styles
+import "react-toastify/dist/ReactToastify.css";
 
 // Controllers
 import { getAllRoutes, insertRoute, updateRoute, deleteRoute } from "@/controllers/RoutesController";
@@ -17,6 +21,8 @@ import { capitalizeFirstLetter } from "@/utils/generalUtils";
 
 // Components
 import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Switch, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from "@mui/material";
+import { apiResponseStatus } from "@/utils/responseUtils";
+import { ToastContainer, toast } from "react-toastify";
 
 export default function RouteManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -63,24 +69,53 @@ export default function RouteManagerView() {
     setFormData(route);
   };
 
+  const validateCorrectProductInputs = (route:IRoute):void => {
+    if (route.route_name === '') toast.error("Debes proporcionar un nombre a la nueva ruta.", { position: 'top-right' });
+    if (route.id_vendor === '') toast.error("Debes seleccionar un vendedor valido.", { position: 'top-right' });
+  }
+
+  const isRouteInputCorrect = (route:IRoute):boolean => {
+    let result:boolean = true;
+    if (route.route_name === '') result = false;
+    if (route.id_vendor === '') result = false;
+
+    return result;
+  }
+
   const handleInsert = async () => {
-    await insertRoute(formData);
-    fetchRoutes();
-    handleCancel();
+    validateCorrectProductInputs(formData);
+
+    if (!isRouteInputCorrect(formData)) return;
+
+    const responseRoute:IResponse<IRoute> = await insertRoute(formData);
+
+    if (apiResponseStatus(responseRoute, 201)) {
+      toast.success("La ruta se a agregado correctamente.", { position: 'top-right' })
+      fetchRoutes();
+      handleCancel();
+      console.log("succels")
+    } else {
+      console.log("error")
+      toast.error("Ha habido un error al momento de agregar la ruta. Intente nuevamente.", { position: 'top-right' })
+    }
   };
 
   const handleUpdate = async () => {
     if (!selectedRoute) return;
-    await updateRoute(formData);
-    fetchRoutes();
-    handleCancel();
-  };
+    
+    validateCorrectProductInputs(formData);
 
-  const handleDelete = async () => {
-    if (!selectedRoute) return;
-    await deleteRoute(selectedRoute.id_route);
-    fetchRoutes();
-    handleCancel();
+    if (!isRouteInputCorrect(formData)) return;
+
+    const responseRoute:IResponse<IRoute> = await updateRoute(formData);
+
+    if (apiResponseStatus(responseRoute, 200)) {
+      toast.success("Se ha actualizado la agregado correctamente.", { position: 'top-right' })
+      fetchRoutes();
+      handleCancel();
+    } else {
+      toast.error("Ha habido un error al momento de actualizar la ruta. Intente nuevamente", { position: 'top-right' })
+    }
   };
 
   const handleCancel = () => {
@@ -103,8 +138,9 @@ export default function RouteManagerView() {
             <TableHead>
               <TableRow>
                 <TableCell>Nombre de ruta</TableCell>
-                <TableCell>Description</TableCell>
+                <TableCell>Descripción</TableCell>
                 <TableCell>Vendor</TableCell>
+                <TableCell>Estatus</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -113,6 +149,7 @@ export default function RouteManagerView() {
                   <TableCell>{capitalizeFirstLetter(route.route_name)}</TableCell>
                   <TableCell>{capitalizeFirstLetter(route.description)}</TableCell>
                   <TableCell>{users.find((user) => user.id_vendor === route.id_vendor)?.name || "No asignado"}</TableCell>
+                  <TableCell>{capitalizeFirstLetter(route.route_status ? 'activa' : 'inactiva')}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -122,19 +159,19 @@ export default function RouteManagerView() {
 
       {/* Right Side - Form */}
       <div className="flex-1 basis-2/3 p-4 flex flex-col gap-4">
-        <TextField label="Route Name" name="route_name" value={formData.route_name} onChange={handleInputTextChange} fullWidth />
-        <TextField label="Description" name="description" value={formData.description} onChange={handleInputTextChange} fullWidth />
+        <TextField label="Nombre de la ruta" name="route_name" value={formData.route_name} onChange={handleInputTextChange} fullWidth />
+        <TextField label="Descripción" name="description" value={formData.description} onChange={handleInputTextChange} fullWidth />
         
         {/* Route Status Switch */}
         <div className="flex items-center gap-4">
           <span>Route Status:</span>
           <Switch checked={formData.route_status === 1} onChange={handleSwitchChange} />
-          <span>{formData.route_status === 1 ? "Active" : "Inactive"}</span>
+          <span>{formData.route_status === 1 ? "Activo" : "Inactivo"}</span>
         </div>
 
         {/* Vendor Dropdown */}
         <FormControl fullWidth>
-          <InputLabel>Vendor</InputLabel>
+          <InputLabel>Vendedor</InputLabel>
           <Select name="id_vendor" value={formData.id_vendor} onChange={handleInputSelectChange}>
             {users.map((user) => (
               <MenuItem key={user.id_vendor} value={user.id_vendor}>
@@ -149,7 +186,6 @@ export default function RouteManagerView() {
           <Button variant="contained" color="warning" onClick={handleCancel}>Cancelar</Button>
           <Button variant="contained" color="success" onClick={handleInsert} disabled={!!selectedRoute}>Insertar</Button>
           <Button variant="contained" color="info" onClick={handleUpdate} disabled={!selectedRoute}>Actualizar</Button>
-          <Button variant="contained" color="error" onClick={handleDelete} disabled={!selectedRoute}>Eliminar</Button>
         </div>
       </div>
     </div>

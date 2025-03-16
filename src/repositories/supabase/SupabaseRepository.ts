@@ -51,7 +51,7 @@ export class SupabaseRepository implements IRepository {
     this.client = supabase;
   }
 
-  // Related to the information of the stores
+  // Related to route
   async getAllDays(): Promise<IResponse<IDay[]>> {
     try {
       const { data, error } = await supabase.from(TABLES.DAYS).select();
@@ -63,52 +63,6 @@ export class SupabaseRepository implements IRepository {
       }
     } catch(error) {
       return createApiResponse<IDay[]>(500, [], null, 'Failed getting all the days.');
-    }
-  }
-
-  async getAllDaysByRoute(id_route:string):Promise<IResponse<IRouteDay[]>> {
-    try {
-      const { data, error } = await supabase.from(TABLES.ROUTE_DAYS).select().eq('id_route', id_route);
-      if (error) {
-        return createApiResponse<IRouteDay[]>(500, [], null,
-          'Failed getting all the days by route.');
-      } else {
-        return createApiResponse<IRouteDay[]>(200, data, null);
-      }
-    } catch(error) {
-      console.log(error)
-      return createApiResponse<IRouteDay[]>(500, [], null, 'Failed getting all the days by route.');
-    }
-  }
-
-  async getAllRouteDays():Promise<IResponse<IRouteDay[]>> {
-    try {
-      const { data, error } = await supabase.from(TABLES.ROUTE_DAYS).select();
-      if (error) {
-        return createApiResponse<IRouteDay[]>(500, [], null,
-          'Failed getting all the route days.');
-      } else {
-        return createApiResponse<IRouteDay[]>(200, data, null);
-      }
-    } catch(error) {
-      console.log(error)
-      return createApiResponse<IRouteDay[]>(500, [], null, 'Failed getting all the route days.');
-    }
-  }
-
-  async getAllRoutesByVendor(id_vendor:string):Promise<IResponse<IRoute[]>> {
-    try {
-      const { data, error } = await supabase.from(TABLES.ROUTES).select().eq('id_vendor', id_vendor);
-      console.log(error)
-      if (error) {
-        return createApiResponse<IRoute[]>(500, [], null,
-          'Failed getting all routes by vendor.');
-      } else {
-        return createApiResponse<IRoute[]>(200, data, null);
-      }
-    } catch(error) {
-      console.log(error)
-      return createApiResponse<IRoute[]>(500, [], null, 'Failed getting all routes by vendor.');
     }
   }
 
@@ -131,7 +85,6 @@ export class SupabaseRepository implements IRepository {
   }
 
   async insertProduct(product:IProduct):Promise<IResponse<IProduct>> {
-    console.log("DB: ", product)
     try {
       const {
         product_name,
@@ -156,8 +109,6 @@ export class SupabaseRepository implements IRepository {
         order_to_show: order_to_show,
       });
 
-      console.log("error: ", error)
-      console.log("data: ", data)
       if (error) {
         return createApiResponse<IProduct>(
           determinigSQLSupabaseError(error),
@@ -209,7 +160,6 @@ export class SupabaseRepository implements IRepository {
         order_to_show: order_to_show,
       })
       .eq('id_product', id_product);
-      console.log("error database: ", error)
 
       if (error) {
         return createApiResponse<IProduct>(
@@ -511,6 +461,194 @@ export class SupabaseRepository implements IRepository {
       );    
     } 
   }
+
+  async getAllDaysByRoute(id_route:string):Promise<IResponse<IRouteDay[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.ROUTE_DAYS).select().eq('id_route', id_route);
+      if (error) {
+        return createApiResponse<IRouteDay[]>(500, [], null,
+          'Failed getting all the days by route.');
+      } else {
+        return createApiResponse<IRouteDay[]>(200, data, null);
+      }
+    } catch(error) {
+      console.log(error)
+      return createApiResponse<IRouteDay[]>(500, [], null, 'Failed getting all the days by route.');
+    }
+  }
+
+  async getAllRouteDays():Promise<IResponse<IRouteDay[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.ROUTE_DAYS).select();
+      if (error) {
+        return createApiResponse<IRouteDay[]>(500, [], null,
+          'Failed getting all the route days.');
+      } else {
+        return createApiResponse<IRouteDay[]>(200, data, null);
+      }
+    } catch(error) {
+      console.log(error)
+      return createApiResponse<IRouteDay[]>(500, [], null, 'Failed getting all the route days.');
+    }
+  }
+
+  async getAllRoutesByVendor(id_vendor:string):Promise<IResponse<IRoute[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.ROUTES).select().eq('id_vendor', id_vendor);
+      console.log(error)
+      if (error) {
+        return createApiResponse<IRoute[]>(500, [], null,
+          'Failed getting all routes by vendor.');
+      } else {
+        return createApiResponse<IRoute[]>(200, data, null);
+      }
+    } catch(error) {
+      console.log(error)
+      return createApiResponse<IRoute[]>(500, [], null, 'Failed getting all routes by vendor.');
+    }
+  }
+
+  async insertRoute(route:IRoute):Promise<IResponse<IRoute>> {
+    try {
+      const {
+        route_name,
+        description,
+        route_status,
+        id_vendor,
+      } = route;
+
+      const { data, error } = await supabase.from(TABLES.ROUTES)
+      .insert({
+        route_name,
+        description,
+        route_status,
+        id_vendor,
+      })
+      .select('*');
+
+      if (error) {
+        return createApiResponse<IRoute>(
+          determinigSQLSupabaseError(error),
+          route,
+          error.details,
+          'Failed inserting the route' 
+        );
+      } else {
+        return createApiResponse<IRoute>(
+          201,
+          data[0],
+          null,
+          'Route inserted successfully.'
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IRoute>(
+        500,
+        route,
+        null,
+        'Failed inserting the route: ' + error
+      );
+    }
+  }
+  
+  async updateRoute(route:IRoute):Promise<IResponse<IRoute>> {
+    try {
+      const {
+        id_route,
+        route_name,
+        description,
+        route_status,
+        id_vendor,
+      } = route;
+
+      const { data, error } = await supabase.from(TABLES.ROUTES)
+      .update({
+        route_name: route_name,
+        description: description,
+        route_status: route_status,
+        id_vendor: id_vendor,
+      })
+      .eq('id_route', id_route);
+
+      if (error) {
+        return createApiResponse<IRoute>(
+          determinigSQLSupabaseError(error),
+          route,
+          error.hint,
+          'Failed updating the route.'
+        );
+      } else {
+        return createApiResponse<IRoute>(
+          200,
+          route,
+          null,
+          'Route updated successfully.'
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IRoute>(
+        500,
+        route,
+        null,
+        'Failed updating the route.'
+      );
+    }
+  }
+
+  async deleteRoute(route:IRoute):Promise<IResponse<null>> {
+    try {
+      const { id_route } = route;
+      const { data, error } = await supabase.from(TABLES.ROUTES)
+      .delete()
+      .eq('id_route', id_route)
+  
+      if (error) {
+        return createApiResponse<null>(500, null, null,'Failed deleting stores of a route day.');
+      } else {
+        return createApiResponse<null>(200, null, null, 'Stores inserted successfully in the route day.');
+      }
+
+    } catch (error) {
+      return createApiResponse<null>(
+        500,
+        null,
+        null,
+        'Failed inserting the inventory operation.'
+      );    
+    } 
+  }
+
+  async insertDaysOfRoute(routeDays:IRouteDay[]):Promise<IResponse<IRouteDay[]>> {
+    try {
+      const { data, error } = await supabase.from(TABLES.ROUTES)
+      .insert(routeDays)
+      .select('*');
+
+      if (error) {
+        return createApiResponse<IRouteDay[]>(
+          determinigSQLSupabaseError(error),
+          [],
+          error.details,
+          'Failed inserting the route' 
+        );
+      } else {
+        return createApiResponse<IRouteDay[]>(
+          201,
+          data,
+          null,
+          'Route inserted successfully.'
+        );
+      }
+    } catch(error) {
+      return createApiResponse<IRouteDay[]>(
+        500,
+        [],
+        null,
+        'Failed inserting the route: ' + error
+      );
+    }
+  }
+
 
   //Related to users
   async getUserDataByCellphone(user: IUser):Promise<IResponse<IUser>> {

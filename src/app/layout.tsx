@@ -3,6 +3,10 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Sidebar from "../components/main/Sidebar";
 
+// Styles
+import "react-toastify/dist/ReactToastify.css";
+import { ToastContainer, toast } from "react-toastify";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -31,6 +35,7 @@ export default function RootLayout({
         bg-system-primary-background
         w-full h-full flex flex-row`}
       >
+        <ToastContainer />
         <div className="w-2/12 h-screen">
           <Sidebar />
         </div>
