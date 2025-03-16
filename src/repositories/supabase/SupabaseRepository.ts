@@ -118,6 +118,7 @@ export class SupabaseRepository implements IRepository {
       const { data, error } = await supabase.from(TABLES.PRODUCTS)
                                             .select()
                                             .order('order_to_show');
+
       if (error) {
         return createApiResponse<IProduct[]>(500, [], null,
           'Failed getting all products.');
@@ -155,6 +156,8 @@ export class SupabaseRepository implements IRepository {
         order_to_show: order_to_show,
       });
 
+      console.log("error: ", error)
+      console.log("data: ", data)
       if (error) {
         return createApiResponse<IProduct>(
           determinigSQLSupabaseError(error),
@@ -181,7 +184,6 @@ export class SupabaseRepository implements IRepository {
   }
   
   async updateProduct(product:IProduct):Promise<IResponse<IProduct>> {
-    console.log("HELLO worls")
     try {
       const {
         id_product,
@@ -218,7 +220,7 @@ export class SupabaseRepository implements IRepository {
         );
       } else {
         return createApiResponse<IProduct>(
-          201,
+          200,
           product,
           null,
           'Product updated successfully.'

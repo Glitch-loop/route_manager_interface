@@ -125,7 +125,7 @@ function ConsultInformation() {
 
     const handlerSelectWorkDay = async(workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay) => {
         // Getting information related to product inventory
-        const products:IProduct[] = await getAllConceptOfProducts();
+        const products:IProduct[] = await getAllConceptOfProducts(false);
         setProductsInventory(convertProductToProductInventoryInterface(products))
         
         // Getting information related to transactions

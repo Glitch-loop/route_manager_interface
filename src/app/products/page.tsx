@@ -38,7 +38,7 @@ export default function ProductPage() {
   }, []);
 
   const fetchProducts = async () => {
-    const data = await getAllConceptOfProducts();
+    const data = await getAllConceptOfProducts(true);
     setProducts(data);
   };
 
@@ -88,7 +88,6 @@ export default function ProductPage() {
 
 
   const handleInsert = async () => {
-
     validateCorrectProductInputs(formData);
 
     if (isProductInputCorrect(formData)) {
@@ -107,14 +106,13 @@ export default function ProductPage() {
         }
     
         const response:IResponse<IProduct> = await insertProduct({...formData, order_to_show: lastPosition, comission: formData.comission / 100});
-
         if (apiResponseStatus(response, 201)) {
             toast.success("El producto se a agregado correctamente", { position: 'top-right' })
+            fetchProducts();
         } else {
             toast.error("Hubo un error al momento de agregar el producto. Intente nuevamente", { position: 'top-right' })
         }
 
-        fetchProducts();
         handleCancel();
     } else {
         /* Do nothing */
@@ -122,21 +120,19 @@ export default function ProductPage() {
   };
 
   const handleUpdate = async () => {
-    console.log("UPDATE")
     if (!selectedProduct) return;
-    console.log("validate")
     validateCorrectProductInputs(formData);
 
     if (isProductInputCorrect(formData)) {
         const responseUpdate:IResponse<IProduct> = await updateProduct({...formData, comission: formData.comission / 100});
 
-        if (apiResponseStatus(responseUpdate, 201)) {
-            toast.success("El producto se a agregado correctamente", { position: 'top-right' })
+        if (apiResponseStatus(responseUpdate, 200)) {
+            toast.success("El producto se a actualizado correctamente", { position: 'top-right' });
+            fetchProducts();
         } else {
-            toast.error("Hubo un error al momento de agregar el producto. Intente nuevamente", { position: 'top-right' })
+            toast.error("Hubo un error al momento de agregar el producto. Intente nuevamente", { position: 'top-right' });
         }
 
-        fetchProducts();
         handleCancel();
     } else {
         /* Do nothing */
@@ -146,9 +142,16 @@ export default function ProductPage() {
 
   const handleDelete = async () => {
     if (!selectedProduct) return;
-    await deleteProduct(selectedProduct);
-    fetchProducts();
-    handleCancel();
+    const responseDelete:IResponse<IProduct> = await deleteProduct(selectedProduct);
+
+    if(apiResponseStatus(responseDelete, 200)) {
+        toast.success("El producto se a eliminado correctamente", { position: 'top-right' })
+        fetchProducts();
+        handleCancel();
+    } else {
+        toast.error("Hubo un error al momento de eliminar el producto. Intente nuevamente", { position: 'top-right' });
+    }
+
   };
 
   const handleCancel = () => {
@@ -157,7 +160,7 @@ export default function ProductPage() {
       id_product: "",
       product_name: "",
       barcode: "",
-      weight: "",
+      weight: 0,
       unit: "",
       comission: 0,
       price: 0,

@@ -9,7 +9,7 @@ export interface IProduct {
   id_product: string;
   product_name: string;
   barcode?: string;
-  weight?: string;
+  weight?: number;
   unit?: string;
   comission: number;
   price: number

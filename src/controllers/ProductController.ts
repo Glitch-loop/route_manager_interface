@@ -36,10 +36,15 @@ export async function deleteProduct(product:IProduct):Promise<IResponse<IProduct
 };
 
 
-export async function getAllConceptOfProducts():Promise<IProduct[]> {
+export async function getAllConceptOfProducts(excludeInactiveProducts:boolean):Promise<IProduct[]> {
+    let products:IProduct[] = []
     const allConceptOfProductsResponse:IResponse<IProduct[]> = await repository.getAllProducts();
-
     const allConceptOfProducts:IProduct[] = getDataFromApiResponse(allConceptOfProductsResponse);
 
-    return allConceptOfProducts
+    if (excludeInactiveProducts) {
+        products = allConceptOfProducts.filter((item:IProduct) => item.product_status !== 0);
+    } else {
+        products = allConceptOfProducts.map((item:IProduct) => item)
+    }
+    return products;
 }
