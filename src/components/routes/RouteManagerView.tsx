@@ -80,7 +80,7 @@ export default function RouteManagerView() {
     const routeWithSameName:IRoute|undefined = routes.find((currentRoute) => currentRoute.route_name === route.route_name);
     if(routeWithSameName) {toastMessage = "El nombre de la ruta tiene que ser unico."; result = false;}
 
-    if (showToast) toast.error(toastMessage, { position: 'top-right' });
+    if (showToast && toastMessage !== '') toast.error(toastMessage, { position: 'top-right' });
     
     return result;
   }

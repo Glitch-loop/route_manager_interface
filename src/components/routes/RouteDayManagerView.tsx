@@ -260,10 +260,8 @@ export default function RouteDayManagerView() {
 
         await updateRouteDayStores(routeDay, routeDayStores);
       }
-
     }
-
-
+    
     fetchData();
   };
 
