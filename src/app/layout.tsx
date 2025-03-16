@@ -5,7 +5,7 @@ import Sidebar from "../components/main/Sidebar";
 
 // Styles
 import "react-toastify/dist/ReactToastify.css";
-import { ToastContainer, toast } from "react-toastify";
+import { ToastContainer } from "react-toastify";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

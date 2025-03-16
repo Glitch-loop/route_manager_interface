@@ -1,6 +1,7 @@
 "use client";
 // Libraries
 import { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 // Interfaces
 import { 
@@ -13,7 +14,7 @@ import {
 import "react-toastify/dist/ReactToastify.css";
 
 // Controllers
-import { getAllRoutes, insertRoute, updateRoute, deleteRoute } from "@/controllers/RoutesController";
+import { getAllRoutes, insertRoute, updateRoute } from "@/controllers/RoutesController";
 import { getAllVendors } from "@/controllers/VendorController";
 
 // Utils
@@ -22,7 +23,6 @@ import { capitalizeFirstLetter } from "@/utils/generalUtils";
 // Components
 import { TextField, Button, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, Switch, Select, MenuItem, FormControl, InputLabel, SelectChangeEvent } from "@mui/material";
 import { apiResponseStatus } from "@/utils/responseUtils";
-import { ToastContainer, toast } from "react-toastify";
 
 export default function RouteManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
