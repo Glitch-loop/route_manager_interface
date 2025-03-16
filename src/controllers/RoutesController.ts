@@ -54,6 +54,7 @@ export async function insertRoute(routeToInsert:IRoute):Promise<IResponse<IRoute
   const record:IRoute = {
     ...routeToInsert,
     route_status: 1,
+    route_name: routeToInsert.route_name.toLocaleLowerCase()
   }
 
 
@@ -81,7 +82,11 @@ export async function insertRoute(routeToInsert:IRoute):Promise<IResponse<IRoute
 };
 
 export async function updateRoute(routeToUpdate:IRoute):Promise<IResponse<IRoute>> {
-  const reponseUpdateRoute:IResponse<IRoute> = await repository.updateRoute(routeToUpdate);
+  const record:IRoute = {
+    ...routeToUpdate,
+    route_name: routeToUpdate.route_name.toLocaleLowerCase()
+  }
+  const reponseUpdateRoute:IResponse<IRoute> = await repository.updateRoute(record);
 
   return reponseUpdateRoute;
 }; 
@@ -93,7 +98,7 @@ export async function hardDeleteRoute(routeToDelete:IRoute):Promise<IResponse<nu
 }
 
 export async function hardDeleteRouteDays(route:IRoute):Promise<IResponse<null>> {
-  const reponseDeleteRouteDays:IResponse<null> = await repository.deleteRouteDays(route);
+  const reponseDeleteRouteDays:IResponse<null> = await repository.deleteDaysOfRoute(route);
   
   return reponseDeleteRouteDays;
 

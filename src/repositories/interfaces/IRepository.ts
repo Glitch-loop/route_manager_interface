@@ -46,8 +46,9 @@ export interface IRepository {
   getAllRoutesByVendor(id_vendor:string): Promise<IResponse<IRoute[]>>;
   insertRoute(route:IRoute): Promise<IResponse<IRoute>>;
   updateRoute(route:IRoute): Promise<IResponse<IRoute>>;
-  insertDaysOfRoute(routeDays:IRouteDay[]): Promise<IResponse<IRouteDay[]>>;
   deleteRoute(route:IRoute): Promise<IResponse<null>>;
+  insertDaysOfRoute(routeDays:IRouteDay[]): Promise<IResponse<IRouteDay[]>>;
+  deleteDaysOfRoute(route:IRoute): Promise<IResponse<null>>;
 
   // Related to users
   getUserDataByCellphone(user:IUser):Promise<IResponse<IUser>>;

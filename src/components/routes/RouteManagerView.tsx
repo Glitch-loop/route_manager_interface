@@ -69,23 +69,25 @@ export default function RouteManagerView() {
     setFormData(route);
   };
 
-  const validateCorrectProductInputs = (route:IRoute):void => {
-    if (route.route_name === '') toast.error("Debes proporcionar un nombre a la nueva ruta.", { position: 'top-right' });
-    if (route.id_vendor === '') toast.error("Debes seleccionar un vendedor valido.", { position: 'top-right' });
-  }
-
-  const isRouteInputCorrect = (route:IRoute):boolean => {
+  const isRouteInputCorrect = (route:IRoute, showToast: boolean):boolean => {
+    let toastMessage:string = '';
     let result:boolean = true;
-    if (route.route_name === '') result = false;
-    if (route.id_vendor === '') result = false;
 
+    if (route.route_name === '') { toastMessage = "Debes proporcionar un nombre a la nueva ruta."; result = false; }
+      
+    if (route.id_vendor === '') {toastMessage = "Debes seleccionar un vendedor."; result = false;}
+
+    const routeWithSameName:IRoute|undefined = routes.find((currentRoute) => currentRoute.route_name === route.route_name);
+    if(routeWithSameName) {toastMessage = "El nombre de la ruta tiene que ser unico."; result = false;}
+
+    if (showToast) toast.error(toastMessage, { position: 'top-right' });
+    
     return result;
   }
 
-  const handleInsert = async () => {
-    validateCorrectProductInputs(formData);
 
-    if (!isRouteInputCorrect(formData)) return;
+  const handleInsert = async () => {
+    if (!isRouteInputCorrect(formData, true)) return;
 
     const responseRoute:IResponse<IRoute> = await insertRoute(formData);
 
@@ -99,20 +101,16 @@ export default function RouteManagerView() {
   };
 
   const handleUpdate = async () => {
-    if (!selectedRoute) return;
-    
-    validateCorrectProductInputs(formData);
-
-    if (!isRouteInputCorrect(formData)) return;
+    if (!selectedRoute || !isRouteInputCorrect(formData, true)) return;
 
     const responseRoute:IResponse<IRoute> = await updateRoute(formData);
 
     if (apiResponseStatus(responseRoute, 200)) {
-      toast.success("Se ha actualizado la agregado correctamente.", { position: 'top-right' })
+      toast.success("Se ha actualizado la ruta correctamente.", { position: 'top-right' })
       fetchRoutes();
       handleCancel();
     } else {
-      toast.error("Ha habido un error al momento de actualizar la ruta. Intente nuevamente", { position: 'top-right' })
+      toast.error("Ha habido un error al momento de actualizar la ruta. Intente nuevamente.", { position: 'top-right' })
     }
   };
 
