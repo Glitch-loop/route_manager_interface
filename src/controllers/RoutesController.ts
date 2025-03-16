@@ -58,7 +58,6 @@ export async function insertRoute(routeToInsert:IRoute):Promise<IResponse<IRoute
 
 
   const reponseInsertRoute:IResponse<IRoute> = await repository.insertRoute(record);
-
   if (apiResponseStatus(reponseInsertRoute, 201)) {
     const insertedRoute:IRoute = getDataFromApiResponse(reponseInsertRoute);
     const responseInsertRouteDays = await createRouteDays(insertedRoute);
@@ -66,7 +65,11 @@ export async function insertRoute(routeToInsert:IRoute):Promise<IResponse<IRoute
     reponseInsertRoute.responseCode = responseInsertRouteDays.responseCode;
 
     if (!apiResponseStatus(reponseInsertRoute, 201)) {
+      hardDeleteRouteDays(insertedRoute)
       hardDeleteRoute(insertedRoute);
+      
+    } else {
+      /* There is not instructions */
     }
   }  else {
     /* There is not instrucctions. */
@@ -87,6 +90,13 @@ export async function hardDeleteRoute(routeToDelete:IRoute):Promise<IResponse<nu
   const reponseDeleteRoute:IResponse<null> = await repository.deleteRoute(routeToDelete);
 
   return reponseDeleteRoute;
+}
+
+export async function hardDeleteRouteDays(route:IRoute):Promise<IResponse<null>> {
+  const reponseDeleteRouteDays:IResponse<null> = await repository.deleteRouteDays(route);
+  
+  return reponseDeleteRouteDays;
+
 }
 
 export async function deleteRoute(routeToUpdate:IRoute):Promise<IResponse<IRoute>> {

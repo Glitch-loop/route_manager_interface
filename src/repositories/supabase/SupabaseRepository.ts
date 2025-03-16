@@ -601,11 +601,11 @@ export class SupabaseRepository implements IRepository {
       const { data, error } = await supabase.from(TABLES.ROUTES)
       .delete()
       .eq('id_route', id_route)
-  
+      
       if (error) {
-        return createApiResponse<null>(500, null, null,'Failed deleting stores of a route day.');
+        return createApiResponse<null>(500, null, null,'Failed deleting the route.');
       } else {
-        return createApiResponse<null>(200, null, null, 'Stores inserted successfully in the route day.');
+        return createApiResponse<null>(200, null, null, 'Route deleted successfully.');
       }
 
     } catch (error) {
@@ -613,15 +613,17 @@ export class SupabaseRepository implements IRepository {
         500,
         null,
         null,
-        'Failed inserting the inventory operation.'
+        'Failed deleting the route.'
       );    
     } 
   }
 
   async insertDaysOfRoute(routeDays:IRouteDay[]):Promise<IResponse<IRouteDay[]>> {
     try {
-      const { data, error } = await supabase.from(TABLES.ROUTES)
-      .insert(routeDays)
+      const { data, error } = await supabase.from(TABLES.ROUTE_DAYS)
+      .insert(
+        routeDays.map((routeDay:IRouteDay) => {return {id_day: routeDay.id_day, id_route: routeDay.id_route}})
+      )
       .select('*');
 
       if (error) {
@@ -646,6 +648,29 @@ export class SupabaseRepository implements IRepository {
         null,
         'Failed inserting the route: ' + error
       );
+    }
+  }
+
+  async deleteDaysOfRoute(route:IRoute):Promise<IResponse<null>> {
+    try {
+      const { id_route } = route;
+      const { data, error } = await supabase.from(TABLES.ROUTE_DAYS)
+      .delete()
+      .eq('id_route', id_route)
+  
+      if (error) {
+        return createApiResponse<null>(500, null, null,'Failed deleting days of the route day.');
+      } else {
+        return createApiResponse<null>(200, null, null, 'Route days deleted successfully.');
+      }
+
+    } catch (error) {
+      return createApiResponse<null>(
+        500,
+        null,
+        null,
+        'Failed deleting days of the route day.'
+      );    
     }
   }
 

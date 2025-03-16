@@ -93,9 +93,7 @@ export default function RouteManagerView() {
       toast.success("La ruta se a agregado correctamente.", { position: 'top-right' })
       fetchRoutes();
       handleCancel();
-      console.log("succels")
     } else {
-      console.log("error")
       toast.error("Ha habido un error al momento de agregar la ruta. Intente nuevamente.", { position: 'top-right' })
     }
   };
@@ -164,7 +162,7 @@ export default function RouteManagerView() {
         
         {/* Route Status Switch */}
         <div className="flex items-center gap-4">
-          <span>Route Status:</span>
+          <span>Estado de la ruta:</span>
           <Switch checked={formData.route_status === 1} onChange={handleSwitchChange} />
           <span>{formData.route_status === 1 ? "Activo" : "Inactivo"}</span>
         </div>
