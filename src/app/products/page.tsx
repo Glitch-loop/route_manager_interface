@@ -24,7 +24,7 @@ export default function ProductPage() {
     id_product: "",
     product_name: "",
     barcode: "",
-    weight: "",
+    weight: 0,
     unit: "",
     comission: 0,
     price: 0,
@@ -198,7 +198,7 @@ export default function ProductPage() {
   return (
     <div className="w-full h-full flex flex-col p-4 overflow-hidden">
         <ToastContainer />
-        <div className="w-full flex flex-row">
+        <div className="w-full flex flex-row mb-3">
             {/* Left Side - Table */}
             <div className="flex-1 basis-1/3 p-2 ">
                 <Paper  sx={{width: '100%', overflow: 'hidden'}}>
@@ -276,7 +276,7 @@ export default function ProductPage() {
                 </div>
             </div>
         </div>
-        <div className="w-1/2 flex flex-row basis-1/2 overflow-y-auto">
+        <div className="basis-1/2 w-1/3 flex flex-row overflow-y-auto">
         {products &&
             <DragDropCatalogItems 
             title={"En este orden apareceran los productos"}

@@ -63,7 +63,7 @@ export default function DragDropCatalogItems({ catalogItems, onSave, title }: Dr
       </div>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={orderedCatalogItems.map((p) => p.id_item)} strategy={verticalListSortingStrategy}>
-          <Paper className="p-4">
+          <Paper className="p-4 overflow-y-auto">
             {orderedCatalogItems.map((product) => (
               <SortableItem key={product.id_item} id={product.id_item} name={product.item_name} />
             ))}
