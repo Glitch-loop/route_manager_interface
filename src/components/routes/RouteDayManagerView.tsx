@@ -29,7 +29,6 @@ import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, convertArrayInJ
 // Components
 import { Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, rgbToHex } from "@mui/material";
 import MultiContainerDragDrop from "@/components/general/dragAndDropComponent/multiDragAndDropComponent/MultiContainerDragDrop";
-import StoreMap from "@/components/general/mapComponent/StoreMap";
 import RouteMap from "../general/mapComponent/RouteMap";
 import InfoStoreHover from "../store/map/InfoStoreHover";
 import InfoStoreClick from "../store/map/InfoStoreClick";
@@ -178,7 +177,7 @@ export default function RouteDayManagerView() {
     const { id_route, id_day, id_route_day } = routeDay;
     const routeDayStoresData = await getStoresOfRouteDay(routeDay);
     const totalstoresInRouteDay:number = routeDayStoresData.length;
-
+    console.log(id_route_day)
 
     // Catalog item for the route day itself.
     catalogRoute.id_item_in_container = generateUUIDv4();
