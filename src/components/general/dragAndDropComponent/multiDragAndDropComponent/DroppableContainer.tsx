@@ -21,25 +21,27 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
   const { setNodeRef } = useDroppable({ id });
   const [confirmDialog, setConfirmDialog] = useState<boolean>(false);
   const [isSave, setIsSave] = useState<boolean>(false);
+  const [inputValue, setInputValue] = useState<string>('');
 
   //Handlers for verifying if it is needed the dialog
   const handleClose = () => {
     setIsSave(false);
-    if (items.length > 0) {
-      setConfirmDialog(true); // Ask for confirmation if there are items
-    } else {
-      onClose(); // Directly close if empty
-    }
+    setConfirmDialog(true);
+    // if (items.length > 0) {
+    //   setConfirmDialog(true); // Ask for confirmation if there are items
+    // } else {
+    //   onClose(); // Directly close if empty
+    // }
   }
 
   // Handle Save with validation
   const handleSave = () => {
     setIsSave(true);
-    if (items.length > 0) {
-      setConfirmDialog(true); // Ask for confirmation if there are items
-    } else {
-      onClose(); // Directly close if empty
-    }
+    setConfirmDialog(true); // Ask for confirmation if there are items
+    // if (items.length > 0) {
+    // } else {
+    //   onClose(); // Directly close if empty
+    // }
   };
 
 
@@ -76,10 +78,15 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
         options={allItems.map((item) => { return { id: item.id_item_in_container, ...item }})}
         getOptionKey={(option) => option.id_item_in_container}
         getOptionLabel={(option) => option.item_name}
-        onChange={(event, newValue) => { onAddItem(newValue) }}
+        inputValue={inputValue}
+        onChange={(event, newValue) => { 
+          setInputValue("");
+          onAddItem(newValue);
+        }}
         renderOption={(props, option) => (
           <li
             {...props}
+            key={option.id_item_in_container}
             onMouseEnter={() => onHoverOption(option)} // Detect hover
             onMouseLeave={() => onHoverOption(null)} // Detect hover
           >
@@ -87,7 +94,9 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
           </li>
         )}
 
-        renderInput={(params) => <TextField {...params} label="Add Item" />}
+        renderInput={(params) => <TextField 
+          onChange={(event) => { setInputValue(event.target.value); }}
+          {...params} label="Add Item" />}
       />
 
       <SortableContext items={items.map((p) => p.id_item_in_container)} strategy={verticalListSortingStrategy}>
