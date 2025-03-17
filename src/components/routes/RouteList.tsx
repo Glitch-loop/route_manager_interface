@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 
 // Controllers
-import { getInventoryOperationsOfWorkDay } from "@/controllers/InventoryController";
+import { getInventoryOperationDescriptionsOfWorkDay, getInventoryOperationsOfWorkDay } from "@/controllers/InventoryController";
 import { getInformationOfStores, getStoresFromRouteTransactions, getStoresOfRouteDay } from "@/controllers/StoreController";
 import { getRouteTransactionOperationDescriptionsFromWorkDay, getRouteTransactionOperationsFromWorkDay, getRouteTransactionsFromWorkDay, getTotalOfTypeOperationOfRouteTransaction } from "@/controllers/RouteTransactionsController";
 
@@ -11,6 +11,8 @@ import {
     IDay, 
     IDayGeneralInformation, 
     IInventoryOperation, 
+    IInventoryOperationDescription, 
+    IResponse, 
     IRoute, 
     IRouteDay, 
     IRouteDayStores, 
@@ -50,8 +52,9 @@ import {
 } from "@/utils/stylesUtils";
 import { formatToCurrency } from "@/utils/saleFunctionUtils";
 import DAYS_OPERATIONS from "@/utils/dayOperations";
-import { createSubscriptionToRouteTransactions } from "@/controllers/WorkDayController";
+import { createSubscriptionToInventoryOperations, createSubscriptionToRouteTransactions } from "@/controllers/WorkDayController";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
+import { capitalizeFirstLetter, generateUUIDv4 } from "@/utils/generalUtils";
 
 
 function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay }) {
@@ -152,8 +155,82 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
         setDayOperations(operationsOfTheDay)
 
         // Creating channel for listening the proces of the route
-        createSubscriptionToRouteTransactions((payload:RealtimePostgresChangesPayload<IRouteTransaction>) => { console.log("New coordinate: ", payload) });
+        console.log("route")
+        createSubscriptionToRouteTransactions((payload:RealtimePostgresChangesPayload<IRouteTransaction>) => { handlerWorkDayRouteTransactions(payload); });
+        console.log("inventory")
+        createSubscriptionToInventoryOperations((payload:RealtimePostgresChangesPayload<IInventoryOperation>) => { handlerWorkDayInventoryOperations(payload); });
     }
+
+    // Channels handlers
+    const handlerWorkDayRouteTransactions = async (payload:RealtimePostgresChangesPayload<IRouteTransaction>) => {
+        if (isTypeIRouteTransaction(payload.new)) {
+            const newRouteTransaction:IRouteTransaction = payload.new;
+    
+            if (newRouteTransaction.id_work_day === workDay.id_work_day) {
+                setRouteTransactions((prev) => 
+                    prev?.some((t) => t.id_route_transaction === newRouteTransaction.id_route_transaction) 
+                    ? prev : [...prev ?? [], newRouteTransaction]);
+                
+                // Route operations and descriptions might delay at the moment of syncing with the database.
+                setTimeout(async () => {
+                    const resultNewTransactionOperations:IRouteTransactionOperation[] = await getRouteTransactionOperationsFromWorkDay([newRouteTransaction]);
+                    const resultNewOperationDescriptions:IRouteTransactionOperationDescription[] = await getRouteTransactionOperationDescriptionsFromWorkDay(resultNewTransactionOperations);
+                    setRouteTransactionOperations((prev) => [
+                        ...prev ?? [], 
+                        ...resultNewTransactionOperations.filter((op) => 
+                            !prev?.some((existingOp) => existingOp.id_route_transaction_operation === op.id_route_transaction_operation)
+                    )]);
+                    setRouteTransactionOperationDescriptions((prev) => [
+                        ...prev ?? [], 
+                        ...resultNewOperationDescriptions.filter((desc) => 
+                        !prev?.some((existingDesc) => existingDesc.id_route_transaction_operation_description === desc.id_route_transaction_operation_description)
+                    )]);   
+
+                    setDayOperations((prev) => {
+                        if (!prev) return [newRouteTransaction]; // If prev is undefined, initialize with the new transaction
+                        
+                        // Check if the item already exists (match by id)
+                        const exists = prev.some((op) => 
+                            "id_route_transaction" in op 
+                            ? op.id_route_transaction === newRouteTransaction.id_route_transaction
+                            : op.id_inventory_operation === (newRouteTransaction as any).id_inventory_operation
+                        );
+                        return exists ? prev : [...prev, newRouteTransaction];
+                    });
+                }, 3000); 
+
+            }
+        }
+    }
+
+    const handlerWorkDayInventoryOperations = async (payload:RealtimePostgresChangesPayload<IInventoryOperation>) => {
+        console.log("inventory operation: ", payload.new)
+        if (isTypeIInventoryOperation(payload.new)) {
+            const newInventoryOperation:IInventoryOperation = payload.new;
+            
+            if (newInventoryOperation.id_work_day === workDay.id_work_day) {
+                console.log("It is in the same day")
+                setInventoryOperations((prev) => 
+                    prev?.some((t) => t.id_inventory_operation === newInventoryOperation.id_inventory_operation) 
+                    ? prev : [...prev ?? [], newInventoryOperation]);
+                
+                // Route operations and descriptions might delay at the moment of syncing with the database.
+                setTimeout(async () => {
+                    setDayOperations((prev) => {
+                        if (!prev) return [newInventoryOperation]; // If prev is undefined, initialize with the new transaction
+                        
+                        // Check if the item already exists (match by id)
+                        const exists = prev.some((op) => 
+                            "id_route_transaction" in op 
+                            ? op.id_route_transaction === newInventoryOperation.id_inventory_operation
+                            : op.id_inventory_operation === (newInventoryOperation as any).id_inventory_operation
+                        );
+                        return exists ? prev : [...prev, newInventoryOperation];
+                    });
+                }, 3000); 
+            }
+        }
+    } 
 
     useEffect(() => {
         initializeElement();
@@ -181,12 +258,13 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
     const { route_name, day_name, start_date, finish_date } = workDay;
 
 
+
     return (
         <div className="w-full h-1/2 flex flex-col items-center">
             {/* Information about the route */}
             <div className="w-full flex flex-row">
                 <div className="flex flex-col basis-4/5 items-start">
-                    <span className="text-2xl">{route_name} - {day_name}</span>
+                    <span className="text-2xl">{capitalizeFirstLetter(route_name)} - {capitalizeFirstLetter(day_name)}</span>
                     <span className="text-2xl">Fecha inicio: {cast_string_to_date_hour_format(start_date)} </span>
                     <span className="text-2xl">Fecha terminado: 
                         { finish_date === null ? 'Sin terminar' : cast_string_to_date_hour_format(finish_date) }
@@ -226,7 +304,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                 <div className="w-full my-3 flex flex-col justify-center items-center">
                     { dayOperations !== undefined &&
                         dayOperations.map((currentDayOperation, index:number) => {
-                            let idOfTheCard:string = '';
+                            const idOfTheCard:string = generateUUIDv4();
                             let title:string = '';
                             let description:string = '';
                             let positionInRouteOfStore:string = '';
@@ -242,7 +320,6 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             if (isTypeIInventoryOperation(currentDayOperation)) {
                                 // console.log("Inventory operation")
                                 const { id_inventory_operation, id_inventory_operation_type } = currentDayOperation;
-                                idOfTheCard = id_inventory_operation;
                                 title = getNameOfOperationType(id_inventory_operation_type);
                                 totalSold = "";
                                 cardColorStyle = determineDayOperationTypeBackgroundColor(id_inventory_operation_type);
@@ -252,9 +329,6 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                                 // console.log("Route transaction")
                                 const { id_route_transaction, id_store, state } = currentDayOperation;
 
-                                idOfTheCard = id_route_transaction;
-                                
-                                
                                 if (routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined && state === 1) {
                                     totalSold = formatToCurrency(
                                         getTotalOfTypeOperationOfRouteTransaction(DAYS_OPERATIONS.sales,

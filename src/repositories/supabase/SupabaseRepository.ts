@@ -1363,7 +1363,6 @@ export class SupabaseRepository implements IRepository {
 
   // Related to subscriptions
   suscribeTable(nameOfTheChannel:string, typeOfEvent: 'INSERT'|'UPDATE'|'DELETE', tableName:string, handler:(payload) => void):IResponse<RealtimeChannel> {
-    console.log(nameOfTheChannel)
     const newChannel:RealtimeChannel =  supabase
       .channel(nameOfTheChannel)
       .on('postgres_changes', { 
