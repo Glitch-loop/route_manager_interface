@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import { 
   ICatalogItem,
   IMapMarker,
+    IResponse,
     IRoute, 
     IRouteDay, 
     IRouteDayStores, 
@@ -34,6 +35,8 @@ import InfoStoreHover from "../store/map/InfoStoreHover";
 import InfoStoreClick from "../store/map/InfoStoreClick";
 import DAYS from "@/utils/days";
 import { generateRandomLightColor, getGradientColor, getLightestMarker } from "@/utils/stylesUtils";
+import { apiResponseStatus } from "@/utils/responseUtils";
+import { toast } from "react-toastify";
 
 export default function RouteDayManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -257,14 +260,21 @@ export default function RouteDayManagerView() {
           }
         })
 
-        await updateRouteDayStores(routeDay, routeDayStores);
+        const responseRouteDayStore:IResponse<null> = await updateRouteDayStores(routeDay, routeDayStores);
+
+        if(apiResponseStatus(responseRouteDayStore, 201)) {
+          handleDeleteRouteFromStates(column)
+          toast.success("Se ha actualizado la ruta correctamente");
+        } else {
+          toast.error("Ha habido un error al momento de actualizar la ruta");
+        }
       }
     }
 
     fetchData();
   };
 
-  const handleClose = (column: number) => {
+  const handleDeleteRouteFromStates = (column: number) => {
     const updatedMatrix:ICatalogItem[][] = [];
     let id_group_to_delete:string|null = null;
     
@@ -292,7 +302,6 @@ export default function RouteDayManagerView() {
         setStoreHovered(updatedStoreHovered);
         setSelectedStore(updatedSelectedStore);
         setTemporalMarkers([...updatedStoreHovered, ...updatedSelectedStore]);
-
       }
 
       setNameOfRouteCatalog(nameOfRoutesCatalog.filter((routeName, index) => index !== column));
@@ -301,8 +310,6 @@ export default function RouteDayManagerView() {
 
   const handlerMondifyCatalogRoutes = (matrix:ICatalogItem[][]) => {
     const markerOfTheRouteDay:IMapMarker[] = [];
-
-
     matrix.forEach((currentCatalog:ICatalogItem[]) => {
       let colorOfRoute:string = generateRandomLightColor();
       const totalItemsInCatalog:number = currentCatalog.length;
@@ -472,7 +479,7 @@ export default function RouteDayManagerView() {
             catalogTitles={nameOfRoutesCatalog}
             allItems={catalogStores}
             onSave={(column:number, catalogItem:ICatalogItem) => {handleSaveRouteDay(column, catalogItem)}}
-            onClose={(column:number) => {handleClose(column)}}
+            onClose={(column:number) => {handleDeleteRouteFromStates(column)}}
             onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {handlerMondifyCatalogRoutes(matrix)}}
             onHoverOption={(item:ICatalogItem|null) => { handleHoverItem(item) }}
             onSelectExistingItem={(id_item:ICatalogItem) => {handleSelectItem(id_item)}} />

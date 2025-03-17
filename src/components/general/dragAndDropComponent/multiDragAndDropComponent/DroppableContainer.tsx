@@ -19,14 +19,8 @@ interface DroppableContainerProps {
 
 export default function DroppableContainer({ id, title, items, allItems, onAddItem, onSave, onClose, onHoverOption }: DroppableContainerProps) {
   const { setNodeRef } = useDroppable({ id });
-  const [isSaveDisabled, setIsSaveDisabled] = useState<boolean>(true);
   const [confirmDialog, setConfirmDialog] = useState<boolean>(false);
   const [isSave, setIsSave] = useState<boolean>(false);
-
-  // Disable save if there are no items
-  useEffect(() => {
-    setIsSaveDisabled(items.length === 0);
-  }, [items]);
 
   //Handlers for verifying if it is needed the dialog
   const handleClose = () => {
@@ -68,7 +62,7 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
     <Paper ref={setNodeRef} className="w-1/3 p-4">
       <h2 className="text-lg font-semibold">{title}</h2>
       <div className="flex justify-between my-4">
-        <Button variant="contained" color="primary" onClick={handleSave} disabled={isSaveDisabled}>
+        <Button variant="contained" color="primary" onClick={handleSave}>
           Guardar
         </Button>
         <Button variant="contained" color="secondary" onClick={handleClose}>

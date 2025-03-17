@@ -389,9 +389,9 @@ export class SupabaseRepository implements IRepository {
     }
   }
 
-  async insertRouteDays(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]):Promise<IResponse<IRouteDayStores[]>> {
+  async insertStoresInRouteDay(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]):Promise<IResponse<IRouteDayStores[]>> {
     try {
-      let supabaseError:null|PostgrestError = '';
+      let supabaseError:null|PostgrestError = null;
       const {
         id_route_day,
       } = routeDay;
@@ -439,13 +439,14 @@ export class SupabaseRepository implements IRepository {
     }
   }
 
-  async deleteRouteDays(routeDay:IRouteDay):Promise<IResponse<null>> {
+  async deleteStoresInRouteDay(routeDay:IRouteDay):Promise<IResponse<null>> {
     try {
       const { id_route_day } = routeDay;
       const { data, error } = await supabase.from(TABLES.ROUTE_DAY_STORES)
       .delete()
       .eq('id_route_day', id_route_day)
-  
+      
+      console.log("delete stores: ", error)
       if (error) {
         return createApiResponse<null>(500, null, null,'Failed deleting stores of a route day.');
       } else {

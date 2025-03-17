@@ -39,8 +39,8 @@ export interface IRepository {
 
   // Related to routes
   getAllRoutes():Promise<IResponse<IRoute[]>>;
-  insertRouteDays(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]):Promise<IResponse<IRouteDayStores[]>>;
-  deleteRouteDays(routeDay:IRouteDay):Promise<IResponse<null>>;
+  insertStoresInRouteDay(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]):Promise<IResponse<IRouteDayStores[]>>;
+  deleteStoresInRouteDay(routeDay:IRouteDay):Promise<IResponse<null>>;
   getAllDaysByRoute(id_route:string): Promise<IResponse<IRouteDay[]>>;
   getAllRouteDays(): Promise<IResponse<IRouteDay[]>>;
   getAllRoutesByVendor(id_vendor:string): Promise<IResponse<IRoute[]>>;

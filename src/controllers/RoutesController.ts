@@ -125,8 +125,17 @@ export async function getStoresOfRouteDay(routeDay:IRouteDay):Promise<IRouteDayS
   return getDataFromApiResponse(allStoresInRoutedayResponse);
 };
 
-export async function updateRouteDayStores(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]) {
+export async function updateRouteDayStores(routeDay:IRouteDay, routeDayStores:IRouteDayStores[]):Promise<IResponse<null>> {
+  const resultUpdateRouteDayStores:IResponse<null> = await repository.deleteStoresInRouteDay(routeDay);    
+  
+  if (apiResponseStatus(resultUpdateRouteDayStores, 200)) {
+    const resultInsertRouteDayStores:IResponse<IRouteDayStores[]> = await repository.insertStoresInRouteDay(routeDay, routeDayStores);
+    resultUpdateRouteDayStores.responseCode = resultInsertRouteDayStores.responseCode;  
+  } else {
+    /* There is not instuctions */
+  }
 
+  return resultUpdateRouteDayStores;
 
 };
 
