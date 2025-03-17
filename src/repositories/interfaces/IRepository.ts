@@ -76,5 +76,5 @@ export interface IRepository {
   getAllRouteTransactionOperationsDescriptionsOfWorkDay(routeTransactionOperation:IRouteTransactionOperation[]):Promise<IResponse<IRouteTransactionOperationDescription[]>>;
 
   // Subscriptions
-  suscribeTable(typeOfEvent: 'INSERT'|'UPDATE'|'DELETE', tableName:string, action:(payload) => void):IResponse<RealtimeChannel>;
+  suscribeTable(nameOfTheChannel:string, typeOfEvent: 'INSERT'|'UPDATE'|'DELETE', tableName:string, action:(payload) => void):IResponse<RealtimeChannel>;
 }

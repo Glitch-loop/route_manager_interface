@@ -1362,19 +1362,22 @@ export class SupabaseRepository implements IRepository {
   }
 
   // Related to subscriptions
-  suscribeTable(typeOfEvent: 'INSERT'|'UPDATE'|'DELETE', tableName:string, handler:(payload) => void):IResponse<RealtimeChannel> {
-    console.log("creating channel")
-    const handlerData = () => {console.log("Hola mundo")}
+  suscribeTable(nameOfTheChannel:string, typeOfEvent: 'INSERT'|'UPDATE'|'DELETE', tableName:string, handler:(payload) => void):IResponse<RealtimeChannel> {
+    console.log(nameOfTheChannel)
     const newChannel:RealtimeChannel =  supabase
-      .channel('sellings')
-      .on('postgres_changes', { event: typeOfEvent, schema: 'public', table: tableName}, handler)
+      .channel(nameOfTheChannel)
+      .on('postgres_changes', { 
+        event: typeOfEvent, 
+        schema: 'public', 
+        table: tableName}, 
+        handler)
       .subscribe()
 
     return createApiResponse<RealtimeChannel>(
       200,
       newChannel,
       null,
-      'Failed getting all route transactions operation description of a route transaction operation.'
+      'Channel created successfully'
     );
   }
 }

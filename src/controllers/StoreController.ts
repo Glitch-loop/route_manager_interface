@@ -31,10 +31,7 @@ export async function getStoresOfRouteDay(routeDay:IRouteDay):Promise<IRouteDayS
       data: [],
     };
     const storesInTheRoute:IRouteDayStores[] = [];
-    console.log("Route day to consult: ", routeDay.id_route_day)
     resultAllStoresInRoute = await repository.getAllStoresInARouteDay(routeDay.id_route_day);
-    
-    console.log("resultAllStoresInRoute: ", resultAllStoresInRoute)
     const allStoreInRoute:IRouteDayStores[] = getDataFromApiResponse(resultAllStoresInRoute);
   
     allStoreInRoute.forEach((storeInRouteDay) => { storesInTheRoute.push(storeInRouteDay); });

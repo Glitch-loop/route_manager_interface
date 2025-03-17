@@ -21,7 +21,7 @@ import { RepositoryFactory } from "@/repositories/RepositoryFactory";
 import { supabase } from "@/lib/supabase";
 import TABLES from "@/utils/tables";
 import { getDataFromApiResponse } from "@/utils/responseUtils";
-import { getOpenWorkDays } from "@/controllers/WorkDayController";
+import { createSubscriptionToRouteTransactions, getOpenWorkDays } from "@/controllers/WorkDayController";
 import { getAllStores } from "@/controllers/StoreController";
 import StoreMap from "@/components/general/mapComponent/StoreMap";
 
@@ -66,13 +66,7 @@ const arrConceptOptions:IConceptOption[] = [
 export default function Home() {
 
   useEffect(() => {
-    
-    // const channelResponse = repository.suscribeTable('INSERT', TABLES.ROUTE_PATHS, 
-    //   (payload) => { console.log("New coordinate: ", payload) }
-    // )
-    
-    // const channel = getDataFromApiResponse(channelResponse);
-    
+        
     getOpenWorkDays()
     .then((data) => setOpenWorkDays(data));
 
@@ -81,12 +75,12 @@ export default function Home() {
     //     }
     
     getAllStores().then((stores) =>{ 
-      console.log("stores: ", stores.length)
+
       setStores(stores)});
-    //     supabase
-    //       .channel('sellings')
-    //       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'route_paths'}, handleInsert)
-    //       .subscribe()
+        // supabase
+        //   .channel('sellings')
+        //   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'route_paths'}, handleInsert)
+        //   .subscribe()
     
   }, [])
 
@@ -116,8 +110,8 @@ export default function Home() {
               openWorkDays.map((workday) => {
                 const { id_work_day } = workday;
                 return (
-                  <div key={id_work_day} className="w-full">
-                    <div  className="w-full min-w-96">
+                  <div key={id_work_day} className="w-full mx-3">
+                    <div  className="w-full min-w-96 max-w-3xl">
                       <RouteList workDay={workday}/>
                     </div>
                   </div>

@@ -50,10 +50,11 @@ import {
 } from "@/utils/stylesUtils";
 import { formatToCurrency } from "@/utils/saleFunctionUtils";
 import DAYS_OPERATIONS from "@/utils/dayOperations";
+import { createSubscriptionToRouteTransactions } from "@/controllers/WorkDayController";
+import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
 
 
 function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay }) {
-    
     const initializeElement = async () => {
         const { id_vendor } = workDay;
         const setOfStores = new Set<string>();
@@ -149,6 +150,9 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
         })
 
         setDayOperations(operationsOfTheDay)
+
+        // Creating channel for listening the proces of the route
+        createSubscriptionToRouteTransactions((payload:RealtimePostgresChangesPayload<IRouteTransaction>) => { console.log("New coordinate: ", payload) });
     }
 
     useEffect(() => {
@@ -236,7 +240,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             const { date } = currentDayOperation;
                             
                             if (isTypeIInventoryOperation(currentDayOperation)) {
-                                console.log("Inventory operation")
+                                // console.log("Inventory operation")
                                 const { id_inventory_operation, id_inventory_operation_type } = currentDayOperation;
                                 idOfTheCard = id_inventory_operation;
                                 title = getNameOfOperationType(id_inventory_operation_type);
@@ -245,7 +249,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             }
 
                             if (isTypeIRouteTransaction(currentDayOperation)) {
-                                console.log("Route transaction")
+                                // console.log("Route transaction")
                                 const { id_route_transaction, id_store, state } = currentDayOperation;
 
                                 idOfTheCard = id_route_transaction;
@@ -289,7 +293,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             dateOfTheOperation = date;
                             
 
-                            console.log(cardColorStyle)
+                            // console.log(cardColorStyle)
 
                             return (
                                 <CardRouteList
