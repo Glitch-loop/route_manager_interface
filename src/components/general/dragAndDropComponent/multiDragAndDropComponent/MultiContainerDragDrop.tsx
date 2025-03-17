@@ -123,6 +123,7 @@ export default function MultiContainerDragDrop({
 
   // Add New Item via Search
   const handleAddItem = (containerIndex: number, item: ICatalogItem | null, catalogThatBelongs: ICatalogItem) => {
+    console.log("Adding an item. Catalog that belongs: ", catalogThatBelongs)
     if (!item) return
     onModifyCatalogMatrix(catalogMatrix.map((catalog, index) =>
       index === containerIndex

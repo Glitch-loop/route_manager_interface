@@ -45,7 +45,10 @@ export default function RouteDayManagerView() {
   const [storesOfSelectedRouteDay, setStoresOfSelectedRouteDay] = useState<(IStore&IRouteDayStores)[]>([]);
 
   // Map component
-  const [markersToShow, setMarkerToShow] = useState<(IMapMarker)[]>([]);
+  const [markersToShow, setMarkerToShow] = useState<IMapMarker[]>([]);
+  const [temporalMarkers, setTemporalMarkers] = useState<IMapMarker[]>([]);
+  const [storeHoverd, setStoreHovered] = useState<IMapMarker[]>([]);
+  const [storeSelected, setSelectedStore] = useState<IMapMarker[]>([]);
   
   // Drag and drop component
   const [catalogsRoutes, setCatalogsRoutes] = useState<ICatalogItem[][]|null>(null);
@@ -55,9 +58,6 @@ export default function RouteDayManagerView() {
   // Maps
   const [mapRoutes, setMapRoutes] = useState<Record<string, IRoute>>({});
   const [mapRouteDays, setMapRouteDays] = useState<Record<string, IRouteDay>>({});
-  const [temporalMarkers, setTemporalMarkers] = useState<IMapMarker[]>([]);
-  const [storeHoverd, setStoreHovered] = useState<IMapMarker[]>([]);
-  const [storeSelected, setSelectedStore] = useState<IMapMarker[]>([]);
   // const [mapRouteDayStores, setMapRouteDayStores] = useState<Record<string, IRouteDayStores>>({});
 
   useEffect(() => {
@@ -153,7 +153,7 @@ export default function RouteDayManagerView() {
       order_to_show: 0,
     }
 
-    // Related to map component
+    // Variables related to the map component
     const markerOfTheRouteDay:IMapMarker[] = [];
     const colorOfRoute:string = generateRandomLightColor();
 
@@ -172,9 +172,19 @@ export default function RouteDayManagerView() {
     if(routeSelectedPreviously) return;
 
     // Retriving information of the route day
+    const { id_route, id_day, id_route_day } = routeDay;
     const routeDayStoresData = await getStoresOfRouteDay(routeDay);
     const totalstoresInRouteDay:number = routeDayStoresData.length;
-    const { id_route, id_day } = routeDay;
+
+
+    // Catalog item for the route day itself.
+    catalogRoute.id_item_in_container = generateUUIDv4();
+    catalogRoute.id_item = id_route_day;
+    catalogRoute.id_group = id_route;
+    if(mapRoutes[id_route]) catalogRoute.item_name = capitalizeFirstLetter(mapRoutes[id_route].route_name) + ' - ';
+    if(DAYS[id_day]) catalogRoute.item_name = catalogRoute.item_name + DAYS[id_day].day_name;
+    catalogRoute.order_to_show = 0;
+    
 
     // Get stores position from the route day
     routeDayStoresData.forEach((routeDayStore:IRouteDayStores) => {
@@ -205,19 +215,8 @@ export default function RouteDayManagerView() {
             order_to_show: position_in_route,
             id_group: id_route_day,
           });
-
-
-          catalogRoute.id_item = id_route_day;
-
-          if(mapRoutes[id_route]) {
-            catalogRoute.item_name = capitalizeFirstLetter(mapRoutes[id_route].route_name) + ' - ';
-          }
-
-          if(DAYS[id_day]) {
-            catalogRoute.item_name = catalogRoute.item_name + DAYS[id_day].day_name;
-          }
         }
-    })
+    });
 
     setSelectedRouteDay(routeDay);
     setRouteDayStores(routeDayStoresData);
@@ -261,13 +260,14 @@ export default function RouteDayManagerView() {
         await updateRouteDayStores(routeDay, routeDayStores);
       }
     }
-    
+
     fetchData();
   };
 
   const handleClose = (column: number) => {
     const updatedMatrix:ICatalogItem[][] = [];
     let id_group_to_delete:string|null = null;
+    
     if (catalogsRoutes) {
       for(let i = 0; i < catalogsRoutes.length; i++) {
         if (i !== column) {
@@ -287,10 +287,15 @@ export default function RouteDayManagerView() {
 
       if (id_group_to_delete) {
         setMarkerToShow(markersToShow.filter((marker) => marker.id_group !== id_group_to_delete));
+        const updatedStoreHovered:IMapMarker[] = [];
+        const updatedSelectedStore:IMapMarker[] = storeSelected.filter((marker) => marker.id_group !== id_group_to_delete);
+        setStoreHovered(updatedStoreHovered);
+        setSelectedStore(updatedSelectedStore);
+        setTemporalMarkers([...updatedStoreHovered, ...updatedSelectedStore]);
+
       }
 
       setNameOfRouteCatalog(nameOfRoutesCatalog.filter((routeName, index) => index !== column));
-
     }
   }
 
@@ -338,11 +343,9 @@ export default function RouteDayManagerView() {
             latitude: latitude,
             longuitude: longuitude
           });
-  
         }
-      })
-
-    })
+      });
+    });
 
     setCatalogsRoutes(matrix);
     
@@ -383,7 +386,7 @@ export default function RouteDayManagerView() {
     }
 
     setStoreHovered(updatedHoveredStores);
-    setTemporalMarkers([...updatedHoveredStores, ...storeSelected])
+    setTemporalMarkers([...updatedHoveredStores, ...storeSelected]);
   }
 
   const handleSelectItem = (selectedItem:ICatalogItem) => {
@@ -472,9 +475,7 @@ export default function RouteDayManagerView() {
             onClose={(column:number) => {handleClose(column)}}
             onModifyCatalogMatrix={(matrix:ICatalogItem[][]) => {handlerMondifyCatalogRoutes(matrix)}}
             onHoverOption={(item:ICatalogItem|null) => { handleHoverItem(item) }}
-            onSelectExistingItem={(id_item:ICatalogItem) => {handleSelectItem(id_item)}}
-            
-          />
+            onSelectExistingItem={(id_item:ICatalogItem) => {handleSelectItem(id_item)}} />
         )}
       </div>
     </div>

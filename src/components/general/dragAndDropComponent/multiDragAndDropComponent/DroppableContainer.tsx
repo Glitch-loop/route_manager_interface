@@ -67,7 +67,6 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
   return (
     <Paper ref={setNodeRef} className="w-1/3 p-4">
       <h2 className="text-lg font-semibold">{title}</h2>
-
       <div className="flex justify-between my-4">
         <Button variant="contained" color="primary" onClick={handleSave} disabled={isSaveDisabled}>
           Guardar
@@ -86,7 +85,6 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
         onChange={(event, newValue) => { onAddItem(newValue) }}
         renderOption={(props, option) => (
           <li
-            key={option.id_item_in_container}
             {...props}
             onMouseEnter={() => onHoverOption(option)} // Detect hover
             onMouseLeave={() => onHoverOption(null)} // Detect hover
