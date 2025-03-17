@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { APIProvider, Map, Marker, InfoWindow } from "@vis.gl/react-google-maps";
-import { IMapMarker, IRouteDayStores, IStore } from "@/interfaces/interfaces";
-import { createCustomMarker, getGradientColor } from "@/utils/stylesUtils";
+import { IMapMarker } from "@/interfaces/interfaces";
+import { createCustomMarker } from "@/utils/stylesUtils";
 
 
 interface StoreMapProps {
@@ -48,7 +48,7 @@ export default function RouteMap({ markers, temporalMarkers, onSelectStore }: St
         defaultCenter={markers.length ? { lat: parseFloat(markers[0].latitude), lng: parseFloat(markers[0].longuitude) } : defaultCenter}
         defaultZoom={13}
       >
-        {markers.map((marker, index) =>  {
+        {markers.map((marker) =>  {
           return (<Marker
             key={marker.id_marker}
             icon={createCustomMarker(marker.color_item)}
@@ -62,7 +62,7 @@ export default function RouteMap({ markers, temporalMarkers, onSelectStore }: St
             onMouseOut={() => handleMouseOut() }
           />
         )})}
-        {temporalMarkers.map((marker, index) =>  {
+        {temporalMarkers.map((marker) =>  {
           return (<Marker
             key={marker.id_item}
             icon={createCustomMarker(marker.color_item)}

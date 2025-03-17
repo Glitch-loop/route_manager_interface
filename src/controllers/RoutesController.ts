@@ -3,19 +3,14 @@ import { RepositoryFactory } from "@/repositories/RepositoryFactory";
 // Interfaces
 import {
     IRouteDayStores,
-    IStore,
-    IDayGeneralInformation,
-    IDay,
     IRouteDay,
     IRoute,
-    IStoreStatusDay,
     IResponse,
-    IUser,
 } from '@/interfaces/interfaces';
 
 // Utils
 //import { determineRouteDayState } from '@/utils/routeDayStoreStatesAutomata';
-import { enumStoreStates } from '@/interfaces/enumStoreStates';
+//import { enumStoreStates } from '@/interfaces/enumStoreStates';
 import {
   apiResponseStatus,
   getDataFromApiResponse,
