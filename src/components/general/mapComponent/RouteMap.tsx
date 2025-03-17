@@ -50,7 +50,7 @@ export default function RouteMap({ markers, temporalMarkers, onSelectStore }: St
       >
         {markers.map((marker, index) =>  {
           return (<Marker
-            key={marker.id_item}
+            key={marker.id_marker}
             icon={createCustomMarker(marker.color_item)}
             position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longuitude) }}
             onClick={() => {

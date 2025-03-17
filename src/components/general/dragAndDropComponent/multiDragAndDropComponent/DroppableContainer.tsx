@@ -27,21 +27,12 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
   const handleClose = () => {
     setIsSave(false);
     setConfirmDialog(true);
-    // if (items.length > 0) {
-    //   setConfirmDialog(true); // Ask for confirmation if there are items
-    // } else {
-    //   onClose(); // Directly close if empty
-    // }
   }
 
   // Handle Save with validation
   const handleSave = () => {
     setIsSave(true);
-    setConfirmDialog(true); // Ask for confirmation if there are items
-    // if (items.length > 0) {
-    // } else {
-    //   onClose(); // Directly close if empty
-    // }
+    setConfirmDialog(true);
   };
 
 
