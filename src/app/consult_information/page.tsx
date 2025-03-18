@@ -52,9 +52,12 @@ import TableInventoryOperationsVisualization from '@/components/inventory/TableI
 import TableInventoryVisualization from '@/components/inventory/TableInventoryVisualization';
 import { cast_string_to_timestamp_standard_format } from '@/utils/dateUtils';
 import DAYS_OPERATIONS from '@/utils/dayOperations';
+import { capitalizeFirstLetter } from '@/utils/generalUtils';
 
 
 function getRouteName(idRoute:string, routes:IRoute[]):string {
+    console.log(routes)
+    console.log(idRoute)
     let routeName:string = '';
     const index:number = routes.findIndex((route) => {return route.id_route === idRoute});
 
@@ -222,7 +225,8 @@ function ConsultInformation() {
                 </div>
             </div>
             <div className='flex flex-row basis-8/12 justify-center'>
-            { workDays.length > 0 &&
+            <div>{routes.length}</div>
+            { workDays.length >  0 &&
                 <div className='w-11/12'>
                     <TableSearchVisualization 
                         workDays={workDays}
@@ -237,7 +241,7 @@ function ConsultInformation() {
         {/* Title of the day */}
         { workday !== undefined && 
             <div className='flex flex-col ml-2'>
-                <span className='text-3xl font-bold'>Ruta: { getRouteName(workday.id_route, routes) }</span>
+                <span className='text-3xl font-bold'>Ruta: { capitalizeFirstLetter(getRouteName(workday.id_route, routes)) }</span>
                 <span className='text-2xl'>Fecha: {cast_string_to_timestamp_standard_format(workday.start_date)}</span>
                 <span className='text-xl'>Vendedor: {getVendorName(workday.id_vendor, vendors)}</span>
                 <span className='text-xl'>id ruta: {workday.id_work_day}</span>
