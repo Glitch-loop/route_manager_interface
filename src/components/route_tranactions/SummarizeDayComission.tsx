@@ -6,6 +6,7 @@ import {
     IDayGeneralInformation,
     IInventoryOperation,
     IInventoryOperationDescription,
+    IProductInventory,
     IRoute,
     IRouteDay,
     IRouteTransaction,
@@ -15,12 +16,15 @@ import {
 import { 
     formatToCurrency,
     isOperationDescriptionEqualToMovement,
+    isRouteOperationDescriptionValid,
  } from "@/utils/saleFunctionUtils";
 import { convertArrayInJsonUsingInterfaces } from "@/utils/generalUtils";
+import { determineProblemWithInventory } from "@/controllers/InventoryController";
 
 
 function SummarizeDayComission({
     workday,
+    inventory,
     routeTransactions,
     routeTransactionOperations,
     routeTransactionOperationDescriptions,
@@ -28,6 +32,7 @@ function SummarizeDayComission({
     inventoryOperationDescriptions
 }:{
     workday:IRoute&IDayGeneralInformation&IDay&IRouteDay,
+    inventory:IProductInventory[],
     routeTransactions:IRouteTransaction[],
     routeTransactionOperations:IRouteTransactionOperation[],
     routeTransactionOperationDescriptions:IRouteTransactionOperationDescription[],
@@ -40,21 +45,29 @@ function SummarizeDayComission({
     const jsonRouteTransactionOperations:Record<string, IRouteTransactionOperation> = convertArrayInJsonUsingInterfaces(routeTransactionOperations)
     const jsonRouteTransactionOperationDescriptions:Record<string, IRouteTransactionOperationDescription> = convertArrayInJsonUsingInterfaces(routeTransactionOperationDescriptions)
 
+    // Operation related to inventory operations
+    const problemWithInventory:number = determineProblemWithInventory(inventory, 
+        inventoryOperations,
+        inventoryOperationDescriptions,
+        routeTransactions,
+        routeTransactionOperations,
+        routeTransactionOperationDescriptions,
+    )
 
     // Operations related to route transaction
     const totalConceptProductDevolution:number = (routeTransactionOperationDescriptions
         .reduce((acc, item) => 
-            { return (isOperationDescriptionEqualToMovement(item, jsonRouteTransactionOperations, product_devolution) ? item.amount * item.price_at_moment : 0)  + acc}, 0)) * -1;
+            { return (isRouteOperationDescriptionValid(item, jsonRouteTransactionOperations, product_devolution, jsonRouteTransactions) ? item.amount * item.price_at_moment : 0)  + acc}, 0)) * -1;
 
     const totalConceptProductReposition:number = routeTransactionOperationDescriptions
         .reduce((acc, item) => 
-            { return (isOperationDescriptionEqualToMovement(item, jsonRouteTransactionOperations, product_reposition) ? item.amount * item.price_at_moment : 0)  + acc}, 0);
+            { return (isRouteOperationDescriptionValid(item, jsonRouteTransactionOperations, product_reposition, jsonRouteTransactions) ? item.amount * item.price_at_moment : 0)  + acc}, 0);
         
     const productDevolutionBalance:number = totalConceptProductReposition + totalConceptProductDevolution 
         
     const totalConceptSales:number = routeTransactionOperationDescriptions
         .reduce((acc, item) => 
-            { return (isOperationDescriptionEqualToMovement(item, jsonRouteTransactionOperations, sales) ? item.amount * item.price_at_moment : 0)  + acc}, 0);
+            { return (isRouteOperationDescriptionValid(item, jsonRouteTransactionOperations, sales, jsonRouteTransactions) ? item.amount * item.price_at_moment : 0)  + acc}, 0);
 
     const greatTotal:number = totalConceptSales + productDevolutionBalance;
 
@@ -68,35 +81,15 @@ function SummarizeDayComission({
 
     const problemWithDeliveredCash:number = cashToDeliver - deliveredCash;
 
+    const totalOfSaleToDiscount:number = problemWithDeliveredCash - problemWithInventory - productDevolutionBalance 
+
+    const totalToPayComission:number = totalConceptSales - totalOfSaleToDiscount;
+
     // Operations related to inventory operations
 
 
     // Making the page to display
     const contentOftheOperation:IAccountabilityItem[] = [
-        {
-            message: "Gran total de hoy: ",
-            value: formatToCurrency(greatTotal),
-            isUnderline: false,
-            isBold: false,
-            isItalic: false,
-            isSeparateLine: false,
-        },
-        {
-            message: "Balance de devolución de producto: ",
-            value: formatToCurrency(productDevolutionBalance),
-            isUnderline: false,
-            isBold: false,
-            isItalic: true,
-            isSeparateLine: false,
-        },
-        {
-            message: "Total dinero en concepto de ventas: ",
-            value: formatToCurrency(totalConceptSales),
-            isUnderline: false,
-            isBold: true,
-            isItalic: false,
-            isSeparateLine: true,
-        },
         {
             message: "Total dinero a entregar: ",
             value: formatToCurrency(cashToDeliver),
@@ -116,30 +109,22 @@ function SummarizeDayComission({
         {
             message: "Diferencia entre dinero recibido y dinero entregado: ",
             value: formatToCurrency(problemWithDeliveredCash),
-            isUnderline: false,
+            isUnderline: true,
             isBold: true,
-            isItalic: false,
+            isItalic: true,
             isSeparateLine: false,
         },
         {
             message: "Problemas con el inventario: ",
-            value: "$10",
+            value: formatToCurrency(problemWithInventory),
             isUnderline: false,
             isBold: true,
             isItalic: false,
             isSeparateLine: false,
         },
         {
-            message: "Total a descontar: ",
-            value: "-$120",
-            isUnderline: false,
-            isBold: true,
-            isItalic: false,
-            isSeparateLine: true,
-        },
-        {
-            message: "Gran total de hoy: ",
-            value: formatToCurrency(greatTotal),
+            message: "Merma: ",
+            value: formatToCurrency(productDevolutionBalance),
             isUnderline: false,
             isBold: false,
             isItalic: false,
@@ -147,7 +132,23 @@ function SummarizeDayComission({
         },
         {
             message: "Total a descontar: ",
-            value: "-$0",
+            value: formatToCurrency(totalOfSaleToDiscount),
+            isUnderline: false,
+            isBold: true,
+            isItalic: false,
+            isSeparateLine: true,
+        },
+        {
+            message: "Venta de hoy: ",
+            value: formatToCurrency(totalConceptSales),
+            isUnderline: false,
+            isBold: false,
+            isItalic: false,
+            isSeparateLine: false,
+        },
+        {
+            message: "Total a descontar: ",
+            value: formatToCurrency(totalOfSaleToDiscount),
             isUnderline: false,
             isBold: false,
             isItalic: false,
@@ -155,15 +156,15 @@ function SummarizeDayComission({
         },        
         {
             message: "Total para pagar la comisión: ",
-            value: "-$120",
-            isUnderline: false,
+            value: formatToCurrency(totalToPayComission),
+            isUnderline: true,
             isBold: true,
-            isItalic: false,
+            isItalic: true,
             isSeparateLine: false,
         },
         {
             message: "Comisión: ",
-            value: "-$120",
+            value: formatToCurrency(totalToPayComission * 0.06),
             isUnderline: false,
             isBold: true,
             isItalic: false,

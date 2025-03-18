@@ -225,7 +225,6 @@ function ConsultInformation() {
                 </div>
             </div>
             <div className='flex flex-row basis-8/12 justify-center'>
-            <div>{routes.length}</div>
             { workDays.length >  0 &&
                 <div className='w-11/12'>
                     <TableSearchVisualization 
@@ -260,17 +259,23 @@ function ConsultInformation() {
                     />
 
                 }
-                {/* { (workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined 
-                    && routeTransactionOperationDescriptions !== undefined && inventoryOperations !== undefined && inventoryOperationDescriptions !== undefined) &&
+                { (workday !== undefined 
+                && routeTransactions !== undefined 
+                && routeTransactionOperations !== undefined 
+                && routeTransactionOperationDescriptions !== undefined 
+                && inventoryOperations !== undefined 
+                && inventoryOperationDescriptions !== undefined
+                && productsInventory !== undefined) &&
                     <SummarizeDayComission
                         workday={workday}
+                        inventory={productsInventory}
                         routeTransactions={routeTransactions}
                         routeTransactionOperations={routeTransactionOperations}
                         routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
                         inventoryOperations={inventoryOperations}
                         inventoryOperationDescriptions={inventoryOperationDescriptions}
                     />
-                } */}
+                }
             </div>
             {/* Summarize of product of the day */}
             { ( productsInventory !== undefined && 

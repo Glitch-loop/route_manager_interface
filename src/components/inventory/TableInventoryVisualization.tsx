@@ -32,6 +32,7 @@ import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow
 import { convertArrayInJsonUsingInterfaces } from '@/utils/generalUtils';
 import DAYS_OPERATIONS from '@/utils/dayOperations';
 import { isTypeIInventoryOperationDescription, isTypeIRouteTransactionOperation, isTypeIRouteTransactionOperationDescription } from '@/utils/guards';
+import { getProductInventoryByInventoryOperationType, getProductInventoryOfInventoryOperationType, groupConceptsInTheirParentConcept } from '@/controllers/InventoryController';
 
 
 const headerTitleTableStyle:string = 'h-32 w-28 flex flex-row justify-center items-center';
@@ -46,120 +47,98 @@ const viewTagRowTableStyle:string = 'w-full flex flex-row items-center justify-c
 const textRowTableStyle:string = 'text-sm text-center text-black flex flex-row justify-center';
 
 
-function groupConceptsInTheirParentConcept<T>(arrConceptToGroup:T[]):Map<string, T[]> {
-  const groupedConcepts:Map<string, T[]> = new Map<string, T[]>()
 
-  arrConceptToGroup.forEach((conceptToGroup:T) => {
-    let key:string = "";
 
-    if (isTypeIInventoryOperationDescription(conceptToGroup) === true) {
-      key = conceptToGroup.id_inventory_operation;
-    } else if(isTypeIRouteTransactionOperation(conceptToGroup)) {
-      key = conceptToGroup.id_route_transaction;
-    } else if(isTypeIRouteTransactionOperationDescription(conceptToGroup)) {
-      key = conceptToGroup.id_route_transaction_operation
-    }
+// function getProductInventoryOfInventoryOperationType(
+//   inventoryOperationType:string, 
+//   inventoryOperations:IInventoryOperation[],
+//   inventoryDescriptions:Map<string, IInventoryOperationDescription[]>,
+//   inventory:IProductInventory[],
+//   idInventoryOperation:string|undefined
+// ):IProductInventory[] {
+//   let productInventory:IProductInventory[];
+//   const inventoryOftheOperation:IInventoryOperation|undefined = inventoryOperations.find((inventoryOperation) => { 
+//     let isOperation:boolean = false;
+//     const {state, id_inventory_operation, id_inventory_operation_type} = inventoryOperation;
 
-    if (groupedConcepts.has(key) === false) {
-      groupedConcepts.set(key, []);
-    }
+//     if (idInventoryOperation === undefined) {
+//       isOperation = (state === 1 && id_inventory_operation_type === inventoryOperationType); 
+//     } else {
+//       isOperation = (idInventoryOperation === id_inventory_operation && state === 1 && id_inventory_operation_type === inventoryOperationType); 
+//     }
 
-    if (groupedConcepts.get(key) !== undefined) {
-      groupedConcepts.get(key)?.push(conceptToGroup);
-    }
-  })
-
-  return groupedConcepts;
-}
-
-function getProductInventoryOfInventoryOperationType(
-  inventoryOperationType:string, 
-  inventoryOperations:IInventoryOperation[],
-  inventoryDescriptions:Map<string, IInventoryOperationDescription[]>,
-  inventory:IProductInventory[],
-  idInventoryOperation:string|undefined
-):IProductInventory[] {
-  let productInventory:IProductInventory[];
-  const inventoryOftheOperation:IInventoryOperation|undefined = inventoryOperations.find((inventoryOperation) => { 
-    let isOperation:boolean = false;
-    const {state, id_inventory_operation, id_inventory_operation_type} = inventoryOperation;
-
-    if (idInventoryOperation === undefined) {
-      isOperation = (state === 1 && id_inventory_operation_type === inventoryOperationType); 
-    } else {
-      isOperation = (idInventoryOperation === id_inventory_operation && state === 1 && id_inventory_operation_type === inventoryOperationType); 
-    }
-
-    return isOperation;
-   })
+//     return isOperation;
+//    })
 
 
 
-  if (inventoryOftheOperation === undefined) {
-    console.log("inventory operation wasn't found")
-    productInventory = [];
-  } else {
-    console.log("+++++++++++++++++inventory operation found")
-    const { id_inventory_operation } = inventoryOftheOperation;
-    const inventoyDescriptions:IInventoryOperationDescription[]|undefined = inventoryDescriptions.get(id_inventory_operation);
-    console.log("inventoyDescriptions: ", inventoyDescriptions?.length)
-    productInventory = convertInventoryOperationDescriptionToProductInventoryInterface(
-      inventoyDescriptions,
-      inventory
-    )
-  }
+//   if (inventoryOftheOperation === undefined) {
+//     console.log("inventory operation wasn't found")
+//     productInventory = [];
+//   } else {
+//     console.log("+++++++++++++++++inventory operation found")
+//     const { id_inventory_operation } = inventoryOftheOperation;
+//     const inventoyDescriptions:IInventoryOperationDescription[]|undefined = inventoryDescriptions.get(id_inventory_operation);
+//     console.log("inventoyDescriptions: ", inventoyDescriptions?.length)
+//     productInventory = convertInventoryOperationDescriptionToProductInventoryInterface(
+//       inventoyDescriptions,
+//       inventory
+//     )
+//   }
 
-  return productInventory;
-}
+//   return productInventory;
+// }
 
-function getProductInventoryByInventoryOperationType(
-  targetTypeOperation:string, 
-  routeTransactions:IRouteTransaction[],
-  routeTransactionOperations:Map<string, IRouteTransactionOperation[]>,
-  routeTransactionOperationDescriptions:Map<string, IRouteTransactionOperationDescription[]>,
-  inventory:IProductInventory[]):IProductInventory[] {
-  const resultInventory:IProductInventory[] = []
+// function getProductInventoryByInventoryOperationType(
+//   targetTypeOperation:string, 
+//   routeTransactions:IRouteTransaction[],
+//   routeTransactionOperations:Map<string, IRouteTransactionOperation[]>,
+//   routeTransactionOperationDescriptions:Map<string, IRouteTransactionOperationDescription[]>,
+//   inventory:IProductInventory[]):IProductInventory[] {
+//   const resultInventory:IProductInventory[] = []
   
-  const newInventory = inventory.map((productInventory:IProductInventory) => {
-    return {...productInventory, amount: 0}
-  })
+//   const newInventory = inventory.map((productInventory:IProductInventory) => {
+//     return {...productInventory, amount: 0}
+//   })
 
-  const productInventoryMap:Record<string, IProductInventory> = convertArrayInJsonUsingInterfaces(newInventory);  
+//   const productInventoryMap:Record<string, IProductInventory> = convertArrayInJsonUsingInterfaces(newInventory);  
   
 
-  for (const transaction of routeTransactions) {
-    const {id_route_transaction, state} = transaction;
-    if (state === 1) { // Verifying it is active
-      const arrTransactionOperations:IRouteTransactionOperation[]|undefined = routeTransactionOperations.get(id_route_transaction);
+//   for (const transaction of routeTransactions) {
+//     const {id_route_transaction, state} = transaction;
+//     if (state === 1) { // Verifying it is active
+//       const arrTransactionOperations:IRouteTransactionOperation[]|undefined = routeTransactionOperations.get(id_route_transaction);
 
-      if (arrTransactionOperations) {
-        for (const transactionOperation of arrTransactionOperations) {
-          const { id_route_transaction_operation_type, id_route_transaction_operation } = transactionOperation;
-          if (id_route_transaction_operation_type === targetTypeOperation) {
-            const arrOperationDescriptions:IRouteTransactionOperationDescription[] |undefined = routeTransactionOperationDescriptions.get(id_route_transaction_operation);
+//       if (arrTransactionOperations) {
+//         for (const transactionOperation of arrTransactionOperations) {
+//           const { id_route_transaction_operation_type, id_route_transaction_operation } = transactionOperation;
+//           if (id_route_transaction_operation_type === targetTypeOperation) {
+//             const arrOperationDescriptions:IRouteTransactionOperationDescription[] |undefined = routeTransactionOperationDescriptions.get(id_route_transaction_operation);
 
-            if (arrOperationDescriptions) {
-              for (const transactionOperationDescription of arrOperationDescriptions) {
-                const {id_product, amount} = transactionOperationDescription
-                if (productInventoryMap[id_product] !== undefined) {
-                  productInventoryMap[id_product].amount += amount
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
+//             if (arrOperationDescriptions) {
+//               for (const transactionOperationDescription of arrOperationDescriptions) {
+//                 const {id_product, amount} = transactionOperationDescription
+//                 if (productInventoryMap[id_product] !== undefined) {
+//                   productInventoryMap[id_product].amount += amount
+//                 }
+//               }
+//             }
+//           }
+//         }
+//       }
+//     }
+//   }
   
 
 
-  for (const key in productInventoryMap) {
-    resultInventory.push(productInventoryMap[key]);
-  }
+//   for (const key in productInventoryMap) {
+//     resultInventory.push(productInventoryMap[key]);
+//   }
 
-  return resultInventory;
-}
+//   return resultInventory;
+// }
+
+
 
 /*
   To generalize as much as possible, this component was made to be capable of showing all the possible "inventory operations".
@@ -237,16 +216,13 @@ const TableInventoryVisualization = (
     const transactionDescriptionByTransactionOperation:Map<string, IRouteTransactionOperationDescription[]> = groupConceptsInTheirParentConcept<IRouteTransactionOperationDescription>(routeTransactionOperationDescriptions);
 
     // Determining inventory operations 
-    console.log("Looking for start shift operation")    
     initialInventory = getProductInventoryOfInventoryOperationType(
       DAYS_OPERATIONS.start_shift_inventory, 
       inventoryOperations, 
       inventoryOperationDescriptionByInventoryOperation, 
       inventory.map((product) => { return {...product, amount: 0}}), 
       undefined);
-    
 
-    console.log("Looking for end shift operation")    
     returnedInventory = getProductInventoryOfInventoryOperationType(
       DAYS_OPERATIONS.end_shift_inventory, 
       inventoryOperations, 
@@ -254,9 +230,6 @@ const TableInventoryVisualization = (
       inventory.map((product) => { return {...product, amount: 0}}), 
       undefined);
   
-    console.log("initialInventory: ", initialInventory.length)
-    console.log("returnedInventory: ", returnedInventory.length)
-
     // Determining valid restock inventories
     const validRestockInventoryOperations:IInventoryOperation[] = inventoryOperations.filter((inventoryOperation:IInventoryOperation) => {
       const { state, id_inventory_operation_type } = inventoryOperation;
