@@ -79,11 +79,11 @@ function SummarizeDayComission({
 
     const deliveredCash:number = workday.final_petty_cash;
 
-    const problemWithDeliveredCash:number = cashToDeliver - deliveredCash;
+    const problemWithDeliveredCash:number =  deliveredCash - cashToDeliver;
 
-    const totalOfSaleToDiscount:number = problemWithDeliveredCash - problemWithInventory - productDevolutionBalance 
+    const totalOfSaleToDiscount:number = problemWithDeliveredCash + problemWithInventory + productDevolutionBalance 
 
-    const totalToPayComission:number = totalConceptSales - totalOfSaleToDiscount;
+    const totalToPayComission:number = totalConceptSales + totalOfSaleToDiscount;
 
     // Operations related to inventory operations
 
