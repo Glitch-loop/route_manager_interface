@@ -342,8 +342,8 @@ export class SupabaseRepository implements IRepository {
     try {
       const { data, error } = await supabase.from(TABLES.WORK_DAYS)
                                     .select()
-                                    .gt('start_date', initialDate)
-                                    .lt('start_date', finalDate)
+                                    .gte('start_date', initialDate)
+                                    .lte('start_date', finalDate)
                                     .order('start_date', {ascending: true})
 
       if (error) {

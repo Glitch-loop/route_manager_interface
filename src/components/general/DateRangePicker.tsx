@@ -155,7 +155,6 @@ export default function DateRangePicker({
                     } else {
                         setFinalDate(day)
                     }
-
                 } else { // User is restarting the range
                     
                     setFinalDate(null)

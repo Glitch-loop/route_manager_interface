@@ -120,7 +120,7 @@ function ConsultInformation() {
             return
         }
 
-        setWorkDays(await getStoresByDate(initialDate.format('YYYY/MM/DD'), finalDate.format('YYYY/MM/DD')));
+        setWorkDays(await getStoresByDate(initialDate.format('YYYY/MM/DD'), finalDate.add(1,'day').format('YYYY/MM/DD')));
         setVendors(await getAllVendors());
         setRoutes(await getAllRoutes());
     }

@@ -165,10 +165,8 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                     position_in_route: -1,
                     id_route_day: ''
                 }
-            }
-
-            
-        })
+            }  
+        });
         setPlannedStores(storesInDay);
         setStores(storesWithStatus);
 
@@ -190,16 +188,12 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
             }
 
             return isGreater;
-        })
+        });
 
-        console.log("Complete list: ", createRouteDayOperations(operationsOfTheDay, storesInDay))
-        setDayOperations(
-            createRouteDayOperations(operationsOfTheDay, storesInDay))
+        setDayOperations(createRouteDayOperations(operationsOfTheDay, storesInDay));
 
         // Creating channel for listening the proces of the route
-        console.log("route")
         createSubscriptionToRouteTransactions((payload:RealtimePostgresChangesPayload<IRouteTransaction>) => { handlerWorkDayRouteTransactions(payload); });
-        console.log("inventory")
         createSubscriptionToInventoryOperations((payload:RealtimePostgresChangesPayload<IInventoryOperation>) => { handlerWorkDayInventoryOperations(payload); });
     }
 
