@@ -10,6 +10,7 @@ import { getRouteTransactionOperationDescriptionsFromWorkDay, getRouteTransactio
 import { 
     IDay, 
     IDayGeneralInformation, 
+    IDayOperation, 
     IInventoryOperation, 
     IInventoryOperationDescription, 
     IResponse, 
@@ -41,7 +42,8 @@ import {
     cast_string_to_hour_format, 
     differenceBetweenDatesInSeconds, 
     differenceBetweenDatesWithFormat, 
-    isDateGreater
+    isDateGreater,
+    timestamp_format
 } from "@/utils/dateUtils";
 import { getVendorById } from "@/controllers/VendorController";
 import { isTypeIInventoryOperation, isTypeIRouteTransaction } from "@/utils/guards";
@@ -54,8 +56,46 @@ import { formatToCurrency } from "@/utils/saleFunctionUtils";
 import DAYS_OPERATIONS from "@/utils/dayOperations";
 import { createSubscriptionToInventoryOperations, createSubscriptionToRouteTransactions } from "@/controllers/WorkDayController";
 import { RealtimePostgresChangesPayload } from "@supabase/supabase-js";
-import { capitalizeFirstLetter, generateUUIDv4 } from "@/utils/generalUtils";
+import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, generateUUIDv4 } from "@/utils/generalUtils";
+import { enumStoreStates } from "@/interfaces/enumStoreStates";
 
+function createRouteDayOperations(dayOperations:(IRouteTransaction|IInventoryOperation)[], plannedStores: IRouteDayStores[]):(IRouteTransaction|IInventoryOperation)[] {
+    let listOfDayOperations:(IRouteTransaction|IInventoryOperation)[] = [];
+    let pendingStores:IRouteDayStores[] = [];
+    let id_work_day:string = '';
+
+    // Determining pending stores
+    pendingStores = plannedStores.reduce((pendingStores:IRouteDayStores[], currentStore) => {
+        const isAttendedStore:boolean = dayOperations.some((dayOperation) => 
+            isTypeIRouteTransaction(dayOperation) ? dayOperation.id_store === currentStore.id_store : false);
+
+        if (!isAttendedStore) pendingStores.push(currentStore);
+        
+        return pendingStores;
+
+    }, []);
+
+    if (dayOperations[0]) id_work_day = dayOperations[0].id_work_day;
+
+    const pendingStoreARouteTransactions:IRouteTransaction[] = pendingStores.map((pendingStore:IRouteDayStores) => {
+        return {
+            id_route_transaction: '',
+            date: timestamp_format(),
+            state: 1,
+            cash_received: 0,
+            id_work_day: id_work_day,
+            id_payment_method: '',
+            id_store: pendingStore.id_store
+        }
+    });
+
+    listOfDayOperations = [
+        ...dayOperations,
+        ...pendingStoreARouteTransactions,
+    ]        
+
+    return listOfDayOperations;
+}
 
 function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRouteDay }) {
     const initializeElement = async () => {
@@ -152,7 +192,9 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
             return isGreater;
         })
 
-        setDayOperations(operationsOfTheDay)
+        console.log("Complete list: ", createRouteDayOperations(operationsOfTheDay, storesInDay))
+        setDayOperations(
+            createRouteDayOperations(operationsOfTheDay, storesInDay))
 
         // Creating channel for listening the proces of the route
         console.log("route")
@@ -204,7 +246,6 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
     }
 
     const handlerWorkDayInventoryOperations = async (payload:RealtimePostgresChangesPayload<IInventoryOperation>) => {
-        console.log("inventory operation: ", payload.new)
         if (isTypeIInventoryOperation(payload.new)) {
             const newInventoryOperation:IInventoryOperation = payload.new;
             
@@ -313,7 +354,9 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             let dateOfTheOperation:string = '';
                             let cardColorStyle:string = 'bg-orange-400';
                             let totalSold:string = '$0';
-                            
+                            let storeStatus:enumStoreStates = enumStoreStates.NUETRAL_STATE;
+                            let indexPreviousOperationDay:number = -1;
+                            let isCurrentOperation:boolean = false;
                             // Common fields
                             const { date } = currentDayOperation;
                             
@@ -326,9 +369,9 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             }
 
                             if (isTypeIRouteTransaction(currentDayOperation)) {
-                                // console.log("Route transaction")
                                 const { id_route_transaction, id_store, state } = currentDayOperation;
 
+                                // Getting total of the selling.
                                 if (routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined && state === 1) {
                                     totalSold = formatToCurrency(
                                         getTotalOfTypeOperationOfRouteTransaction(DAYS_OPERATIONS.sales,
@@ -340,6 +383,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                                     totalSold = formatToCurrency(0, "$");    
                                 }
 
+                                // Getting information regarded to the store
                                 if (stores[id_store] !== undefined) {
                                     const { store_name, position_in_route } = stores[id_store];
                                     title = store_name;
@@ -350,12 +394,48 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                                         positionInRouteOfStore = position_in_route.toString();
                                     }
 
-                                    cardColorStyle = determineStoreContextBackgroundColor(stores[id_store], false)
+
+                                    
+                                    // Determining the state of the store
+                                    if (routeTransactions) {
+                                        const routeTransactionFound:IRouteTransaction|undefined = routeTransactions.find((routeTransaction) => routeTransaction.id_store === id_store);
+                                        indexPreviousOperationDay = index - 1;
+                                        
+                                        // Determining if the currect day operation is the current one.
+                                        if(indexPreviousOperationDay >= 0) {
+                                            const previousDayOperation:IRouteTransaction|IInventoryOperation = dayOperations[indexPreviousOperationDay];
+                                            if (isTypeIInventoryOperation(previousDayOperation) && routeTransactionFound === undefined) {
+                                                isCurrentOperation = true
+                                            } else if (isTypeIRouteTransaction(previousDayOperation)) {
+                                                const previoudDayRouteTransactionFound:IRouteTransaction|undefined = routeTransactions.find((routeTransaction) => routeTransaction.id_store === previousDayOperation.id_store);
+                                                if (previoudDayRouteTransactionFound && routeTransactionFound === undefined) {
+                                                    isCurrentOperation = true;
+                                                } else {
+                                                    isCurrentOperation = false;
+                                                }
+                                            }
+                                        } else { // The operation is not the current one.
+                                            isCurrentOperation = false;
+                                        }
+
+                                        if (!isCurrentOperation) {
+                                            if (routeTransactionFound) {
+                                                storeStatus = enumStoreStates.SERVED;
+                                            } else {
+                                                storeStatus = enumStoreStates.PENDING_TO_VISIT;
+                                            }
+                                        }
+
+                                    } else {
+                                        storeStatus = enumStoreStates.NUETRAL_STATE;
+                                    }
+                                    cardColorStyle = determineStoreContextBackgroundColor({
+                                        ...stores[id_store],
+                                        route_day_state: storeStatus,
+                                    }, isCurrentOperation)                                        
                                 }
                             }
                             
-
-
                             // Calculating the difference of time between day operations
                             if(dayOperations[index + 1] !== undefined) {
                                 const nextDate:string = dayOperations[index + 1].date;
@@ -363,17 +443,14 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                                 rateOfDiffferenceBetweenDates = differenceBetweenDatesInSeconds(date, nextDate);
                             }
 
-                            // Getting the date of the operation day. 
+                            // Getting 'date' of the operation day. 
                             dateOfTheOperation = date;
                             
-
-                            // console.log(cardColorStyle)
-
                             return (
                                 <CardRouteList
                                     key={idOfTheCard} 
-                                    firstColumn={positionInRouteOfStore}
-                                    seconColumn={title}
+                                    firstColumn={capitalizeFirstLetter(positionInRouteOfStore)}
+                                    seconColumn={capitalizeFirstLetterOfEachWord(title)}
                                     descriptionSecondColumn={description}
                                     thirdColumn={totalSold}
                                     fourthColumn={cast_string_to_hour_format(dateOfTheOperation)}
