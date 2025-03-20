@@ -64,7 +64,8 @@ function TableSearchVisualizationWorkDay({
                             let vendorName:string = ""
                             let routeName:string = ""
                             let paidComission:string = ""
-                            
+                            let finalDate:string = "";
+
                             const { id_work_day, start_date, finish_date, id_vendor, id_route, id_comission } = workDay
                             const indexVendor:number = vendors.findIndex((vendor) => { return id_vendor === vendor.id_vendor;});
                             const indexRoute:number = routes.findIndex((route) => { return id_route === route.id_route;});
@@ -87,10 +88,12 @@ function TableSearchVisualizationWorkDay({
                                 paidComission = "Si";
                             }
 
+                            if (finish_date) finalDate = cast_string_to_timestamp_standard_format(finish_date)
+                            else finalDate = "Dia sin terminar"
                             return (
                             <TableRow key={id_work_day}>
                                 <TableCell>{cast_string_to_timestamp_standard_format(start_date)}</TableCell>
-                                <TableCell>{cast_string_to_timestamp_standard_format(finish_date)}</TableCell>
+                                <TableCell>{finalDate}</TableCell>
                                 <TableCell>{capitalizeFirstLetter(routeName)}</TableCell>
                                 <TableCell>{capitalizeFirstLetterOfEachWord(vendorName)}</TableCell>
                                 <TableCell>{paidComission}</TableCell>

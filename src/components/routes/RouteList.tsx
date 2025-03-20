@@ -223,7 +223,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                     )]);   
 
                     setDayOperations((prev) => {
-                        if (!prev) return [newRouteTransaction]; // If prev is undefined, initialize with the new transaction
+                        if (!prev) return createRouteDayOperations([newRouteTransaction], plannedStores); // If prev is undefined, initialize with the new transaction
                         
                         // Check if the item already exists (match by id)
                         const exists = prev.some((op) => 
@@ -231,7 +231,10 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             ? op.id_route_transaction === newRouteTransaction.id_route_transaction
                             : op.id_inventory_operation === (newRouteTransaction as any).id_inventory_operation
                         );
-                        return exists ? prev : [...prev, newRouteTransaction];
+                        return createRouteDayOperations(
+                            exists ? prev : [...prev, newRouteTransaction],
+                            plannedStores
+                        )
                     });
                 }, 3000); 
 
@@ -252,7 +255,7 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                 // Route operations and descriptions might delay at the moment of syncing with the database.
                 setTimeout(async () => {
                     setDayOperations((prev) => {
-                        if (!prev) return [newInventoryOperation]; // If prev is undefined, initialize with the new transaction
+                        if (!prev) return createRouteDayOperations([newInventoryOperation], plannedStores); // If prev is undefined, initialize with the new transaction
                         
                         // Check if the item already exists (match by id)
                         const exists = prev.some((op) => 
@@ -260,7 +263,10 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             ? op.id_route_transaction === newInventoryOperation.id_inventory_operation
                             : op.id_inventory_operation === (newInventoryOperation as any).id_inventory_operation
                         );
-                        return exists ? prev : [...prev, newInventoryOperation];
+                        return createRouteDayOperations(
+                            exists ? prev : [...prev, newInventoryOperation],
+                            plannedStores
+                        );
                     });
                 }, 3000); 
             }

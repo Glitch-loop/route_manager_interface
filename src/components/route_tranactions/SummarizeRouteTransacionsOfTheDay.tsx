@@ -59,8 +59,8 @@ const SummarizeRouteTransacionsOfTheDay = ({
           <Accordion
           key={idStore}>
             <AccordionSummary>
-              <AccordionDetails>
-                <span >
+              <AccordionDetails className='text-xl'>
+                <span>
                   { jsonStores[idStore] === undefined ? "Tienda no especificada" : 
                     capitalizeFirstLetterOfEachWord(jsonStores[idStore].store_name)
                   }                  

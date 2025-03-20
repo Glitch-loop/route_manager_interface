@@ -38,13 +38,13 @@ import { getProductInventoryByInventoryOperationType, getProductInventoryOfInven
 const headerTitleTableStyle:string = 'h-32 w-28 flex flex-row justify-center items-center';
 const headerRowTitleTableStyle:string = 'w-28 flex flex-row justify-center items-center';
 const viewTagHeaderTableStyle:string = 'w-full flex flex-row justify-center items-center';
-const textHeaderTableStyle:string = 'h-16 text-lg align-middle text-center text-black flex flex-row justify-center items-center';
+const textHeaderTableStyle:string = 'h-16 text-xl align-middle text-center text-black flex flex-row justify-center items-center';
 
 const rowTableStyle:string = 'h-32';
 const cellTableStyle:string = 'flex flex-row justify-center';
 const cellTableStyleWithAmountOfProduct:string = 'flex flex-row justify-center bg-amber-100';
 const viewTagRowTableStyle:string = 'w-full flex flex-row items-center justify-center';
-const textRowTableStyle:string = 'text-lg text-center text-black flex flex-row justify-center';
+const textRowTableStyle:string = 'text-xl text-center text-black flex flex-row justify-center';
 
 
 

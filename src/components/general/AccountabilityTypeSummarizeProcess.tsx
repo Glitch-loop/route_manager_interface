@@ -22,7 +22,7 @@ function AccountabilityTypeSummarizeProcess({
                     isSeparateLine,
                 } = content
                 return (
-                    <div key={index} className={`w-full h-full my-1 text-base flex-col justify-center items-center`}>
+                    <div key={index} className={`w-full h-full my-1 text-xl flex-col justify-center items-center`}>
                         <div className={`w-full h-full flex flex-row justify-center items-end text-wrap
                             ${isUnderline ? 'underline' : ''}
                             ${isBold ? 'font-bold' : ''}

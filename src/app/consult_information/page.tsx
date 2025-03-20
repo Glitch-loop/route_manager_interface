@@ -209,8 +209,9 @@ function ConsultInformation() {
     return (
     <div className="w-full h-full flex flex-col items-start">
         <span className="text-style-h0 ml-3">Consulta de información</span>
+
         {/* Parameters to consult the days */}
-        <div className='w-full h-60 flex flex-row justify-start ml-3 mb-14'>
+        <div className='w-full h-60 flex flex-row justify-start ml-3'>
             <div className='flex flex-row basis-4/12 justify-start'>
                 <DateRangePicker 
                     defaultDay={dayjs()}
@@ -237,138 +238,139 @@ function ConsultInformation() {
             }
             </div>
         </div>
-        {/* Title of the day */}
-        { workday !== undefined && 
-            <div className='flex flex-col ml-2'>
-                <span className='text-3xl font-bold'>Ruta: { capitalizeFirstLetter(getRouteName(workday.id_route, routes)) }</span>
-                <span className='text-2xl'>Fecha: {cast_string_to_timestamp_standard_format(workday.start_date)}</span>
-                <span className='text-xl'>Vendedor: {getVendorName(workday.id_vendor, vendors)}</span>
-                <span className='text-xl'>id ruta: {workday.id_work_day}</span>
-            </div>
-        
-        }
-        {/* Components that summarize the day */}
-        <div className='w-3/5 my-3 ml-3 flex flex-col overflow-x-auto'>
-            <div className='flex flex-row'>
-                { workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined &&
-                    <SummarizeOfTheDay
-                        workday={workday}
-                        routeTransactions={routeTransactions}
-                        routeTransactionOperations={routeTransactionOperations}
-                        routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
-                    />
 
+        <div className='w-full h-full flex flex-col mt-24 overflow-y-hidden'>
+            {/* Title of the day */}
+            { workday !== undefined && 
+                <div className='flex flex-col ml-2'>
+                    <span className='text-3xl font-bold'>{ capitalizeFirstLetter(getRouteName(workday.id_route, routes)) }</span>
+                    <span className='text-2xl'>Fecha: {cast_string_to_timestamp_standard_format(workday.start_date)}</span>
+                    <span className='text-xl'>Vendedor: {getVendorName(workday.id_vendor, vendors)}</span>
+                    <span className='text-xl'>id ruta: {workday.id_work_day}</span>
+                </div>
+            }
+            {/* Components that summarize the day */}
+            <div className='w-3/5 my-3 ml-3 flex flex-col overflow-x-auto'>
+                <div className='flex flex-row'>
+                    { workday !== undefined && routeTransactions !== undefined && routeTransactionOperations !== undefined && routeTransactionOperationDescriptions !== undefined &&
+                        <SummarizeOfTheDay
+                            workday={workday}
+                            routeTransactions={routeTransactions}
+                            routeTransactionOperations={routeTransactionOperations}
+                            routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
+                        />
+
+                    }
+                    { (workday !== undefined 
+                    && routeTransactions !== undefined 
+                    && routeTransactionOperations !== undefined 
+                    && routeTransactionOperationDescriptions !== undefined 
+                    && inventoryOperations !== undefined 
+                    && inventoryOperationDescriptions !== undefined
+                    && productsInventory !== undefined) &&
+                        <SummarizeDayComission
+                            workday={workday}
+                            inventory={productsInventory}
+                            routeTransactions={routeTransactions}
+                            routeTransactionOperations={routeTransactionOperations}
+                            routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
+                            inventoryOperations={inventoryOperations}
+                            inventoryOperationDescriptions={inventoryOperationDescriptions}
+                        />
+                    }
+                </div>
+                {/* Summarize of product of the day */}
+                { ( productsInventory !== undefined && 
+                    inventoryOperations !== undefined && 
+                    inventoryOperationDescriptions !== undefined &&
+                    routeTransactions !== undefined && 
+                    routeTransactionOperations !== undefined && 
+                    routeTransactionOperationDescriptions !== undefined) &&
+                    <div className='w-full my-3'>
+                        <Accordion className=''>
+                            <AccordionSummary>
+                                <span className='text-xl font-bold ml-2'>Resumen de movimiento de inventario</span>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <TableInventoryVisualization
+                                    inventory={productsInventory}
+                                    inventoryOperations={inventoryOperations}
+                                    inventoryOperationDescriptions={inventoryOperationDescriptions}
+                                    routeTransactions={routeTransactions}
+                                    routeTransactionOperations={routeTransactionOperations}
+                                    routeTransactionOperationDescriptions={routeTransactionOperationDescriptions}/>
+                            </AccordionDetails>
+                        </Accordion>
+                    </div>
                 }
-                { (workday !== undefined 
-                && routeTransactions !== undefined 
-                && routeTransactionOperations !== undefined 
-                && routeTransactionOperationDescriptions !== undefined 
-                && inventoryOperations !== undefined 
-                && inventoryOperationDescriptions !== undefined
-                && productsInventory !== undefined) &&
-                    <SummarizeDayComission
-                        workday={workday}
-                        inventory={productsInventory}
-                        routeTransactions={routeTransactions}
-                        routeTransactionOperations={routeTransactionOperations}
-                        routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
-                        inventoryOperations={inventoryOperations}
-                        inventoryOperationDescriptions={inventoryOperationDescriptions}
-                    />
+                { ( productsInventory !== undefined && 
+                    nameOfStores !== undefined && 
+                    productDevolutionByStore !== undefined) &&
+                    <div className='w-full my-3'>
+                        <Accordion className=''>
+                            <AccordionSummary>
+                                <span className={`text-xl font-bold ml-2`}>Merma de producto por tienda</span>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <TableInventoryOperationsVisualization
+                                    inventory             = {productsInventory}
+                                    titleColumns          = {nameOfStores}
+                                    productInventories    = {productDevolutionByStore}
+                                    calculateTotal        = {true}/>
+                            </AccordionDetails>
+                        </Accordion>
+                    </div>
+                }
+                { ( productsInventory !== undefined && 
+                    nameOfStores !== undefined && 
+                    productRepositionByStore !== undefined) &&
+                    <div className='w-full my-3'>
+                        <Accordion>
+                            <AccordionSummary>
+                                <span className={`text-xl font-bold ml-2`}>Reposición de producto por tienda</span>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <TableInventoryOperationsVisualization
+                                    inventory             = {productsInventory}
+                                    titleColumns          = {nameOfStores}
+                                    productInventories    = {productRepositionByStore}
+                                    calculateTotal        = {true}/>
+                            </AccordionDetails>
+                        </Accordion>
+                    </div>
+                }
+                { ( productsInventory !== undefined && 
+                    nameOfStores !== undefined && 
+                    productSoldByStore !== undefined) &&
+                    <div className='w-full my-3'>
+                        <Accordion>
+                            <AccordionSummary>
+                                <span className={`text-xl font-bold ml-2`}>Producto vendido por tienda</span>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <TableInventoryOperationsVisualization
+                                    inventory             = {productsInventory}
+                                    titleColumns          = {nameOfStores}
+                                    productInventories    = {productSoldByStore}
+                                    calculateTotal        = {true}/>
+                            </AccordionDetails>
+                        </Accordion>
+                    </div>
+                }
+                {/* Summaraize of route transactions */}
+                { routeTransactions && routeTransactionOperations && routeTransactionOperationDescriptions && productsInventory &&
+                    <div className='w-full'>
+                        <span className='text-xl font-bold ml-2'>Resumen de ventas</span>
+                        <SummarizeRouteTransacionsOfTheDay 
+                            routeTransactionOfTheDay={routeTransactions}
+                            routeTransactionOperationsOfTheDay={routeTransactionOperations}
+                            routeTransactionOperationDescriptionsOfTheDay={routeTransactionOperationDescriptions}
+                            productsInventory={productsInventory}
+                            storesOfTheDay={stores}
+                        />
+                    </div>
                 }
             </div>
-            {/* Summarize of product of the day */}
-            { ( productsInventory !== undefined && 
-                inventoryOperations !== undefined && 
-                inventoryOperationDescriptions !== undefined &&
-                routeTransactions !== undefined && 
-                routeTransactionOperations !== undefined && 
-                routeTransactionOperationDescriptions !== undefined) &&
-                <div className='w-full my-3'>
-                    <Accordion className=''>
-                        <AccordionSummary>
-                            <span className='text-xl font-bold ml-2'>Resumen de movimiento de inventario</span>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <TableInventoryVisualization
-                                inventory={productsInventory}
-                                inventoryOperations={inventoryOperations}
-                                inventoryOperationDescriptions={inventoryOperationDescriptions}
-                                routeTransactions={routeTransactions}
-                                routeTransactionOperations={routeTransactionOperations}
-                                routeTransactionOperationDescriptions={routeTransactionOperationDescriptions}/>
-                        </AccordionDetails>
-                    </Accordion>
-                </div>
-            }
-            { ( productsInventory !== undefined && 
-                nameOfStores !== undefined && 
-                productDevolutionByStore !== undefined) &&
-                <div className='w-full my-3'>
-                    <Accordion className=''>
-                        <AccordionSummary>
-                            <span className={`text-xl font-bold ml-2`}>Merma de producto por tienda</span>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <TableInventoryOperationsVisualization
-                                inventory             = {productsInventory}
-                                titleColumns          = {nameOfStores}
-                                productInventories    = {productDevolutionByStore}
-                                calculateTotal        = {true}/>
-                        </AccordionDetails>
-                    </Accordion>
-                </div>
-            }
-            { ( productsInventory !== undefined && 
-                nameOfStores !== undefined && 
-                productRepositionByStore !== undefined) &&
-                <div className='w-full my-3'>
-                    <Accordion>
-                        <AccordionSummary>
-                            <span className={`text-xl font-bold ml-2`}>Reposición de producto por tienda</span>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <TableInventoryOperationsVisualization
-                                inventory             = {productsInventory}
-                                titleColumns          = {nameOfStores}
-                                productInventories    = {productRepositionByStore}
-                                calculateTotal        = {true}/>
-                        </AccordionDetails>
-                    </Accordion>
-                </div>
-            }
-            { ( productsInventory !== undefined && 
-                nameOfStores !== undefined && 
-                productSoldByStore !== undefined) &&
-                <div className='w-full my-3'>
-                    <Accordion>
-                        <AccordionSummary>
-                            <span className={`text-xl font-bold ml-2`}>Producto vendido por tienda</span>
-                        </AccordionSummary>
-                        <AccordionDetails>
-                            <TableInventoryOperationsVisualization
-                                inventory             = {productsInventory}
-                                titleColumns          = {nameOfStores}
-                                productInventories    = {productSoldByStore}
-                                calculateTotal        = {true}/>
-                        </AccordionDetails>
-                    </Accordion>
-                </div>
-            }
-            {/* Summaraize of route transactions */}
-            { routeTransactions && routeTransactionOperations && routeTransactionOperationDescriptions && productsInventory &&
-                <div className='w-full'>
-                    <span className='text-xl font-bold ml-2'>Resumen de ventas</span>
-                    <SummarizeRouteTransacionsOfTheDay 
-                        routeTransactionOfTheDay={routeTransactions}
-                        routeTransactionOperationsOfTheDay={routeTransactionOperations}
-                        routeTransactionOperationDescriptionsOfTheDay={routeTransactionOperationDescriptions}
-                        productsInventory={productsInventory}
-                        storesOfTheDay={stores}
-                    />
-                </div>
-            }
-
         </div>
     </div>)
 }

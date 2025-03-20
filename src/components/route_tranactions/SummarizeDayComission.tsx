@@ -131,7 +131,7 @@ function SummarizeDayComission({
             isSeparateLine: false,
         },
         {
-            message: "Total a descontar: ",
+            message: "Total problemas del día: ",
             value: formatToCurrency(totalOfSaleToDiscount),
             isUnderline: false,
             isBold: true,
@@ -147,7 +147,7 @@ function SummarizeDayComission({
             isSeparateLine: false,
         },
         {
-            message: "Total a descontar: ",
+            message: "Total problemas del día: ",
             value: formatToCurrency(totalOfSaleToDiscount),
             isUnderline: false,
             isBold: false,
