@@ -420,7 +420,12 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
 
                                         if (!isCurrentOperation) {
                                             if (routeTransactionFound) {
-                                                storeStatus = enumStoreStates.SERVED;
+                                                const index:number = plannedStores.findIndex((plannedStore) => { return plannedStore.id_store === routeTransactionFound.id_store});
+                                                if (index === -1) {
+                                                    storeStatus = enumStoreStates.SPECIAL_SALE;
+                                                } else {
+                                                    storeStatus = enumStoreStates.SERVED;
+                                                }
                                             } else {
                                                 storeStatus = enumStoreStates.PENDING_TO_VISIT;
                                             }
@@ -441,6 +446,13 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                                 const nextDate:string = dayOperations[index + 1].date;
                                 differenceBetweenDayOperations = differenceBetweenDatesWithFormat(date, nextDate);
                                 rateOfDiffferenceBetweenDates = differenceBetweenDatesInSeconds(date, nextDate);
+
+                                if (differenceBetweenDayOperations === "00:00:00") {
+                                    differenceBetweenDayOperations = undefined;
+                                    rateOfDiffferenceBetweenDates = undefined;
+                                } else {
+                                    /* Do nothing */
+                                }
                             }
 
                             // Getting 'date' of the operation day. 

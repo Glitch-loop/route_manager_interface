@@ -1,5 +1,3 @@
-import { enumStoreStates } from "@/interfaces/enumStoreStates";
-import { IStore, IStoreStatusDay } from "@/interfaces/interfaces";
 import { getColorDependingOnTheDifferenceOfDates } from "@/utils/dateUtils";
 import { determineBackgroundColor, 
     // getColorContextOfStore 
