@@ -48,7 +48,7 @@ function CardRouteList({
         }
 
     return (
-    <div className="w-full flex flex-row h-fit max-h-16 mt-3">
+    <div className="w-full h-full flex flex-row mt-3">
         <div 
             className={"text-lg flex flex-row basis-4/5 justify-center items-center p-3 rounded-md"}
             style={{backgroundColor: cardColorStyle}} 
@@ -61,20 +61,30 @@ function CardRouteList({
             <span className="flex basis-1/6 justify-center">{thirdColumn}</span>
             <span className="flex basis-1/6 justify-center ml-1">{fourthColumn}</span>
         </div>
-        <div className="relative flex flex-col basis-1/5 justify-start">
-            { informationUpperCard !== undefined && informationUpperCard !== "" &&
+        <div className="h-auto items-center flex basis-1/5 flex-col justify-between">
+            { informationUpperCard !== undefined && informationUpperCard !== "" ?
                 <div
                     style={{backgroundColor: colorUpperCard}} 
-                    className={`relative right-6 bottom-5 h-fit w-fit p-2 rounded-md`}>
-                    {informationUpperCard}
+                    className={`relative right-6 bottom-7 h-fit w-fit p-2 rounded-md`}>
+                        {informationUpperCard}
+                </div>
+                :
+                <div
+                    style={{backgroundColor: 'transparent'}} 
+                    className={`relative right-6 bottom-7 h-fit w-fit p-2 rounded-md`}>
                 </div>
             }
-            { informationLowerCard !== undefined && informationLowerCard !== "" &&
+            { informationLowerCard !== undefined && informationLowerCard !== "" ?                
                 <div 
                     style={{backgroundColor: colorLowerCard}} 
-                    className={`relative right-6 top-12 h-fit w-fit p-2 rounded-md`}>
+                    className={`relative right-6 top-6 h-fit w-fit p-2 rounded-md`}>
                     {informationLowerCard}
-                </div>
+                </div> 
+                :
+                <div 
+                    style={{backgroundColor: 'transparent'}} 
+                    className={`relative right-6 top-6 h-fit w-fit p-2 rounded-md`}>
+                </div> 
             }
         </div>
     </div>
