@@ -35,8 +35,6 @@ const cellTableStyleWithAmountOfProduct:string = 'flex flex-row justify-center b
 const viewTagRowTableStyle:string = 'w-full flex flex-row items-center justify-center';
 const textRowTableStyle:string = 'text-lg text-center text-black flex flex-row justify-center';
 
-
-
 /*
  This component is an abstraction from "TableInventoryVisualization" component, here, what is in the "props"
  is what will be displayed, so the order of how the information is stored in the arrays will influence in

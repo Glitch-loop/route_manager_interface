@@ -48,7 +48,7 @@ function CardRouteList({
         }
 
     return (
-    <div className="w-full flex flex-row max-h-16 mt-3">
+    <div className="w-full flex flex-row h-fit max-h-16 mt-3">
         <div 
             className={"text-lg flex flex-row basis-4/5 justify-center items-center p-3 rounded-md"}
             style={{backgroundColor: cardColorStyle}} 

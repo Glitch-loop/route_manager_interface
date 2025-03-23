@@ -53,6 +53,7 @@ import TableInventoryVisualization from '@/components/inventory/TableInventoryVi
 import { cast_string_to_timestamp_standard_format } from '@/utils/dateUtils';
 import DAYS_OPERATIONS from '@/utils/dayOperations';
 import { capitalizeFirstLetter } from '@/utils/generalUtils';
+import TableOfComissionOfTheDay from '@/components/comissions/TableOfComissionOfTheDay';
 
 
 function getRouteName(idRoute:string, routes:IRoute[]):string {
@@ -201,6 +202,7 @@ function ConsultInformation() {
             routeTransactions,
             routeTransactionOperations,
             routeTransactionOperationDescriptions);
+        
         setProductSoldByStore(
             responseInventoryByStoreAndSaleOperation
             .map(((currentInventory) => { const { productInventory } = currentInventory; return productInventory;})));
@@ -259,7 +261,6 @@ function ConsultInformation() {
                             routeTransactionOperations={routeTransactionOperations}
                             routeTransactionOperationDescriptions={routeTransactionOperationDescriptions} 
                         />
-
                     }
                     { (workday !== undefined 
                     && routeTransactions !== undefined 
@@ -279,6 +280,26 @@ function ConsultInformation() {
                         />
                     }
                 </div>
+                {/* Summarize of comission of the day */}
+                { ( productsInventory !== undefined &&
+                    routeTransactions !== undefined &&
+                    routeTransactionOperations !== undefined &&
+                    routeTransactionOperationDescriptions !== undefined &&
+                    <div className='w-full my-3'>
+                        <Accordion className=''>
+                            <AccordionSummary>
+                                <span className='text-xl font-bold ml-2'>Resumen de comision del día.</span>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                                <TableOfComissionOfTheDay
+                                    inventory={productsInventory}
+                                    routeTransactionOfTheDay={routeTransactions}
+                                    routeTransactionOperationsOfTheDay={routeTransactionOperations}
+                                    routeTransactionOperationDescriptionsOfTheDay={routeTransactionOperationDescriptions}/>
+                            </AccordionDetails>
+                        </Accordion>
+                    </div>
+                ) }
                 {/* Summarize of product of the day */}
                 { ( productsInventory !== undefined && 
                     inventoryOperations !== undefined && 

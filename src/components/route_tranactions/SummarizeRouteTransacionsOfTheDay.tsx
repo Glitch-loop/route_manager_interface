@@ -48,8 +48,6 @@ const SummarizeRouteTransacionsOfTheDay = ({
       if (routeTransactionsGroupedByStore.get(id_store) !== undefined) {
         routeTransactionsGroupedByStore.get(id_store)?.push(routeTransaction)
       }
-      
-
     });
     
   return (
