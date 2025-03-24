@@ -63,8 +63,7 @@ function createRouteDayOperations(dayOperations:(IRouteTransaction|IInventoryOpe
     let listOfDayOperations:(IRouteTransaction|IInventoryOperation)[] = [];
     let pendingStores:IRouteDayStores[] = [];
     let id_work_day:string = '';
-
-
+    let pendingStoreARouteTransactions:IRouteTransaction[] = [];
 
     const validDayOperations:(IRouteTransaction|IInventoryOperation)[] = dayOperations.filter((dayOperation:IRouteTransaction|IInventoryOperation) => {
         if (isTypeIRouteTransaction(dayOperation)) return dayOperation.id_route_transaction !== '';
@@ -78,34 +77,53 @@ function createRouteDayOperations(dayOperations:(IRouteTransaction|IInventoryOpe
         else return 0
     })
 
+    
 
-    console.log("planned stores: ", plannedStores)
-    console.log("validDayOperations: ", validDayOperations)
     // Determining pending stores
-    pendingStores = plannedStores.reduce((pendingStores:IRouteDayStores[], currentStore) => {
-        const isAttendedStore:boolean = validDayOperations.some((dayOperation) => 
-            isTypeIRouteTransaction(dayOperation) ? dayOperation.id_store === currentStore.id_store : false);
+    if (plannedStores.length > 0) {
+        pendingStores = plannedStores.reduce((pendingStores:IRouteDayStores[], currentStore) => {
+            const isAttendedStore:boolean = validDayOperations.some((dayOperation) => 
+                isTypeIRouteTransaction(dayOperation) ? dayOperation.id_store === currentStore.id_store : false);
+    
+            console.log("isAttendedStore: ", isAttendedStore)
+            if (!isAttendedStore) pendingStores.push(currentStore);
+            
+            return pendingStores;
+        }, []);
 
-        console.log("isAttendedStore: ", isAttendedStore)
-        if (!isAttendedStore) pendingStores.push(currentStore);
+        if (validDayOperations[0]) id_work_day = validDayOperations[0].id_work_day;
+
+        pendingStoreARouteTransactions = pendingStores.map((pendingStore:IRouteDayStores) => {
+            return {
+                id_route_transaction: '',
+                date: timestamp_format(),
+                state: 1,
+                cash_received: 0,
+                id_work_day: id_work_day,
+                id_payment_method: '',
+                id_store: pendingStore.id_store
+            }
+        });
+    } else {
+        const pendingDayOperations:(IRouteTransaction|IInventoryOperation)[] = dayOperations.filter((pendingDayOperatons:(IRouteTransaction|IInventoryOperation)) => {
+            if (isTypeIRouteTransaction(pendingDayOperatons)) return pendingDayOperatons.id_route_transaction === '';
+            if (isTypeIInventoryOperation(pendingDayOperatons)) return pendingDayOperatons.id_inventory_operation === '';
+        });
+
+        pendingStoreARouteTransactions = pendingDayOperations.reduce((pendingStores:IRouteTransaction[], currentDayOperation:IRouteTransaction|IInventoryOperation) => {
+            if (isTypeIRouteTransaction(currentDayOperation)) {
+                const isAttendedStore:boolean = validDayOperations.some((dayOperation) => 
+                    isTypeIRouteTransaction(dayOperation) ? dayOperation.id_store === currentDayOperation.id_store : false);
         
-        return pendingStores;
+                console.log("isAttendedStore: ", isAttendedStore)
+                if (!isAttendedStore) pendingStores.push(currentDayOperation);
 
-    }, []);
+            }
+            return pendingStores;
+        }, []);
+    }
 
-    if (validDayOperations[0]) id_work_day = validDayOperations[0].id_work_day;
 
-    const pendingStoreARouteTransactions:IRouteTransaction[] = pendingStores.map((pendingStore:IRouteDayStores) => {
-        return {
-            id_route_transaction: '',
-            date: timestamp_format(),
-            state: 1,
-            cash_received: 0,
-            id_work_day: id_work_day,
-            id_payment_method: '',
-            id_store: pendingStore.id_store
-        }
-    });
 
     listOfDayOperations = [
         ...validDayOperations,
