@@ -1371,7 +1371,8 @@ export class SupabaseRepository implements IRepository {
         table: tableName}, 
         handler)
       .subscribe()
-
+      console.log("channel to: ", tableName)
+      console.log("Name of the channel to: ", nameOfTheChannel)
     return createApiResponse<RealtimeChannel>(
       200,
       newChannel,

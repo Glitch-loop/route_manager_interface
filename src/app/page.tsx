@@ -109,7 +109,6 @@ export default function Home() {
             { openWorkDays !== undefined &&
               openWorkDays.map((workday) => {
                 const { id_work_day } = workday;
-                console.log("ID work day: ", id_work_day)
                 return (
                   <div key={id_work_day} className="w-full mx-3">
                     <div  className="w-full min-w-96 max-w-3xl">

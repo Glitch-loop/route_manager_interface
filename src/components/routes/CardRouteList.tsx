@@ -63,25 +63,25 @@ function CardRouteList({
             { informationUpperCard !== undefined && informationUpperCard !== "" ?
                 <div
                     style={{backgroundColor: colorUpperCard}} 
-                    className={`relative right-6 bottom-7 h-fit w-fit p-2 rounded-md`}>
+                    className={`relative right-12 bottom-7 h-fit w-fit p-2 rounded-md`}>
                         {informationUpperCard}
                 </div>
                 :
                 <div
                     style={{backgroundColor: 'transparent'}} 
-                    className={`relative right-6 bottom-7 h-fit w-fit p-2 rounded-md`}>
+                    className={`relative right-12 bottom-7 h-fit w-fit p-2 rounded-md`}>
                 </div>
             }
             { informationLowerCard !== undefined && informationLowerCard !== "" ?                
                 <div 
                     style={{backgroundColor: colorLowerCard}} 
-                    className={`relative right-6 top-6 h-fit w-fit p-2 rounded-md`}>
+                    className={`relative right-12 top-6 h-fit w-fit p-2 rounded-md`}>
                     {informationLowerCard}
                 </div> 
                 :
                 <div 
                     style={{backgroundColor: 'transparent'}} 
-                    className={`relative right-6 top-6 h-fit w-fit p-2 rounded-md`}>
+                    className={`relative right-12 top-6 h-fit w-fit p-2 rounded-md`}>
                 </div> 
             }
         </div>

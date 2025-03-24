@@ -81,7 +81,7 @@ function SummarizeDayComission({
 
     const problemWithDeliveredCash:number =  deliveredCash - cashToDeliver;
 
-    const totalOfSaleToDiscount:number = problemWithDeliveredCash + problemWithInventory + productDevolutionBalance 
+    const totalOfSaleToDiscount:number = problemWithDeliveredCash + productDevolutionBalance 
 
     const totalToPayComission:number = totalConceptSales + totalOfSaleToDiscount;
 
@@ -115,19 +115,11 @@ function SummarizeDayComission({
             isSeparateLine: false,
         },
         {
-            message: "Problemas con el inventario: ",
-            value: formatToCurrency(problemWithInventory),
-            isUnderline: false,
-            isBold: true,
-            isItalic: false,
-            isSeparateLine: false,
-        },
-        {
-            message: "Merma: ",
+            message: "Total valance de devolución de producto: ",
             value: formatToCurrency(productDevolutionBalance),
             isUnderline: false,
             isBold: false,
-            isItalic: false,
+            isItalic: true,
             isSeparateLine: false,
         },
         {
@@ -135,7 +127,7 @@ function SummarizeDayComission({
             value: formatToCurrency(totalOfSaleToDiscount),
             isUnderline: false,
             isBold: true,
-            isItalic: false,
+            isItalic: true,
             isSeparateLine: true,
         },
         {
@@ -170,10 +162,16 @@ function SummarizeDayComission({
             isItalic: false,
             isSeparateLine: true,
         },
+        {
+            message: "Problemas con el inventario: ",
+            value: formatToCurrency(problemWithInventory),
+            isUnderline: true,
+            isBold: true,
+            isItalic: true,
+            isSeparateLine: false,
+        },
 
     ]
-
-
 
     return (
         <AccountabilityTypeSummarizeProcess 

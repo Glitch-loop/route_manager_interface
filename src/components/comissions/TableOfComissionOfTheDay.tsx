@@ -2,7 +2,6 @@
 import { IProductInventory, IRoute, IRouteTransaction, IRouteTransactionOperation, IRouteTransactionOperationDescription } from '@/interfaces/interfaces';
 import DAYS_OPERATIONS from '@/utils/dayOperations';
 import { convertArrayInJsonUsingInterfaces } from '@/utils/generalUtils';
-import { isTypeIRouteTransactionOperation } from '@/utils/guards';
 import { formatToCurrency, isRouteOperationDescriptionValid } from '@/utils/saleFunctionUtils';
 import { Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow } from '@mui/material';
 
@@ -148,14 +147,14 @@ const TableOfComissionOfTheDay = (
                     <TableCell className={`${headerTitleTableStyle}`}>
                       <div className={`${viewTagHeaderTableStyle}`}>
                         <span className={`${textHeaderTableStyle}`}>
-                          comisión
+                          Subtotal
                         </span>
                       </div>
                     </TableCell>
                     <TableCell className={`${headerTitleTableStyle}`}>
                       <div className={`${viewTagHeaderTableStyle}`}>
                         <span className={`${textHeaderTableStyle}`}>
-                          Subtotal
+                          comisión
                         </span>
                       </div>
                     </TableCell>
@@ -208,13 +207,6 @@ const TableOfComissionOfTheDay = (
                           <TableCell className={`${cellTableStyle}`}>
                             <div className={`${viewTagRowTableStyle}`}>
                               <span className={`${textRowTableStyle}`}>
-                                {formattedComission}%
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className={`${cellTableStyle}`}>
-                            <div className={`${viewTagRowTableStyle}`}>
-                              <span className={`${textRowTableStyle}`}>
                                 {formatToCurrency(totalSold)}
                               </span>
                             </div>
@@ -222,7 +214,14 @@ const TableOfComissionOfTheDay = (
                           <TableCell className={`${cellTableStyle}`}>
                             <div className={`${viewTagRowTableStyle}`}>
                               <span className={`${textRowTableStyle}`}>
-                              ${formatToCurrency(comissionToPay)}
+                                {formattedComission}%
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell className={`${cellTableStyle}`}>
+                            <div className={`${viewTagRowTableStyle}`}>
+                              <span className={`${textRowTableStyle}`}>
+                              {formatToCurrency(comissionToPay)}
                               </span>
                             </div>
                           </TableCell>

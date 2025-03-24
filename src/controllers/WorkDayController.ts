@@ -65,11 +65,11 @@ export async function getOpenWorkDays():Promise<(IRoute&IDayGeneralInformation&I
 }
 
 export async function  createSubscriptionToRouteTransactions(handler:(payload:RealtimePostgresChangesPayload<IRouteTransaction>) => void):Promise<IResponse<RealtimeChannel>> {
-  const resultCreateChannel:IResponse<RealtimeChannel> =  repository.suscribeTable(generateUUIDv4(), 'INSERT', TABLES.ROUTE_TRANSACTIONS, handler);
+  const resultCreateChannel:IResponse<RealtimeChannel> =  repository.suscribeTable('route_transactions', 'INSERT', TABLES.ROUTE_TRANSACTIONS, handler);
   return resultCreateChannel;
 }
 export async function  createSubscriptionToInventoryOperations(handler:(payload:RealtimePostgresChangesPayload<IInventoryOperation>) => void):Promise<IResponse<RealtimeChannel>> {
-  repository.suscribeTable(generateUUIDv4(), 'INSERT', TABLES.INVENTORY_OPERATIONS, handler);
-  repository.suscribeTable(generateUUIDv4(), 'UPDATE', TABLES.INVENTORY_OPERATIONS, handler);
+  const resultCreateChannel:IResponse<RealtimeChannel> = repository.suscribeTable('inventory_operations', 'INSERT', TABLES.INVENTORY_OPERATIONS, handler);
+  return resultCreateChannel;
 
 }
