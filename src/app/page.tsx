@@ -1,7 +1,7 @@
 'use client'
+import 'reflect-metadata';
+
 import { useEffect, useState } from "react";
-
-
 import RouteList from "../components/routes/RouteList";
 import IconButtonWithNotification from "../components/general/IconButtonWithNotification";
 // import ButtonWithNotification from "./components/ButtonWithNotificaion";

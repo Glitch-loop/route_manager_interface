@@ -6,21 +6,18 @@ import { Store } from '@/core/entities/Store';
 
 // Interfaces
 import { StoreRepository } from '@/core/interfaces/StoreRepository';
-import { SyncServerStoreRepository } from '@/infrastructure/persitence/interface/server-database/SyncServerStoreRepository';
 
 // Infrastructure
 import { SupabaseDataSource } from '@/infrastructure/datasources/SupabaseDataSource'; 
 
-// Models
-import StoreModel from '@/infrastructure/persitence/model/StoreModel';
 
 // Utils
 import { TOKENS } from '@/infrastructure/di/tokens';
-import { SERVER_DATABASE_ENUM } from '@/infrastructure/persitence/enums/serverTablesEnum';
+import { SERVER_DATABASE_ENUM } from '@/infrastructure/persistence/enums/serverTablesEnum';
 
 
 @injectable()
-export class SupabaseStoreRepository implements StoreRepository, SyncServerStoreRepository {
+export class SupabaseStoreRepository implements StoreRepository {
     constructor(@inject(TOKENS.SupabaseDataSource) private readonly dataSource: SupabaseDataSource) { }
 
     private get supabase() {
@@ -177,34 +174,4 @@ export class SupabaseStoreRepository implements StoreRepository, SyncServerStore
         }
     }
 
-    async upsertStores(stores: StoreModel[]): Promise<void> {
-        if (!stores || stores.length === 0) return;
-        try {
-            const records = stores.map((store) => ({
-                street: store.street,
-                ext_number: store.ext_number,
-                colony: store.colony,
-                postal_code: store.postal_code,
-                address_reference: store.address_reference,
-                store_name: store.store_name,
-                owner_name: store.owner_name,
-                cellphone: store.cellphone,
-                latitude: store.latitude,
-                longitude: store.longitude,
-                creation_date: store.creation_date,
-                creation_context: store.creation_context,
-                status_store: store.status_store,
-                id_creator: store.id_creator,
-                id_store: store.id_store,
-            }));
-            console.log("Store: ", records)
-            const { error } = await this.supabase
-                .from(SERVER_DATABASE_ENUM.STORES)
-                .upsert(records, { onConflict: 'id_store' });
-
-            if (error) throw new Error(`Error upserting stores: ${error.message}`);
-        } catch (error: any) {
-            throw new Error(`Failed to upsert stores: ${error.message}`);
-        }
-    }
 }

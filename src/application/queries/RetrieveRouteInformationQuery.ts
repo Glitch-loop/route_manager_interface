@@ -1,5 +1,5 @@
 // Libraries
-import { inject } from "tsyringe";
+import { inject, injectable } from "tsyringe";
 
 // Interfaces
 import { RouteRepository } from "@/core/interfaces/RouteRepository";
@@ -18,6 +18,7 @@ import { MapperDTO } from "@/application/mappers/MapperDTO";
 // Utils
 import { TOKENS } from "@/infrastructure/di/tokens";
 
+@injectable()
 export default class RetrieveRouteInformationQuery {
     constructor(
         @inject(TOKENS.SupabaseRouteRepository) private repo: RouteRepository,

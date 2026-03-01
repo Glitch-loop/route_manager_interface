@@ -1,4 +1,5 @@
 "use client";
+import 'reflect-metadata';
 // Libraries
 import { useState } from "react";
 

@@ -29,9 +29,25 @@ export class SupabaseRouteRepository implements RouteRepository {
 
   async listRoutes(): Promise<Route[]> {
     try {
+
+      const routes:Route[] = [];
+
       const { data, error } = await this.supabase.from(SERVER_DATABASE_ENUM.ROUTES).select('*');
       if (error) throw new Error('Error fetching routes: ' + error.message);
-      return data;
+
+      for (const route of data) {
+        const { id_route, route_name, description, route_status, id_vendor } = route;
+        routes.push(new Route(
+          id_route,
+          route_name,
+          description,
+          route_status,
+          id_vendor,
+          []
+        ))
+      }
+
+      return routes;
     } catch (error) {
       throw new Error('Error fetching routes: ' + error);
     }
@@ -46,7 +62,12 @@ export class SupabaseRouteRepository implements RouteRepository {
 
       if (error) throw new Error('Error fetching routes: ' + error.message);
 
-      return data;
+      const routes: Route[] = data.map(route => {
+        const { id_route, route_name, description, route_status, id_vendor } = route;
+        return new Route(id_route, route_name, description, route_status, id_vendor, []);
+      });
+
+      return routes;
         
     } catch (error) {
       throw new Error('Error fetching routes: ' + error);
@@ -64,7 +85,12 @@ export class SupabaseRouteRepository implements RouteRepository {
 
       if (error) throw new Error('Error fetching routes by ids: ' + error.message);
 
-      return data;
+      const routes: Route[] = data.map(route => {
+        const { id_route, route_name, description, route_status, id_vendor } = route;
+        return new Route(id_route, route_name, description, route_status, id_vendor, []);
+      });
+
+      return routes;
     } catch (error) {
       throw new Error('Error fetching routes by ids: ' + error);
     }

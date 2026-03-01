@@ -1,4 +1,4 @@
-import DAY_OPERATIONS from "@/src/core/enums/DayOperations"
+import DAY_OPERATIONS from "@/core/enums/DayOperations"
 
 export default interface RouteTransactionDescriptionDTO {
     id_route_transaction_description: string,

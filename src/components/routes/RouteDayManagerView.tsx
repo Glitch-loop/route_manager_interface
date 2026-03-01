@@ -1,4 +1,5 @@
 "use client";
+
 // Libraries
 import { useState, useEffect } from "react";
 
@@ -45,6 +46,8 @@ import { generateRandomLightColor, getGradientColor, getLightestMarker } from "@
 import { apiResponseStatus } from "@/utils/responseUtils";
 import { toast } from "react-toastify";
 import RouteDTO from "@/application/dto/RouteDTO";
+import { DAYS_ARRAY } from "@/core/constants/Days";
+import DayType from "@/core/types/DaysType";
 
 export default function RouteDayManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -71,6 +74,9 @@ export default function RouteDayManagerView() {
   const [mapRouteDays, setMapRouteDays] = useState<Record<string, IRouteDay>>({});
   // const [mapRouteDayStores, setMapRouteDayStores] = useState<Record<string, IRouteDayStores>>({});
 
+  // NEW STATES ====================
+  const [routeDTOs, setRouteDTOs] = useState<RouteDTO[]>([]);
+
   useEffect(() => {
     fetchData();
   }, []);
@@ -83,7 +89,9 @@ export default function RouteDayManagerView() {
 
     const routeIds:string[] = routes.map(route => route.id_route);
 
-    
+    const routesWithInformation:RouteDTO[] = await retrieveRouteInformationQuery.execute(routeIds);
+
+    setRouteDTOs(routesWithInformation);
 
     // const mapOfRouteDays:Record<string, IRouteDay> = {};
     // const mapOfRoutes:Record<string, IRoute> = {};
@@ -469,12 +477,30 @@ export default function RouteDayManagerView() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {routeDays.map((routeDay) => (
-                  <TableRow key={routeDay.id_route_day} onDoubleClick={() => handleAddRouteDay(routeDay)} className="cursor-pointer">
-                    <TableCell>{capitalizeFirstLetter(routes.find((r) => r.id_route === routeDay.id_route)?.route_name) || "No se identifico la ruta"}</TableCell>
-                    <TableCell>{DAYS[routeDay.id_day].day_name}</TableCell>
-                  </TableRow>
-                ))}
+                {routeDTOs.map((route:RouteDTO) => {
+                const { route_day_by_day, route_name } = route;
+
+                  if (route_day_by_day === null) return null;
+
+                  return DAYS_ARRAY.map((day: DayType) => {
+                    const { id_day, day_name } = day;
+                    
+                    if (route_day_by_day.has(id_day)) {
+                      const routeDay = route_day_by_day.get(id_day)!;
+                      const { id_route_day } = routeDay;
+                      return (
+                        <TableRow key={id_route_day} onDoubleClick={() => handleAddRouteDay(routeDay)} className="cursor-pointer">
+                          <TableCell>{capitalizeFirstLetter(route_name)}</TableCell>
+                          <TableCell>{day_name}</TableCell>
+                        </TableRow>
+                      )
+                    } else {
+                      return null;
+                    }
+
+                  });
+                }
+                )}
               </TableBody>
             </Table>
           </TableContainer>
