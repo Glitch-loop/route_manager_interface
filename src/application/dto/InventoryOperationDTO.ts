@@ -1,4 +1,4 @@
-import InventoryOperationDescriptionDTO from "@/src/application/dto/InventoryOperationDescriptionDTO";
+import InventoryOperationDescriptionDTO from "@/application/dto/InventoryOperationDescriptionDTO";
 
 export default interface InventoryOperationDTO {
     id_inventory_operation: string;

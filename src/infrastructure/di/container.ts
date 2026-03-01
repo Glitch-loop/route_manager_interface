@@ -82,4 +82,4 @@ container.register<RouteRepository>(TOKENS.SupabaseRouteRepository, {
 //     useClass: SupabaseWorkdayInformationRepository
 // });
 
-export { container }
+export { container as di_container }

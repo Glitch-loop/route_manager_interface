@@ -18,7 +18,7 @@ import { MapperDTO } from "@/application/mappers/MapperDTO";
 // Utils
 import { TOKENS } from "@/infrastructure/di/tokens";
 
-export default class RetrieveRouteQuery {
+export default class RetrieveRouteInformationQuery {
     constructor(
         @inject(TOKENS.SupabaseRouteRepository) private repo: RouteRepository,
         private mapper: MapperDTO

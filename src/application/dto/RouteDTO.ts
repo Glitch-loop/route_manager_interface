@@ -1,4 +1,4 @@
-import RouteDayDTO  from "@/src/application/dto/RouteDayDTO";
+import RouteDayDTO  from "@/application/dto/RouteDayDTO";
 
 export default interface RouteDTO {
     id_route: string;

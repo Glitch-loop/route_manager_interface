@@ -1,4 +1,4 @@
-import { DAY_OPERATIONS } from '@/src/core/enums/DayOperations';
+import { DAY_OPERATIONS } from '@/core/enums/DayOperations';
 
 export default interface DayOperationDTO {
     id_day_operation: string;

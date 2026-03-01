@@ -23,6 +23,14 @@ import {
 
 import { getAllStores } from "@/controllers/StoreController";
 
+// Queries
+import ListRoutesQuery from "@/application/queries/ListRoutesQuery";
+import RetrieveRouteInformationQuery  from "@/application/queries/RetrieveRouteInformationQuery";
+
+
+// DI container
+import { di_container } from "@/infrastructure/di/container";
+
 // Utils
 import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord, convertArrayInJsonUsingInterfaces, generateUUIDv4 } from "@/utils/generalUtils";
 
@@ -36,6 +44,7 @@ import DAYS from "@/utils/days";
 import { generateRandomLightColor, getGradientColor, getLightestMarker } from "@/utils/stylesUtils";
 import { apiResponseStatus } from "@/utils/responseUtils";
 import { toast } from "react-toastify";
+import RouteDTO from "@/application/dto/RouteDTO";
 
 export default function RouteDayManagerView() {
   const [routes, setRoutes] = useState<IRoute[]>([]);
@@ -67,76 +76,85 @@ export default function RouteDayManagerView() {
   }, []);
 
   const fetchData = async () => {
-    const mapOfRouteDays:Record<string, IRouteDay> = {};
-    const mapOfRoutes:Record<string, IRoute> = {};
+    const listRouteQuery = di_container.resolve<ListRoutesQuery>(ListRoutesQuery);
+    const retrieveRouteInformationQuery = di_container.resolve<RetrieveRouteInformationQuery>(RetrieveRouteInformationQuery);
+
+    const routes:RouteDTO[] =  await listRouteQuery.execute()
+
+    const routeIds:string[] = routes.map(route => route.id_route);
+
     
-    const routesData = await getAllRoutes();
-    const routeDaysData = await getRouteDays();
-    const storesData = await getAllStores();
+
+    // const mapOfRouteDays:Record<string, IRouteDay> = {};
+    // const mapOfRoutes:Record<string, IRoute> = {};
     
-    routesData.forEach((route:IRoute) => {
-      const { id_route } = route;
-      mapOfRoutes[id_route] = route;
-    });
+    // const routesData = await getAllRoutes();
+    // const routeDaysData = await getRouteDays();
+    // const storesData = await getAllStores();
+    
+    // routesData.forEach((route:IRoute) => {
+    //   const { id_route } = route;
+    //   mapOfRoutes[id_route] = route;
+    // });
 
-    routeDaysData.forEach((routeDay:IRouteDay) => {
-      const { id_route_day} = routeDay;
-      mapOfRouteDays[id_route_day] = routeDay;
-    });
+    // routeDaysData.forEach((routeDay:IRouteDay) => {
+    //   const { id_route_day} = routeDay;
+    //   mapOfRouteDays[id_route_day] = routeDay;
+    // });
 
-    // Creating maps of the concepts
-    setMapRouteDays(mapOfRouteDays);
-    setMapRoutes(mapOfRoutes);
+    // // Creating maps of the concepts
+    // setMapRouteDays(mapOfRouteDays);
+    // setMapRoutes(mapOfRoutes);
 
 
-    // Creating states
-    setRoutes(routesData);
+    // // Creating states
+    // setRoutes(routesData);
 
-    setRouteDays(routeDaysData.sort((routeDayA:IRouteDay, routeDayB:IRouteDay) => {
-      let dayA = DAYS[routeDayA.id_day];
-      let dayB = DAYS[routeDayB.id_day];
+    // setRouteDays(routeDaysData.sort((routeDayA:IRouteDay, routeDayB:IRouteDay) => {
+    //   let dayA = DAYS[routeDayA.id_day];
+    //   let dayB = DAYS[routeDayB.id_day];
 
-      let routeA = mapOfRoutes[routeDayA.id_route];
-      let routeB = mapOfRoutes[routeDayB.id_route];
+    //   let routeA = mapOfRoutes[routeDayA.id_route];
+    //   let routeB = mapOfRoutes[routeDayB.id_route];
 
-      if (routeA && routeB) {
-        if (routeA.route_name == routeB.route_name) {
-          if(dayA && dayB) {
-            if(dayA.order_to_show < dayB.order_to_show) {
-              return -1;
-            } else {
-              return 1;
-            }
-          } else {
-            return 0;
-          }
-        } else {
-          if(routeA.route_name < routeB.route_name) {
-            return -1;
-          } else {
-            return 1;
-          }
-        }
-      } else {
-        return 0;
-      }     
+    //   if (routeA && routeB) {
+    //     if (routeA.route_name == routeB.route_name) {
+    //       if(dayA && dayB) {
+    //         if(dayA.order_to_show < dayB.order_to_show) {
+    //           return -1;
+    //         } else {
+    //           return 1;
+    //         }
+    //       } else {
+    //         return 0;
+    //       }
+    //     } else {
+    //       if(routeA.route_name < routeB.route_name) {
+    //         return -1;
+    //       } else {
+    //         return 1;
+    //       }
+    //     }
+    //   } else {
+    //     return 0;
+    //   }     
 
-    }));
+    // }));
 
-    setStores(storesData);
+    // setStores(storesData);
 
-    setCatalogStores(storesData.map((store:IStore) => { 
-      const { id_store, store_name } = store;
-      return { 
-      id_item: id_store,
-      id_item_in_container: generateUUIDv4(),
-      item_name: store_name,
-      id_group: '',
-      order_to_show: 0,
-    }}))
+    // setCatalogStores(storesData.map((store:IStore) => { 
+    //   const { id_store, store_name } = store;
+    //   return { 
+    //   id_item: id_store,
+    //   id_item_in_container: generateUUIDv4(),
+    //   item_name: store_name,
+    //   id_group: '',
+    //   order_to_show: 0,
+    // }}))
 
-    // Convert stores to JSON for quick access
-    setStoreJson(convertArrayInJsonUsingInterfaces(storesData));
+    // // Convert stores to JSON for quick access
+    // setStoreJson(convertArrayInJsonUsingInterfaces(storesData));
   };
 
   // Related to the table

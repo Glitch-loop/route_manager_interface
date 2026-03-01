@@ -74,9 +74,9 @@ export default function Home() {
     //       console.log("Something new: ", payload)
     //     }
     console.log("Getting stores in Home page");
-    getAllStores().then((stores) =>{ 
-      console.log("Stores in Home page: ", stores);
-      setStores(stores)});
+    // getAllStores().then((stores) =>{ 
+    //   console.log("Stores in Home page: ", stores);
+    //   setStores(stores)});
         // supabase
         //   .channel('sellings')
         //   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'route_paths'}, handleInsert)
@@ -120,11 +120,11 @@ export default function Home() {
               })
             }
         </div>
-        <div className="w-full h-full flex flex-row items-center justify-center">
+        {/* <div className="w-full h-full flex flex-row items-center justify-center">
             { stores !== undefined &&
               <StoreMap stores={stores} onSelectStore={(item) => console.log(item)}/>
             }
-        </div>
+        </div> */}
       {/* </main> */}
     </div>
   );
