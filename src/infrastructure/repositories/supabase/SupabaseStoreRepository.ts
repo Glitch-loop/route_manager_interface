@@ -1,0 +1,210 @@
+// Libraries
+import { injectable, inject } from 'tsyringe';
+
+// Entities
+import { Store } from '@/core/entities/Store';
+
+// Interfaces
+import { StoreRepository } from '@/core/interfaces/StoreRepository';
+import { SyncServerStoreRepository } from '@/infrastructure/persitence/interface/server-database/SyncServerStoreRepository';
+
+// Infrastructure
+import { SupabaseDataSource } from '@/infrastructure/datasources/SupabaseDataSource'; 
+
+// Models
+import StoreModel from '@/infrastructure/persitence/model/StoreModel';
+
+// Utils
+import { TOKENS } from '@/infrastructure/di/tokens';
+import { SERVER_DATABASE_ENUM } from '@/infrastructure/persitence/enums/serverTablesEnum';
+
+
+@injectable()
+export class SupabaseStoreRepository implements StoreRepository, SyncServerStoreRepository {
+    constructor(@inject(TOKENS.SupabaseDataSource) private readonly dataSource: SupabaseDataSource) { }
+
+    private get supabase() {
+        return this.dataSource.getClient();
+    }
+
+    async insertStores(stores: Store[]): Promise<void> {
+        try {
+            // Map Store entities to database schema (excluding route_day_state)
+            const storeRecords = stores.map(store => ({
+                street: store.street,
+                ext_number: store.ext_number,
+                colony: store.colony,
+                postal_code: store.postal_code,
+                address_reference: store.address_reference,
+                store_name: store.store_name,
+                owner_name: store.owner_name,
+                cellphone: store.cellphone,
+                latitude: store.latitude,
+                longitude: store.longitude,
+                creation_date: store.creation_date,
+                creation_context: store.creation_context,
+                status_store: store.status_store,
+                id_creator: store.id_creator
+            }));
+
+            const { error } = await this.supabase
+                .from(SERVER_DATABASE_ENUM.STORES)
+                .insert(storeRecords);
+
+            if (error) throw new Error(`Error inserting stores: ${ error.message }`);
+        } catch (error: any) {
+            throw new Error(`Failed to insert stores: ${error.message}`);
+        }
+    }
+
+    async updateStore(store: Store): Promise<void> {
+        try {
+            // Map Store entity to database schema (excluding route_day_state and id_store)
+            const storeRecord = {
+                street: store.street,
+                ext_number: store.ext_number,
+                colony: store.colony,
+                postal_code: store.postal_code,
+                address_reference: store.address_reference,
+                store_name: store.store_name,
+                owner_name: store.owner_name,
+                cellphone: store.cellphone,
+                latitude: store.latitude,
+                longitude: store.longitude,
+                creation_date: store.creation_date,
+                creation_context: store.creation_context,
+                status_store: store.status_store,
+                id_creator: store.id_creator
+            };
+
+            const { error } = await this.supabase
+                .from(SERVER_DATABASE_ENUM.STORES)
+                .update(storeRecord)
+                .eq('id_store', store.id_store);
+
+            if (error) throw new Error(`Error updating store: ${error.message}`);
+        } catch (error: any) {
+            throw new Error(`Failed to update store: ${error.message}`);
+        }
+    }
+
+    async retrieveStore(id_stores: string[]): Promise<Store[]> {
+        try {
+            const { data, error } = await this.supabase
+                .from(SERVER_DATABASE_ENUM.STORES)
+                .select('*')
+                .in('id_store', id_stores);
+
+            if (error) throw new Error(`Error retrieving stores: ${error.message}`);
+            const stores: Store[] = [];
+            for (const store of data || []) {
+                stores.push(
+                    new Store(
+                        store.id_store,
+                        store.street,
+                        store.ext_number ?? null,
+                        store.colony,
+                        store.postal_code,
+                        store.address_reference ?? null,
+                        store.store_name ?? null,
+                        store.owner_name ?? null,
+                        store.cellphone ?? null,
+                        store.latitude,
+                        store.longitude,
+                        store.id_creator ?? '',
+                        store.creation_date,
+                        store.creation_context ?? '',
+                        store.status_store,
+                        store.is_new ?? 0
+                    )
+                );
+            }
+            return stores;
+        } catch (error: any) {
+            throw new Error(`Failed to retrieve stores: ${error.message}`);
+        }
+    }
+
+    async listStores(): Promise<Store[]> {
+        try {
+            const { data, error } = await this.supabase
+                .from(SERVER_DATABASE_ENUM.STORES)
+                .select('*')
+                .eq('status_store', 1);
+
+            if (error) throw new Error(`Error listing stores: ${error.message}`);
+            const stores: Store[] = [];
+            for (const store of data || []) {
+                stores.push(
+                    new Store(
+                        store.id_store,
+                        store.street,
+                        store.ext_number ?? null,
+                        store.colony,
+                        store.postal_code,
+                        store.address_reference ?? null,
+                        store.store_name ?? null,
+                        store.owner_name ?? null,
+                        store.cellphone ?? null,
+                        store.latitude,
+                        store.longitude,
+                        store.id_creator ?? '',
+                        store.creation_date,
+                        store.creation_context ?? '',
+                        store.status_store,
+                        store.is_new ?? 0
+                    )
+                );
+            }
+            return stores;
+        } catch (error: any) {
+            throw new Error(`Failed to list stores: ${error.message}`);
+        }
+    }
+
+    async deleteStores(stores: Store[]): Promise<void> {
+        try {
+            const storeIds = stores.map(store => store.id_store);
+
+            const { error } = await this.supabase
+                .from(SERVER_DATABASE_ENUM.STORES)
+                .delete()
+                .in('id_store', storeIds);
+
+            if (error) throw new Error(`Error deleting stores: ${error.message}`);
+        } catch (error: any) {
+            throw new Error(`Failed to delete stores: ${error.message}`);
+        }
+    }
+
+    async upsertStores(stores: StoreModel[]): Promise<void> {
+        if (!stores || stores.length === 0) return;
+        try {
+            const records = stores.map((store) => ({
+                street: store.street,
+                ext_number: store.ext_number,
+                colony: store.colony,
+                postal_code: store.postal_code,
+                address_reference: store.address_reference,
+                store_name: store.store_name,
+                owner_name: store.owner_name,
+                cellphone: store.cellphone,
+                latitude: store.latitude,
+                longitude: store.longitude,
+                creation_date: store.creation_date,
+                creation_context: store.creation_context,
+                status_store: store.status_store,
+                id_creator: store.id_creator,
+                id_store: store.id_store,
+            }));
+            console.log("Store: ", records)
+            const { error } = await this.supabase
+                .from(SERVER_DATABASE_ENUM.STORES)
+                .upsert(records, { onConflict: 'id_store' });
+
+            if (error) throw new Error(`Error upserting stores: ${error.message}`);
+        } catch (error: any) {
+            throw new Error(`Failed to upsert stores: ${error.message}`);
+        }
+    }
+}

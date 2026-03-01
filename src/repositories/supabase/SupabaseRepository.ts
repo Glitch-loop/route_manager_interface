@@ -224,7 +224,7 @@ export class SupabaseRepository implements IRepository {
   async getAllStores():Promise<IResponse<IStore[]>>{
     try {
       const { data, error } = await supabase.from(TABLES.STORES).select();
-
+      console.log("get all stores in the repo: ", error)
       if (error) {
         return createApiResponse<IStore[]>(500, [], null,'Failed getting stores information.');
       } else {

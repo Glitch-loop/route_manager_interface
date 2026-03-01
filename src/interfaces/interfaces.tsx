@@ -32,7 +32,7 @@ export interface IStore {
   owner_name?: string;
   cellphone?: string;
   latitude: string;
-  longuitude: string;
+  longitude: string;
   id_creator: number;
   creation_date: string;
   creation_context: string;
@@ -231,5 +231,5 @@ export interface IMapMarker{
   color_item: string,
   id_group: string,
   latitude: string;
-  longuitude: string;
+  longitude: string;
 }

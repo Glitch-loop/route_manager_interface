@@ -16,6 +16,7 @@ const containerStyle = { width: "100%", height: "100%" };
 const defaultCenter = { lat: 20.648043093256433, lng: -105.21612612535338 }; // Default: Mexico City
  
 export default function RouteMap({ markers, temporalMarkers, onSelectStore }: StoreMapProps) {
+  console.log("Markers in RouteMap:", markers);
   const [selectedStore, setSelectedStore] = useState<IMapMarker | null>(null);
   const [hoveredPosition, setHoveredPosition] = useState<IMapMarker | null>(null);
   const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
@@ -45,14 +46,14 @@ export default function RouteMap({ markers, temporalMarkers, onSelectStore }: St
     <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string}>
       <Map 
         style={containerStyle}
-        defaultCenter={markers.length ? { lat: parseFloat(markers[0].latitude), lng: parseFloat(markers[0].longuitude) } : defaultCenter}
+        defaultCenter={markers.length ? { lat: parseFloat(markers[0].latitude), lng: parseFloat(markers[0].longitude) } : defaultCenter}
         defaultZoom={13}
       >
         {markers.map((marker) =>  {
           return (<Marker
             key={marker.id_marker}
             icon={createCustomMarker(marker.color_item)}
-            position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longuitude) }}
+            position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longitude) }}
             onClick={() => {
               setSelectedStore(marker);
               onSelectStore(marker);
@@ -66,7 +67,7 @@ export default function RouteMap({ markers, temporalMarkers, onSelectStore }: St
           return (<Marker
             key={marker.id_item}
             icon={createCustomMarker(marker.color_item)}
-            position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longuitude) }}
+            position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longitude) }}
             onClick={() => {
               setSelectedStore(marker);
               onSelectStore(marker);
@@ -79,7 +80,7 @@ export default function RouteMap({ markers, temporalMarkers, onSelectStore }: St
         {/* Hover Info */}
         {hoveredPosition && (
           <InfoWindow
-            position={{ lat: parseFloat(hoveredPosition.latitude), lng: parseFloat(hoveredPosition.longuitude) }}
+            position={{ lat: parseFloat(hoveredPosition.latitude), lng: parseFloat(hoveredPosition.longitude) }}
             onCloseClick={() => setHoveredPosition(null)}
           >
             {hoveredPosition.hoverComponent}
@@ -88,7 +89,7 @@ export default function RouteMap({ markers, temporalMarkers, onSelectStore }: St
         {/* Show store info when clicked */}
         {selectedStore && (
           <InfoWindow
-            position={{ lat: parseFloat(selectedStore.latitude), lng: parseFloat(selectedStore.longuitude) }}
+            position={{ lat: parseFloat(selectedStore.latitude), lng: parseFloat(selectedStore.longitude) }}
             onCloseClick={() => setSelectedStore(null)}
           >
             {selectedStore.clickComponent}

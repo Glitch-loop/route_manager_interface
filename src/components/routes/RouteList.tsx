@@ -475,6 +475,12 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                                         ...stores[id_store],
                                         route_day_state: storeStatus,
                                     }, isCurrentOperation)
+
+                                    if (storeStatus === enumStoreStates.SPECIAL_SALE) {
+                                        console.log(stores[id_store].store_name)
+                                        console.log(stores[id_store].colony)
+                                    }
+                                    console.log(cardColorStyle)
                                 }
                             }
                             
@@ -493,11 +499,12 @@ function RouteList({ workDay }:{ workDay:IRoute&IDayGeneralInformation&IDay&IRou
                             }
 
                             // Getting 'date' of the operation day. 
-                            if (differenceBetweenDayOperations && rateOfDiffferenceBetweenDates) {
-                                dateOfTheOperation = date;
-                            } else {
-                                dateOfTheOperation = '';
-                            }
+                            dateOfTheOperation = date;
+                            // if (differenceBetweenDayOperations && rateOfDiffferenceBetweenDates) {
+                            //     dateOfTheOperation = date;
+                            // } else {
+                            //     dateOfTheOperation = '';
+                            // }
                             
 
                             return (
