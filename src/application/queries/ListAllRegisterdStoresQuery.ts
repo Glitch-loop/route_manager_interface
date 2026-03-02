@@ -17,7 +17,7 @@ import { TOKENS } from '@/infrastructure/di/tokens';
 @injectable()
 export default class ListAllRegisterdStoresQuery {
 	constructor(
-		@inject(TOKENS.SQLiteStoreRepository) private readonly storeRepository: StoreRepository,
+		@inject(TOKENS.SupabaseStoreRepository) private readonly storeRepository: StoreRepository,
 		private readonly mapperDTO: MapperDTO
 	) {}
 

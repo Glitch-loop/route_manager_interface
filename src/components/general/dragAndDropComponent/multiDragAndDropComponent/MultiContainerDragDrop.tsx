@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ICatalogItem } from "@/interfaces/interfaces";
+import { ICatalogItem, ICatalog } from "../Interfaces";
 import {
   DndContext,
   closestCenter,
@@ -99,6 +99,7 @@ export default function MultiContainerDragDrop({
     setSelectedItem(null);
     setShowDialogDeleteItem(false);
   }
+
   const handlerSelectItem = (idItem:string) => {
     if(selectedItem === null) { // First time the user selects an item
       setSelectedItem(idItem);
@@ -110,6 +111,7 @@ export default function MultiContainerDragDrop({
         handleCleanDeleteItemsStates();
       }
     }
+
   }
 
   const handleRemoveItem = (id_item_container_to_delete:string|null) => {    

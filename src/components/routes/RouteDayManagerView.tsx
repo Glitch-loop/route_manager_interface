@@ -48,16 +48,17 @@ import { toast } from "react-toastify";
 import RouteDTO from "@/application/dto/RouteDTO";
 import { DAYS_ARRAY } from "@/core/constants/Days";
 import DayType from "@/core/types/DaysType";
+import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdStoresQuery";
+import StoreDTO from "@/application/dto/StoreDTO";
+import RouteDayDTO from "@/application/dto/RouteDayDTO";
+import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
 
 export default function RouteDayManagerView() {
-  const [routes, setRoutes] = useState<IRoute[]>([]);
-  const [routeDays, setRouteDays] = useState<IRouteDay[]>([]);
   const [stores, setStores] = useState<IStore[]>([]);
-  const [routeDayStores, setRouteDayStores] = useState<IRouteDayStores[]>([]);
+  const [routeDayStores, setRouteDayStores] = useState<RouteDayStoreDTO[]>([]);
   const [selectedRouteDay, setSelectedRouteDay] = useState<IRouteDay | null>(null);
   const [storeJson, setStoreJson] = useState<Record<string, IStore>>({});
-  const [storesOfSelectedRouteDay, setStoresOfSelectedRouteDay] = useState<(IStore&IRouteDayStores)[]>([]);
-
+  
   // Map component
   const [markersToShow, setMarkerToShow] = useState<IMapMarker[]>([]);
   const [temporalMarkers, setTemporalMarkers] = useState<IMapMarker[]>([]);
@@ -70,126 +71,73 @@ export default function RouteDayManagerView() {
   const [nameOfRoutesCatalog, setNameOfRouteCatalog] = useState<ICatalogItem[]>([]);
   
   // Maps
-  const [mapRoutes, setMapRoutes] = useState<Record<string, IRoute>>({});
-  const [mapRouteDays, setMapRouteDays] = useState<Record<string, IRouteDay>>({});
-  // const [mapRouteDayStores, setMapRouteDayStores] = useState<Record<string, IRouteDayStores>>({});
-
+  const [mapRoutes, setMapRoutes] = useState<Map<string, RouteDTO>>(new Map());
+  const [mapRouteDays, setMapRouteDays] = useState<Map<string, RouteDayDTO>>(new Map());
+  // const [mapRouteDayStores, setMapRouteDayStores] = useState<Map<string, RouteDayStoreDTO>>(new Map());
+  
   // NEW STATES ====================
   const [routeDTOs, setRouteDTOs] = useState<RouteDTO[]>([]);
+  const [storeDTOs, setStoreDTOs] = useState<StoreDTO[]>([]);
+  const [mapStoreDTOs, setMapStoreDTOs] = useState<Map<string, StoreDTO>|null>(null);
+  const [storesOfSelectedRouteDay, setStoresOfSelectedRouteDay] = useState<(StoreDTO&RouteDayStoreDTO)[]>([]);
 
   useEffect(() => {
     fetchData();
   }, []);
 
+  // ----------Auxiliar functions----------
   const fetchData = async () => {
     const listRouteQuery = di_container.resolve<ListRoutesQuery>(ListRoutesQuery);
     const retrieveRouteInformationQuery = di_container.resolve<RetrieveRouteInformationQuery>(RetrieveRouteInformationQuery);
+    const listStoresQuery = di_container.resolve<ListAllRegisterdStoresQuery>(ListAllRegisterdStoresQuery);
 
     const routes:RouteDTO[] =  await listRouteQuery.execute()
-
     const routeIds:string[] = routes.map(route => route.id_route);
 
     const routesWithInformation:RouteDTO[] = await retrieveRouteInformationQuery.execute(routeIds);
 
     setRouteDTOs(routesWithInformation);
 
-    // const mapOfRouteDays:Record<string, IRouteDay> = {};
-    // const mapOfRoutes:Record<string, IRoute> = {};
+    const stores:StoreDTO[] = await listStoresQuery.execute();
+    setStoreDTOs(stores);
+
+    const mapOfStoreDTOs:Map<string, StoreDTO> = new Map<string, StoreDTO>();
+    stores.forEach((store:StoreDTO) => {
+      mapOfStoreDTOs.set(store.id_store, store);
+    });
+
     
-    // const routesData = await getAllRoutes();
-    // const routeDaysData = await getRouteDays();
-    // const storesData = await getAllStores();
-    
-    // routesData.forEach((route:IRoute) => {
-    //   const { id_route } = route;
-    //   mapOfRoutes[id_route] = route;
-    // });
-
-    // routeDaysData.forEach((routeDay:IRouteDay) => {
-    //   const { id_route_day} = routeDay;
-    //   mapOfRouteDays[id_route_day] = routeDay;
-    // });
-
-    // // Creating maps of the concepts
-    // setMapRouteDays(mapOfRouteDays);
-    // setMapRoutes(mapOfRoutes);
-
-
-    // // Creating states
-    // setRoutes(routesData);
-
-    // setRouteDays(routeDaysData.sort((routeDayA:IRouteDay, routeDayB:IRouteDay) => {
-    //   let dayA = DAYS[routeDayA.id_day];
-    //   let dayB = DAYS[routeDayB.id_day];
-
-    //   let routeA = mapOfRoutes[routeDayA.id_route];
-    //   let routeB = mapOfRoutes[routeDayB.id_route];
-
-    //   if (routeA && routeB) {
-    //     if (routeA.route_name == routeB.route_name) {
-    //       if(dayA && dayB) {
-    //         if(dayA.order_to_show < dayB.order_to_show) {
-    //           return -1;
-    //         } else {
-    //           return 1;
-    //         }
-    //       } else {
-    //         return 0;
-    //       }
-    //     } else {
-    //       if(routeA.route_name < routeB.route_name) {
-    //         return -1;
-    //       } else {
-    //         return 1;
-    //       }
-    //     }
-    //   } else {
-    //     return 0;
-    //   }     
-
-    // }));
-
-    // setStores(storesData);
-
-    // setCatalogStores(storesData.map((store:IStore) => { 
-    //   const { id_store, store_name } = store;
-    //   return { 
-    //   id_item: id_store,
-    //   id_item_in_container: generateUUIDv4(),
-    //   item_name: store_name,
-    //   id_group: '',
-    //   order_to_show: 0,
-    // }}))
-
-    // // Convert stores to JSON for quick access
-    // setStoreJson(convertArrayInJsonUsingInterfaces(storesData));
+    setMapStoreDTOs(mapOfStoreDTOs);
   };
 
-  // Related to the table
-  const handleAddRouteDay = async (routeDay: IRouteDay) => {
-    // Variables to prevent route duplication.
-    let routeSelectedPreviously:boolean = false;
-    
-    // Variables related to drag and drop component
-    const storesOfTheRouteDay:(IStore&IRouteDayStores)[] = [];  
-    const catalogOfTheRouteDay:ICatalogItem[] = [];
-    const catalogRoute:ICatalogItem = {
-      id_item: '',
-      id_item_in_container: '',
-      id_group: '',
-      item_name: '',
-      order_to_show: 0,
-    }
+  // ----------Handlers----------
+  const handleAddRouteDay = async (route: RouteDTO, routeDay: RouteDayDTO) => {
+
+    // Variables related to the route day to add
+    const { id_route, route_name } = route;
+    const { id_route_day, id_day, stores } = routeDay;
 
     // Variables related to the map component
     const markerOfTheRouteDay:IMapMarker[] = [];
     const colorOfRoute:string = generateRandomLightColor();
 
+    // Variables to prevent route duplication.
+    let routeSelectedPreviously:boolean = false;
+    
+    // Verifications of states
+    if (mapStoreDTOs === null) {
+      console.error("mapStoreDTOs is null, cannot fetch store information for the route day.");  
+      return
+    };
+
     // Verifying the user didn't choose before the route day.
     if (catalogsRoutes) {
       catalogsRoutes.forEach((catalog:ICatalogItem[]) => {
-        if(catalog[0]) {
-          if(catalog[0].id_group === routeDay.id_route_day) {
+        const currentCatalog:ICatalogItem = catalog[0];
+
+        if(currentCatalog) {
+          const { id_group } = currentCatalog;
+          if(id_group === id_route_day) {
             routeSelectedPreviously = true;
             return;
           }
@@ -199,47 +147,53 @@ export default function RouteDayManagerView() {
 
     if(routeSelectedPreviously) return;
 
+    // Variables related to drag and drop component
+    const storesOfTheRouteDay:(StoreDTO&RouteDayStoreDTO)[] = [];  
+    const catalogOfTheRouteDay:ICatalogItem[] = [];
+      
+    const day:DayType|undefined = DAYS_ARRAY.find((day) => { return id_day === day.id_day});
+    const day_name:string = day ? day.day_name : 'Nombre de día no encontrado.';
+
+    const catalogRouteToAdd:ICatalogItem = {
+      id_item: id_route_day,
+      id_item_in_container: generateUUIDv4(),
+      id_group: id_route,
+      item_name: capitalizeFirstLetterOfEachWord(route_name + ' - ' + day_name),
+      order_to_show: 0,
+    }
+
     // Retriving information of the route day
-    const { id_route, id_day, id_route_day } = routeDay;
-    const routeDayStoresData = await getStoresOfRouteDay(routeDay);
-    const totalstoresInRouteDay:number = routeDayStoresData.length;
-    console.log(id_route_day)
+    const totalstoresInRouteDay:number = stores.length;
 
-    // Catalog item for the route day itself.
-    catalogRoute.id_item_in_container = generateUUIDv4();
-    catalogRoute.id_item = id_route_day;
-    catalogRoute.id_group = id_route;
-    if(mapRoutes[id_route]) catalogRoute.item_name = capitalizeFirstLetter(mapRoutes[id_route].route_name) + ' - ';
-    if(DAYS[id_day]) catalogRoute.item_name = catalogRoute.item_name + DAYS[id_day].day_name;
-    catalogRoute.order_to_show = 0;
-    
-
+  
     // Get stores position from the route day
-    routeDayStoresData.forEach((routeDayStore:IRouteDayStores) => {
+    stores.forEach((routeDayStore:RouteDayStoreDTO) => {
         const { id_store, id_route_day, position_in_route } = routeDayStore;
-        if(storeJson[id_store] !== undefined) {
+        
+        if(mapStoreDTOs.has(id_store) === true) {
           const colorAccordingThePosition:string = getGradientColor(colorOfRoute, position_in_route, totalstoresInRouteDay );
           
-          const currentStore:IStore = storeJson[id_store];
-          const { store_name, latitude, longuitude } = currentStore;
+          const currentStore:StoreDTO = mapStoreDTOs.get(id_store)!;
+          const { store_name, latitude, longitude } = currentStore;
+          const nameOfStore:string = store_name ? store_name : 'Nombre de tienda no encontrado.';
 
           storesOfTheRouteDay.push({...currentStore, ...routeDayStore}); 
-          
+
           markerOfTheRouteDay.push({
             id_marker: generateUUIDv4(),
             id_item: id_store,
-            hoverComponent: <InfoStoreHover store={currentStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes} />,
+            hoverComponent: <InfoStoreHover store_name={nameOfStore} route_name={route_name} day_name={day_name} position_in_route={position_in_route} />,
             clickComponent: <InfoStoreClick store={currentStore} routeDayStores={[routeDayStore]} routeDays={mapRouteDays} routes={mapRoutes} />,
             color_item: colorAccordingThePosition,
             id_group: id_route_day,
             latitude: latitude,
-            longuitude: longuitude
+            longitude: longitude
           });
 
           catalogOfTheRouteDay.push({
             id_item: id_store,
             id_item_in_container: generateUUIDv4(),
-            item_name: capitalizeFirstLetterOfEachWord(store_name),
+            item_name: capitalizeFirstLetterOfEachWord(nameOfStore),
             order_to_show: position_in_route,
             id_group: id_route_day,
           });
@@ -247,11 +201,11 @@ export default function RouteDayManagerView() {
     });
 
     setSelectedRouteDay(routeDay);
-    setRouteDayStores(routeDayStoresData);
+    setRouteDayStores(stores);
 
     setStoresOfSelectedRouteDay([...storesOfTheRouteDay, ...storesOfSelectedRouteDay]);
     setMarkerToShow([...markerOfTheRouteDay, ...markersToShow]);
-    setNameOfRouteCatalog([{ ...catalogRoute }, ...nameOfRoutesCatalog]);
+    setNameOfRouteCatalog([{ ...catalogRouteToAdd }, ...nameOfRoutesCatalog]);
 
     if (catalogsRoutes) {
       setCatalogsRoutes([[...catalogOfTheRouteDay], ...catalogsRoutes])
@@ -263,7 +217,6 @@ export default function RouteDayManagerView() {
   // Related drag and drop component
   const handleSaveRouteDay = async (column: number, routeCatalogItem:ICatalogItem) => {
     // the list that lists the route day will be taken as the truth table.
-
     if (catalogsRoutes) {
       if(catalogsRoutes[column]) {
 
@@ -333,8 +286,22 @@ export default function RouteDayManagerView() {
     }
   }
 
-  const handlerMondifyCatalogRoutes = (matrix:ICatalogItem[][]) => {
+  const handlerMondifyCatalogRoutes = (matrix:ICatalogItem[][]): void => {
+    /*
+    This a map to know which fields of the DTOs are used in CatalogItem
+      id_item: id of the store,
+      id_item_in_container: ID generated at moment of adding the route to this section,
+      id_group: id of the route day (not get confused with the id of the route),
+      item_name: Name of the store,
+      order_to_show: Order to be displayed,
+    */
     const markerOfTheRouteDay:IMapMarker[] = [];
+    
+    if (mapStoreDTOs === null) {
+      console.error("mapStoreDTOs is null, cannot fetch store information for the route day.");
+      return;
+    }
+
     matrix.forEach((currentCatalog:ICatalogItem[]) => {
       let colorOfRoute:string = generateRandomLightColor();
       const totalItemsInCatalog:number = currentCatalog.length;
@@ -355,32 +322,30 @@ export default function RouteDayManagerView() {
       currentCatalog.forEach((currentItem:ICatalogItem) => {
         const {id_item, id_group, order_to_show  } = currentItem;
         
-        if(storeJson[id_item] !== undefined) {
-          const currentStore:IStore = storeJson[id_item];
-          const { latitude, longuitude } = currentStore;
+        if(mapStoreDTOs.has(id_item) === true) {
+          const currentStore:StoreDTO = mapStoreDTOs.get(id_item)!;
+          const { store_name, latitude, longitude } = currentStore;
           const colorAccordingThePosition:string = getGradientColor(colorOfRoute, order_to_show, totalItemsInCatalog);
-          const routeDayStore:IRouteDayStores = {
-            id_route_day_store: "",
-            position_in_route: order_to_show,
-            id_route_day: id_group,
-            id_store: id_item
-          }
+          const nameOfStore:string = store_name ? store_name : 'Nombre de tienda no encontrado.';
+          const day:DayType|undefined = DAYS_ARRAY.find((day) => { return id_day === day.id_day});
+          const day_name:string = day ? day.day_name : 'Nombre de día no encontrado.';
+
+
           markerOfTheRouteDay.push({
             id_marker: generateUUIDv4(),
             id_item: id_item,
-            hoverComponent: <InfoStoreHover store={currentStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
+            hoverComponent: <InfoStoreHover store_name={nameOfStore} route_name={route_name} day_name={day_name} position_in_route={order_to_show} />,
             clickComponent: <InfoStoreClick store={currentStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
             color_item: colorAccordingThePosition,
             id_group: id_group,
             latitude: latitude,
-            longuitude: longuitude
+            longitude: longitude
           });
         }
       });
     });
 
     setCatalogsRoutes(matrix);
-    
     setMarkerToShow([ ...markerOfTheRouteDay ]);
 
   }
@@ -489,7 +454,7 @@ export default function RouteDayManagerView() {
                       const routeDay = route_day_by_day.get(id_day)!;
                       const { id_route_day } = routeDay;
                       return (
-                        <TableRow key={id_route_day} onDoubleClick={() => handleAddRouteDay(routeDay)} className="cursor-pointer">
+                        <TableRow key={id_route_day} onDoubleClick={() => handleAddRouteDay(route, routeDay)} className="cursor-pointer">
                           <TableCell>{capitalizeFirstLetter(route_name)}</TableCell>
                           <TableCell>{day_name}</TableCell>
                         </TableRow>

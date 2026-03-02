@@ -126,8 +126,7 @@ export class SupabaseStoreRepository implements StoreRepository {
         try {
             const { data, error } = await this.supabase
                 .from(SERVER_DATABASE_ENUM.STORES)
-                .select('*')
-                .eq('status_store', 1);
+                .select('*');
 
             if (error) throw new Error(`Error listing stores: ${error.message}`);
             const stores: Store[] = [];
