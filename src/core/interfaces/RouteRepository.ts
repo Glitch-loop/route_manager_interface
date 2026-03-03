@@ -7,6 +7,9 @@ import { Route } from '@/core/entities/Route';
 import { RouteDay } from '@/core/object-values/RouteDay';
 
 export abstract class RouteRepository {
+  abstract insertRouteDays(idRoute: string, idDay: string): Promise<void>;
+  abstract insertRouteDayStores(routeDayStores: RouteDayStore[]): Promise<void>;
+  abstract deleteRouteDayStores(idRouteDay: string): Promise<void>;
   abstract listRoutesByUser(user: string): Promise<Route[]>;
   abstract listRoutes(): Promise<Route[]>;
   abstract retrieveRouteByIds(routeIds: string[]): Promise<Route[]>;

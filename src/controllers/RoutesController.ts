@@ -113,7 +113,6 @@ export async function getRouteDays():Promise<IRouteDay[]> {
   const allRouteDaysResponse:IResponse<IRouteDay[]> = await repository.getAllRouteDays();
   return getDataFromApiResponse(allRouteDaysResponse);
 };
-
 export async function getStoresOfRouteDay(routeDay:IRouteDay):Promise<IRouteDayStores[]> {
   const { id_route_day } = routeDay;
   const allStoresInRoutedayResponse:IResponse<IRouteDayStores[]> = await repository.getAllStoresInARouteDay(id_route_day);
@@ -129,7 +128,7 @@ export async function updateRouteDayStores(routeDay:IRouteDay, routeDayStores:IR
   } else {
     /* There is not instuctions */
   }
-
+  
   return resultUpdateRouteDayStores;
 
 };

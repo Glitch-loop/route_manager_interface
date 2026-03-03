@@ -53,11 +53,14 @@ import StoreDTO from "@/application/dto/StoreDTO";
 import RouteDayDTO from "@/application/dto/RouteDayDTO";
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
 
+function createMarker() {
+
+}
+
 export default function RouteDayManagerView() {
   const [stores, setStores] = useState<IStore[]>([]);
   const [routeDayStores, setRouteDayStores] = useState<RouteDayStoreDTO[]>([]);
   const [selectedRouteDay, setSelectedRouteDay] = useState<IRouteDay | null>(null);
-  const [storeJson, setStoreJson] = useState<Record<string, IStore>>({});
   
   // Map component
   const [markersToShow, setMarkerToShow] = useState<IMapMarker[]>([]);
@@ -80,6 +83,7 @@ export default function RouteDayManagerView() {
   const [storeDTOs, setStoreDTOs] = useState<StoreDTO[]>([]);
   const [mapStoreDTOs, setMapStoreDTOs] = useState<Map<string, StoreDTO>|null>(null);
   const [storesOfSelectedRouteDay, setStoresOfSelectedRouteDay] = useState<(StoreDTO&RouteDayStoreDTO)[]>([]);
+  
 
   useEffect(() => {
     fetchData();
@@ -108,11 +112,21 @@ export default function RouteDayManagerView() {
 
     
     setMapStoreDTOs(mapOfStoreDTOs);
+
+    setCatalogStores(stores.map((store:StoreDTO) => {
+        return {
+          id_item_in_container: '',
+          id_item: store.id_store,
+          item_name: capitalizeFirstLetterOfEachWord(store.store_name),
+          order_to_show: 0,
+          id_group: '',
+        }
+      }));
+
   };
 
   // ----------Handlers----------
   const handleAddRouteDay = async (route: RouteDTO, routeDay: RouteDayDTO) => {
-
     // Variables related to the route day to add
     const { id_route, route_name } = route;
     const { id_route_day, id_day, stores } = routeDay;
@@ -200,11 +214,15 @@ export default function RouteDayManagerView() {
         }
     });
 
-    setSelectedRouteDay(routeDay);
+    // setSelectedRouteDay(routeDay);
+    setMapRouteDays(new Map(mapRouteDays.set(id_route_day, routeDay)));
     setRouteDayStores(stores);
 
-    setStoresOfSelectedRouteDay([...storesOfTheRouteDay, ...storesOfSelectedRouteDay]);
+    // Related to map component
     setMarkerToShow([...markerOfTheRouteDay, ...markersToShow]);
+
+
+    setStoresOfSelectedRouteDay([...storesOfTheRouteDay, ...storesOfSelectedRouteDay]);
     setNameOfRouteCatalog([{ ...catalogRouteToAdd }, ...nameOfRoutesCatalog]);
 
     if (catalogsRoutes) {
@@ -327,9 +345,19 @@ export default function RouteDayManagerView() {
           const { store_name, latitude, longitude } = currentStore;
           const colorAccordingThePosition:string = getGradientColor(colorOfRoute, order_to_show, totalItemsInCatalog);
           const nameOfStore:string = store_name ? store_name : 'Nombre de tienda no encontrado.';
-          const day:DayType|undefined = DAYS_ARRAY.find((day) => { return id_day === day.id_day});
-          const day_name:string = day ? day.day_name : 'Nombre de día no encontrado.';
-
+          let day_name:string = 'Nombre de día no encontrado.';
+          let route_name:string = 'Nombre de ruta no encontrado.';
+          
+          if (mapRouteDays.has(id_group) === true) {
+            const selectedRouteDay = mapRouteDays.get(id_group)!;
+            console.log("Selected Route Day: ", selectedRouteDay.id_route_day);
+            const { id_day, id_route } = selectedRouteDay;
+            const day:DayType|undefined = DAYS_ARRAY.find((day) => { return id_day === day.id_day});
+            day_name = day ? day.day_name : 'Nombre de día no encontrado.';
+            
+            const route:RouteDTO|undefined = routeDTOs.find((route) => {return route.id_route === id_route});
+            route_name = route ? route.route_name : 'Nombre de ruta no encontrado.';
+          }
 
           markerOfTheRouteDay.push({
             id_marker: generateUUIDv4(),
@@ -371,7 +399,7 @@ export default function RouteDayManagerView() {
             id_item: foundStore.id_store,
             hoverComponent: <InfoStoreHover store={foundStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
             clickComponent: <InfoStoreClick store={foundStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
-            color_item: '#F08080'	,
+            color_item: '#5b1e1e'	,
             id_group: '',
             latitude: foundStore.latitude,
             longuitude: foundStore.longuitude,
@@ -472,11 +500,11 @@ export default function RouteDayManagerView() {
         </div>
         {/* Right Side - Store Map */}
         <div className="basis-1/2 ml-2 overflow-hidden">
-          <RouteMap 
+          {/* <RouteMap 
             markers={markersToShow}
             temporalMarkers={temporalMarkers}
             onSelectStore={(store) => console.log("Selected Store:", store)} 
-          />
+          /> */}
         </div>
       </div>
       <div className="h-1/2 mt-3 flex basis-2/3 overflow-y-auto">

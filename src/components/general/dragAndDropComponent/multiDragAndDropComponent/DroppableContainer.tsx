@@ -65,9 +65,13 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
 
 
       {/* Search & Add New Items */}
+      {/* 
+        Since Autocomplete is used for search the item i.e. stores, it is possible to use directly the id of the item, 
+        instead of the generated id_item_in_container.
+      */}
       <Autocomplete
-        options={allItems.map((item) => { return { id: item.id_item_in_container, ...item }})}
-        getOptionKey={(option) => option.id_item_in_container}
+        options={allItems.map((item) => { return { id: item.id_item, ...item }})}
+        getOptionKey={(option) => option.id_item}
         getOptionLabel={(option) => option.item_name}
         inputValue={inputValue}
         onChange={(event, newValue) => { 
@@ -77,7 +81,7 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
         renderOption={(props, option) => (
           <li
             {...props}
-            key={option.id_item_in_container}
+            key={option.id_item}
             onMouseEnter={() => onHoverOption(option)} // Detect hover
             onMouseLeave={() => onHoverOption(null)} // Detect hover
           >

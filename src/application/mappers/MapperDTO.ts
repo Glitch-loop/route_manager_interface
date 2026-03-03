@@ -10,6 +10,8 @@ import { DayOperation } from '@/core/entities/DayOperation';
 import { RouteTransactionDescription } from '@/core/object-values/RouteTransactionDescription';
 import { PaymentMethod } from '@/core/object-values/PaymentMethod';
 import { PAYMENT_METHODS } from '@/core/enums/PaymentMethod';
+import { RouteDay } from '@/core/object-values/RouteDay';
+import { RouteDayStore } from '@/core/object-values/RouteDayStore';
 
 // DTOs
 import RouteDTO from '@/application/dto/RouteDTO';
@@ -25,8 +27,6 @@ import DayOperationDTO from '@/application/dto/DayOperationDTO';
 import RouteTransactionDTO from '@/application/dto/RouteTransactionDTO';
 import RouteTransactionDescriptionDTO from '@/application/dto/RouteTransactionDescriptionDTO';
 import { InventoryOperationDescription } from '@/core/object-values/InventoryOperationDescription';
-import { RouteDay } from '@/core/object-values/RouteDay';
-import { RouteDayStore } from '@/core/object-values/RouteDayStore';
 
 // dto guards
 import { 

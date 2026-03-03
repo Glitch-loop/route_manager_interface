@@ -19,12 +19,59 @@ import { SupabaseDataSource } from '@/infrastructure/datasources/SupabaseDataSou
 import { TOKENS } from '@/infrastructure/di/tokens';
 import { SERVER_DATABASE_ENUM } from '@/infrastructure/persistence/enums/serverTablesEnum';
 
+import RouteDayStoreDTO from '@/application/dto/RouteDayStoreDTO';
+
 @injectable()
 export class SupabaseRouteRepository implements RouteRepository {
   constructor(@inject(TOKENS.SupabaseDataSource) private readonly dataSource: SupabaseDataSource) {}
 
   private get supabase() {
     return this.dataSource.getClient();
+  }
+
+  async insertRouteDays(idRoute: string, idDay: string): Promise<void> {
+    try {
+      const { error } = await this.supabase.from(SERVER_DATABASE_ENUM.ROUTE_DAY)
+      .insert({ id_route: idRoute, id_day: idDay });
+      
+      if (error) throw new Error('Error inserting route day: ' + error.message);
+
+    } catch(error) {
+      if (error) throw new Error('Error inserting route day: ' + error);
+    }    
+  }
+
+  async insertRouteDayStores(routeDayStores:RouteDayStore[]):Promise<void> {
+    try {
+      const routeDayStoresToInsert = routeDayStores.map((routeDayStore:RouteDayStoreDTO) => {
+        const { id_store, position_in_route, id_route_day } = routeDayStore;
+        return {
+          id_route_day: id_route_day,
+          position_in_route: position_in_route,
+          id_store: id_store
+        }
+      });
+
+      const { error } = await this.supabase.from(SERVER_DATABASE_ENUM.ROUTE_DAY_STORES)
+      .insert(routeDayStoresToInsert);
+      
+      if (error) throw new Error('Error inserting route day stores: ' + error.message);
+
+    } catch(error) {
+      if (error) throw new Error('Error inserting route day stores: ' + error);
+    }
+  }
+
+  async deleteRouteDayStores(idRouteDay: string): Promise<void> {
+    try {
+      const { error } = await this.supabase.from(SERVER_DATABASE_ENUM.ROUTE_DAY_STORES)
+      .delete()
+      .eq('id_route_day', idRouteDay)
+      
+      if (error) throw new Error('Error deleting route day stores: ' + error.message);
+    } catch (error) {
+      if (error) throw new Error('Error deleting route day stores: ' + error);
+    }
   }
 
   async listRoutes(): Promise<Route[]> {

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { ICatalogItem, ICatalog } from "../Interfaces";
+import { ICatalogItem } from "@/interfaces/interfaces";
 import {
   DndContext,
   closestCenter,
@@ -45,8 +45,7 @@ export default function MultiContainerDragDrop({
   const [showDialogDeleteItem, setShowDialogDeleteItem] = useState<boolean>(false);
 
   const sensors = useSensors(useSensor(PointerSensor));
-
-
+  
   // Handle Drag & Drop Movement
   const handleDragEnd = (event: any) => {
     const { active, over } = event;
