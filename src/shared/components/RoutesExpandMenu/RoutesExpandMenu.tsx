@@ -17,39 +17,34 @@ import ChevronRight from "@mui/icons-material/ChevronRight";
 
 // DTOs
 import RouteDTO from "@/application/dto/RouteDTO";
+import StoreDTO from "@/application/dto/StoreDTO";
 
 // Core - Constant
 import { DAYS_ARRAY } from "@/core/constants/Days";
 
 // Utils
 import { capitalizeFirstLetterOfEachWord } from "@/shared/utils/strings/utils";
-
+import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
 
 interface RoutesExpandMenuProps {
     routeList: RouteDTO[];
     anchorEl: HTMLElement | null;
     open: boolean;
     onClose: () => void;
-    onDaySelect?: (route: RouteDTO, dayId: string, dayName: string) => void;
+    mapStores?: Map<string, StoreDTO>; // Optional map of store ID to StoreDTO for quick access
+    onDaySelect?: (routesDaySelected: string) => void;
+    onDaySelectCheckbox?: (routesDaySelected: string, selected: boolean) => void;
     showDayCheckbox?: boolean;
 }
-
-const DAYS_OF_WEEK = [
-    { id: "1", name: "Lunes", clientes: 3 },
-    { id: "2", name: "Martes", clientes: 5 },
-    { id: "3", name: "Miércoles", clientes: 2 },
-    { id: "4", name: "Jueves", clientes: 7 },
-    { id: "5", name: "Viernes", clientes: 4 },
-    { id: "6", name: "Sábado", clientes: 1 },
-    { id: "7", name: "Domingo", clientes: 0 },
-];
 
 export default function RouteExpandMenu({ 
     routeList, 
     anchorEl, 
     open, 
     onClose, 
+    mapStores,
     onDaySelect,
+    onDaySelectCheckbox,
     showDayCheckbox = false,
 }: RoutesExpandMenuProps) {
     
@@ -125,8 +120,8 @@ export default function RouteExpandMenu({
 
         // 3-second hover detection for route
         routeHoverTimeoutRef.current = setTimeout(() => {
-            console.log(`Route hovered for 3 seconds: ${route.route_name}`);
-        }, 3000);
+            console.log(`Route hovered for 1 second: ${route.route_name}`);
+        }, 1000);
     };
 
     const handleRouteLeave = () => {
@@ -148,7 +143,7 @@ export default function RouteExpandMenu({
         dayHoverTimeoutRef.current = setTimeout(() => {
             console.log(`Day hovered for 3 seconds: ${dayName}`);
             setHoveredDayTooltip(dayId);
-        }, 3000);
+        }, 1000);
     };
 
     const handleDayLeave = () => {
@@ -157,10 +152,20 @@ export default function RouteExpandMenu({
 
     const handleCheckboxChange = (dayId: string, event: React.MouseEvent) => {
         event.stopPropagation();
+        
+        // Determine selected days.
         setCheckedDays(prev => ({
             ...prev,
             [dayId]: !prev[dayId]
         }));
+
+        if (onDaySelectCheckbox !== undefined) {
+            if (checkedDays[dayId]) {
+                onDaySelectCheckbox(dayId, !checkedDays[dayId]); // If it was previously selected, now, determine the state
+            } else {
+                onDaySelectCheckbox(dayId, true); // First time selection is always true
+            }
+        }
     };
 
     const handleSubmenuEnter = () => {
@@ -180,12 +185,52 @@ export default function RouteExpandMenu({
         }, 150);
     };
 
-    const handleDayClick = (dayId: string, dayName: string) => {
-        if (activeRoute && onDaySelect) {
-            onDaySelect(activeRoute, dayId, dayName);
+    const handleDayClick = (dayId: string) => {
+        if (showDayCheckbox) {
+            setCheckedDays(prev => ({
+                ...prev,
+                [dayId]: !prev[dayId]
+            }));
+            if (onDaySelectCheckbox !== undefined) {
+                if (checkedDays[dayId]) {
+                    onDaySelectCheckbox(dayId, !checkedDays[dayId]); // If it was previously selected, now, determine the state
+                } else {
+                    onDaySelectCheckbox(dayId, true); // First time selection is always true
+                }
+            }
+        } else {
+            if (activeRoute && onDaySelect) {
+                onDaySelect(dayId);
+            } 
+
+            handleClose();
         }
-        handleClose();
     };
+
+    const getTooltipText = (stores: RouteDayStoreDTO[]) => {
+        let zonification:string  = "";
+        const identifiedZones: Set<string> = new Set();
+
+        if (mapStores !== undefined) {
+            stores.forEach((store:RouteDayStoreDTO) => {
+                const storeInfo = mapStores.get(store.id_store);
+                if (storeInfo) {
+                    const { colony } = storeInfo;
+                    identifiedZones.add(colony.trim().toLowerCase());
+                }
+            })
+            
+            if (identifiedZones.size > 0) {
+                zonification = "Zonas visitadas: ";
+                identifiedZones.forEach((zone:string) => { zonification = zonification.concat(capitalizeFirstLetterOfEachWord(zone) + ", ") });    
+                zonification = zonification.slice(0, -2); // Remove last comma and space
+            } else {
+                zonification = "Zonas visitadas: No identificadas";
+            }
+        }
+
+        return zonification;
+    }
 
     return (
         <>
@@ -266,24 +311,32 @@ export default function RouteExpandMenu({
                                     </MenuItem>
                                     {/* Day rows */}
                                     {DAYS_ARRAY.map((day) => {
-                                        const { route_day_by_day } = activeRoute;
+
+
+                                        if (!activeRoute) return null;
+                                        
+                                        const {  route_day_by_day } = activeRoute;
+
+                                        if (route_day_by_day === undefined || route_day_by_day === null) return null;
+
                                         const { id_day, day_name } = day;
 
                                         if (route_day_by_day.has(id_day) === false) return null;
                                         
                                         const routeDay = route_day_by_day.get(id_day)!;
                                         const { id_route_day, stores } = routeDay;
+                                    
 
-                                        return (
-                                            <Tooltip
-                                                key={id_route_day}
-                                                title={`${day_name}: ${day.clientes} clientes`}
-                                                open={hoveredDayTooltip === id_route_day}
-                                                placement="right"
-                                                arrow
-                                            >
+                                        return (                                                
+                                                <Tooltip
+                                                    key={id_route_day}
+                                                    title={getTooltipText(stores)}
+                                                    open={hoveredDayTooltip === id_route_day && mapStores !== undefined}
+                                                    placement="right"
+                                                    arrow
+                                                >
                                                 <MenuItem
-                                                    onClick={() => handleDayClick(id_route_day, day_name)}
+                                                    onClick={() => handleDayClick(id_route_day)}
                                                     onMouseEnter={() => handleDayHover(id_route_day, day_name)}
                                                     onMouseLeave={handleDayLeave}
                                                     sx={{ 

@@ -43,6 +43,9 @@ export default function Page() {
     const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(null);
 
     const [routes, setRoutes] = useState<RouteDTO[]>([]);
+    const [stores, setStores] = useState<StoreDTO[]>([]);
+    const [mapStores, setMapStores] = useState<Map<string, StoreDTO>>(new Map()); // Map of store ID to StoreDTO for quick access
+    
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -66,18 +69,30 @@ export default function Page() {
         // Injecting dependencies
         const listRouteQuery = di_container.resolve<ListRoutesQuery>(ListRoutesQuery);
         const retrieveRouteInformationQuery = di_container.resolve<RetrieveRouteInformationQuery>(RetrieveRouteInformationQuery);
-        const listStoresQuery = di_container.resolve<ListAllRegisterdStoresQuery>(ListAllRegisterdStoresQuery);
 
 
         // Retrieve routes.
         const routes:RouteDTO[] =  await listRouteQuery.execute();
         const routeIds:string[] = routes.map(route => route.id_route);
         const routesWithInformation:RouteDTO[] = await retrieveRouteInformationQuery.execute(routeIds);
-        console.log("Complete routes")
-        console.log(routesWithInformation)
         setRoutes(routesWithInformation);
+
+
+        // Retrieve stores.
+        await fetchStores();
     }
 
+
+    const fetchStores = async () => {
+        const listStoresQuery = di_container.resolve<ListAllRegisterdStoresQuery>(ListAllRegisterdStoresQuery);
+        const stores:StoreDTO[] = await listStoresQuery.execute();
+        setStores(stores);
+        const storeMap = new Map<string, StoreDTO>();
+        stores.forEach(store => {
+            storeMap.set(store.id_store, store);
+        });
+        setMapStores(storeMap);
+    }
 
     // Handlers
     const handleRouteSelect = (route: RouteDTO) => {
@@ -94,6 +109,10 @@ export default function Page() {
 
     const handleAdministrationView = (option: number) => {
         setAdministrationView(option);
+    }
+
+    const handleRouteDaySelect = (dayId: string, state: boolean) => {
+        console.log(`Day ${dayId} selected with state: ${state}`);
     }
 
     return (
@@ -182,8 +201,10 @@ export default function Page() {
                             routeList={routes} 
                             anchorEl={routeMenuAnchor}
                             open={Boolean(routeMenuAnchor)}
+                            mapStores={mapStores}
                             onClose={() => setRouteMenuAnchor(null)}
                             onDaySelect={() => {}}
+                            onDaySelectCheckbox={handleRouteDaySelect}
                             showDayCheckbox={true}
                         />
                     </div>
