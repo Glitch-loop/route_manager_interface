@@ -1,44 +1,327 @@
-import * as React from 'react';
-import Button from '@mui/material/Button';
-import Menu from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
+"use client";
 
-export default function RouteExpandMenu() {
-  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
-  const open = Boolean(anchorEl);
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
-  };
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+import * as React from "react";
+import { useRef, useEffect } from "react";
+import {
+    Menu,
+    MenuItem,
+    Paper,
+    MenuList,
+    Popper,
+    Grow,
+    ClickAwayListener,
+    Tooltip,
+    Checkbox,
+} from "@mui/material";
+import ChevronRight from "@mui/icons-material/ChevronRight";
 
-  return (
-    <div>
-      <Button
-        id="basic-button"
-        aria-controls={open ? 'basic-menu' : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? 'true' : undefined}
-        onClick={handleClick}
-      >
-        Dashboard
-      </Button>
-      <Menu
-        id="basic-menu"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        slotProps={{
-          list: {
-            'aria-labelledby': 'basic-button',
-          },
-        }}
-      >
-        <MenuItem onClick={handleClose}>Profile</MenuItem>
-        <MenuItem onClick={handleClose}>My account</MenuItem>
-        <MenuItem onClick={handleClose}>Logout</MenuItem>
-      </Menu>
-    </div>
-  );
+// DTOs
+import RouteDTO from "@/application/dto/RouteDTO";
+
+// Core - Constant
+import { DAYS_ARRAY } from "@/core/constants/Days";
+
+// Utils
+import { capitalizeFirstLetterOfEachWord } from "@/shared/utils/strings/utils";
+
+
+interface RoutesExpandMenuProps {
+    routeList: RouteDTO[];
+    anchorEl: HTMLElement | null;
+    open: boolean;
+    onClose: () => void;
+    onDaySelect?: (route: RouteDTO, dayId: string, dayName: string) => void;
+    showDayCheckbox?: boolean;
+}
+
+const DAYS_OF_WEEK = [
+    { id: "1", name: "Lunes", clientes: 3 },
+    { id: "2", name: "Martes", clientes: 5 },
+    { id: "3", name: "Miércoles", clientes: 2 },
+    { id: "4", name: "Jueves", clientes: 7 },
+    { id: "5", name: "Viernes", clientes: 4 },
+    { id: "6", name: "Sábado", clientes: 1 },
+    { id: "7", name: "Domingo", clientes: 0 },
+];
+
+export default function RouteExpandMenu({ 
+    routeList, 
+    anchorEl, 
+    open, 
+    onClose, 
+    onDaySelect,
+    showDayCheckbox = false,
+}: RoutesExpandMenuProps) {
+    
+    // States
+    const [submenuAnchorEl, setSubmenuAnchorEl] = React.useState<null | HTMLElement>(null);
+    const [activeRoute, setActiveRoute] = React.useState<RouteDTO | null>(null);
+    const [checkedDays, setCheckedDays] = React.useState<Record<string, boolean>>({});
+    const [hoveredDayTooltip, setHoveredDayTooltip] = React.useState<string | null>(null);
+    
+    // Refs
+    const isOverSubmenu = useRef(false);
+    const isOverMenuItem = useRef(false);
+    const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const routeHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const dayHoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    const submenuOpen = Boolean(submenuAnchorEl) && Boolean(activeRoute);
+
+    // Cleanup timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (closeTimeoutRef.current) {
+                clearTimeout(closeTimeoutRef.current);
+            }
+            if (routeHoverTimeoutRef.current) {
+                clearTimeout(routeHoverTimeoutRef.current);
+            }
+            if (dayHoverTimeoutRef.current) {
+                clearTimeout(dayHoverTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const clearCloseTimeout = () => {
+        if (closeTimeoutRef.current) {
+            clearTimeout(closeTimeoutRef.current);
+            closeTimeoutRef.current = null;
+        }
+    };
+
+    const clearRouteHoverTimeout = () => {
+        if (routeHoverTimeoutRef.current) {
+            clearTimeout(routeHoverTimeoutRef.current);
+            routeHoverTimeoutRef.current = null;
+        }
+    };
+
+    const clearDayHoverTimeout = () => {
+        if (dayHoverTimeoutRef.current) {
+            clearTimeout(dayHoverTimeoutRef.current);
+            dayHoverTimeoutRef.current = null;
+        }
+        setHoveredDayTooltip(null);
+    };
+
+    const handleClose = () => {
+        clearCloseTimeout();
+        clearRouteHoverTimeout();
+        clearDayHoverTimeout();
+        setSubmenuAnchorEl(null);
+        setActiveRoute(null);
+        isOverSubmenu.current = false;
+        isOverMenuItem.current = false;
+        onClose();
+    };
+
+    const handleRouteHover = (event: React.MouseEvent<HTMLLIElement>, route: RouteDTO) => {
+        clearCloseTimeout();
+        clearRouteHoverTimeout();
+        isOverMenuItem.current = true;
+        setSubmenuAnchorEl(event.currentTarget);
+        setActiveRoute(route);
+
+        // 3-second hover detection for route
+        routeHoverTimeoutRef.current = setTimeout(() => {
+            console.log(`Route hovered for 3 seconds: ${route.route_name}`);
+        }, 3000);
+    };
+
+    const handleRouteLeave = () => {
+        clearRouteHoverTimeout();
+        isOverMenuItem.current = false;
+        // Delay to check if mouse moved to submenu or another menu item
+        closeTimeoutRef.current = setTimeout(() => {
+            if (!isOverSubmenu.current && !isOverMenuItem.current) {
+                setSubmenuAnchorEl(null);
+                setActiveRoute(null);
+            }
+        }, 150);
+    };
+
+    const handleDayHover = (dayId: string, dayName: string) => {
+        clearDayHoverTimeout();
+        
+        // 3-second hover detection for day
+        dayHoverTimeoutRef.current = setTimeout(() => {
+            console.log(`Day hovered for 3 seconds: ${dayName}`);
+            setHoveredDayTooltip(dayId);
+        }, 3000);
+    };
+
+    const handleDayLeave = () => {
+        clearDayHoverTimeout();
+    };
+
+    const handleCheckboxChange = (dayId: string, event: React.MouseEvent) => {
+        event.stopPropagation();
+        setCheckedDays(prev => ({
+            ...prev,
+            [dayId]: !prev[dayId]
+        }));
+    };
+
+    const handleSubmenuEnter = () => {
+        clearCloseTimeout();
+        isOverSubmenu.current = true;
+    };
+
+    const handleSubmenuLeave = () => {
+        isOverSubmenu.current = false;
+        clearDayHoverTimeout();
+        // Delay to allow moving back to menu item
+        closeTimeoutRef.current = setTimeout(() => {
+            if (!isOverMenuItem.current && !isOverSubmenu.current) {
+                setSubmenuAnchorEl(null);
+                setActiveRoute(null);
+            }
+        }, 150);
+    };
+
+    const handleDayClick = (dayId: string, dayName: string) => {
+        if (activeRoute && onDaySelect) {
+            onDaySelect(activeRoute, dayId, dayName);
+        }
+        handleClose();
+    };
+
+    return (
+        <>
+            {/* Main Menu - Routes */}
+            <Menu
+                id="routes-menu"
+                anchorEl={anchorEl}
+                open={open}
+                onClose={handleClose}
+                MenuListProps={{
+                    "aria-labelledby": "routes-menu-button",
+                }}
+            >
+                {routeList.length > 0 ? (
+                    routeList.map((route) => (
+                        <MenuItem
+                            key={route.id_route}
+                            onMouseEnter={(e) => handleRouteHover(e, route)}
+                            onMouseLeave={handleRouteLeave}
+                            sx={{
+                                display: "flex",
+                                justifyContent: "space-between",
+                                alignItems: "center",
+                                minWidth: 180,
+                                backgroundColor:
+                                    activeRoute?.id_route === route.id_route
+                                        ? "rgba(0, 123, 255, 0.1)"
+                                        : "transparent",
+                            }}
+                        >
+                            <span>{capitalizeFirstLetterOfEachWord(route.route_name)}</span>
+                            <ChevronRight fontSize="small" />
+                        </MenuItem>
+                    ))
+                ) : (
+                    <MenuItem disabled>No hay rutas disponibles</MenuItem>
+                )}
+            </Menu>
+
+            {/* Submenu - Days of week */}
+            <Popper
+                open={submenuOpen}
+                anchorEl={submenuAnchorEl}
+                placement="right-start"
+                transition
+                disablePortal={false}
+                style={{ zIndex: 1301 }}
+            >
+                {({ TransitionProps }) => (
+                    <Grow {...TransitionProps}>
+                        <Paper 
+                            elevation={8}
+                            onMouseEnter={handleSubmenuEnter}
+                            onMouseLeave={handleSubmenuLeave}
+                        >
+                            <ClickAwayListener onClickAway={() => {}}>
+                                <MenuList sx={{ padding: 0 }}>
+                                    {/* Header row */}
+                                    <MenuItem
+                                        disabled
+                                        sx={{
+                                            display: "flex",
+                                            alignItems: "center",
+                                            borderBottom: "1px solid #e0e0e0",
+                                            backgroundColor: "#f5f5f5",
+                                            fontWeight: "bold",
+                                            fontSize: "0.85rem",
+                                            color: "#333 !important",
+                                            opacity: "1 !important",
+                                            minHeight: 36,
+                                        }}
+                                    >
+                                        <span style={{ width: 90 }}>{capitalizeFirstLetterOfEachWord("Dia")}</span>
+                                        <span style={{ width: 70, textAlign: "center" }}>{capitalizeFirstLetterOfEachWord("Clientes")}</span>
+                                        {showDayCheckbox && (
+                                            <span style={{ width: 70, textAlign: "center" }}>{capitalizeFirstLetterOfEachWord("Selected")}</span>
+                                        )}
+                                    </MenuItem>
+                                    {/* Day rows */}
+                                    {DAYS_ARRAY.map((day) => {
+                                        const { route_day_by_day } = activeRoute;
+                                        const { id_day, day_name } = day;
+
+                                        if (route_day_by_day.has(id_day) === false) return null;
+                                        
+                                        const routeDay = route_day_by_day.get(id_day)!;
+                                        const { id_route_day, stores } = routeDay;
+
+                                        return (
+                                            <Tooltip
+                                                key={id_route_day}
+                                                title={`${day_name}: ${day.clientes} clientes`}
+                                                open={hoveredDayTooltip === id_route_day}
+                                                placement="right"
+                                                arrow
+                                            >
+                                                <MenuItem
+                                                    onClick={() => handleDayClick(id_route_day, day_name)}
+                                                    onMouseEnter={() => handleDayHover(id_route_day, day_name)}
+                                                    onMouseLeave={handleDayLeave}
+                                                    sx={{ 
+                                                        display: "flex",
+                                                        alignItems: "center",
+                                                        minHeight: 40,
+                                                    }}
+                                                >
+                                                    <span style={{ width: 90 }}>{capitalizeFirstLetterOfEachWord(day_name)}</span>
+                                                    <span style={{ 
+                                                        width: 70, 
+                                                        textAlign: "center",
+                                                        color: '#666'
+                                                    }}>
+                                                        {stores.length}
+                                                    </span>
+                                                    {showDayCheckbox && (
+                                                        <span style={{ width: 70, textAlign: "center" }}>
+                                                            <Checkbox
+                                                                checked={checkedDays[id_route_day] || false}
+                                                                onClick={(e) => handleCheckboxChange(id_route_day, e)}
+                                                                size="small"
+                                                                sx={{ padding: 0 }}
+                                                            />
+                                                        </span>
+                                                    )}
+                                                </MenuItem>
+                                            </Tooltip>
+                                        )
+                                    }
+                                    
+                                    )}
+                                </MenuList>
+                            </ClickAwayListener>
+                        </Paper>
+                    </Grow>
+                )}
+            </Popper>
+        </>
+    );
 }

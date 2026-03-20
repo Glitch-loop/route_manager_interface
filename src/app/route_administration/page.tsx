@@ -1,25 +1,48 @@
-
-
-
+// Critial imports
 "use client";
+import 'reflect-metadata';
 
-import { useState } from "react";
+// Libraries
+import { useEffect, useState } from "react";
 import { Button, ButtonGroup, Collapse, IconButton } from "@mui/material";
-import { ChevronLeft, ChevronRight, KeyboardArrowUp, KeyboardArrowDown } from "@mui/icons-material";
-import RouteForm from "./components/RouteForm";
-import SearchRoute from "./components/SearchRoute";
-import StoreForm from "./components/StoreForm";
+
+// DTOs
 import UserDTO from "@/application/dto/UserDTO";
 import RouteDTO from "@/application/dto/RouteDTO";
 import StoreDTO from "@/application/dto/StoreDTO";
+import RouteDayDTO from "@/application/dto/RouteDayDTO";
+import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
+
+// Queries
+import ListRoutesQuery from "@/application/queries/ListRoutesQuery";
+import RetrieveRouteInformationQuery  from "@/application/queries/RetrieveRouteInformationQuery";
+import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdStoresQuery";
+import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
+
+// Core - Constant
+
+
+// DI container
+import { di_container } from "@/infrastructure/di/container";
+
+// UI components
+import { ChevronLeft, ChevronRight, KeyboardArrowUp, KeyboardArrowDown, Menu as MenuIcon } from "@mui/icons-material";
+import RouteForm from "./components/RouteForm";
+import SearchRoute from "./components/SearchRoute";
+import StoreForm from "./components/StoreForm";
 import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDateSelection";
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
+import RouteMap from "@/components/general/mapComponent/RouteMap";
+import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer";
 
 export default function Page() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
     const [selectedRoute, setSelectedRoute] = useState<RouteDTO | null>(null);
     const [selectedStore, setSelectedStore] = useState<StoreDTO | null>(null);
+    const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(null);
+
+    const [routes, setRoutes] = useState<RouteDTO[]>([]);
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -31,35 +54,32 @@ export default function Page() {
         }
     ]);
 
-    const [routes, setRoutes] = useState<RouteDTO[]>([
-        {
-            id_route: "1",
-            route_name: "Ruta Norte",
-            description: "Ruta del sector norte",
-            route_status: true,
-            id_vendor: "1",
-            route_day_by_day: null,
-        },
-        {
-            id_route: "2",
-            route_name: "Ruta Sur",
-            description: "Ruta del sector sur",
-            route_status: true,
-            id_vendor: "",
-            route_day_by_day: null,
-        },
-        {
-            id_route: "3",
-            route_name: "Ruta Este",
-            description: "Ruta del sector este",
-            route_status: false,
-            id_vendor: "1",
-            route_day_by_day: null,
-        },
-    ]);
-
     const [administrationView, setAdministrationView] = useState(1); // 1 for Routes, 2 for Stores
 
+
+    useEffect(() => {
+        fetchScreenInformation();
+    }, [])
+
+    // Auxiliar functions
+    const fetchScreenInformation = async () => {
+        // Injecting dependencies
+        const listRouteQuery = di_container.resolve<ListRoutesQuery>(ListRoutesQuery);
+        const retrieveRouteInformationQuery = di_container.resolve<RetrieveRouteInformationQuery>(RetrieveRouteInformationQuery);
+        const listStoresQuery = di_container.resolve<ListAllRegisterdStoresQuery>(ListAllRegisterdStoresQuery);
+
+
+        // Retrieve routes.
+        const routes:RouteDTO[] =  await listRouteQuery.execute();
+        const routeIds:string[] = routes.map(route => route.id_route);
+        const routesWithInformation:RouteDTO[] = await retrieveRouteInformationQuery.execute(routeIds);
+        console.log("Complete routes")
+        console.log(routesWithInformation)
+        setRoutes(routesWithInformation);
+    }
+
+
+    // Handlers
     const handleRouteSelect = (route: RouteDTO) => {
         setSelectedRoute(route);
     };
@@ -79,7 +99,6 @@ export default function Page() {
     return (
         <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
             {/* Route and store section */}
-
             <div className="relative flex">
                 <Collapse in={sidebarOpen} orientation="horizontal">
                     {/* Route section */}
@@ -123,7 +142,7 @@ export default function Page() {
                     </div>
                 </Collapse>
                 {/* Toggle button - stays at right edge of sidebar area */}
-                <div className="absolute -right-10 top-1/2 -translate-y-1/2 bg-white rounded-full">
+                <div className="absolute -right-10 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full">
                     <IconButton
                         onClick={() => setSidebarOpen(!sidebarOpen)}
                         className="h-fit my-auto bg-color-info-primary shadow-md"
@@ -133,19 +152,49 @@ export default function Page() {
                 </div>
             </div>
 
-
-
             {/* Main content */}
             <div className="flex flex-col flex-1">
+                {/* Search content */}
                 <div className="w-full h-1/6 bg-green-900">
                     <h1 className="text-white text-2xl font-bold p-4">Search content</h1>
-                    <RangeDateSelection />
+                    {/* <RangeDateSelection /> */}
                 </div>
-                <div className="w-full flex-1 bg-blue-900">
-                    <RouteExpandMenu />
+
+                {/* Map content */}
+                <div className="relative w-full flex-1 bg-blue-900">
+                    {/* Button that displays the menu */}
+                    <div className="absolute left-48 top-2 z-10">
+                        <IconButton
+                            onClick={(e) => setRouteMenuAnchor(e.currentTarget)}
+                            sx={{
+                                backgroundColor: '#1976d2',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: '#1565c0',
+                                },
+                                width: 48,
+                                height: 48,
+                            }}
+                        >
+                            <MenuIcon />
+                        </IconButton>
+                        <RouteExpandMenu 
+                            routeList={routes} 
+                            anchorEl={routeMenuAnchor}
+                            open={Boolean(routeMenuAnchor)}
+                            onClose={() => setRouteMenuAnchor(null)}
+                            onDaySelect={() => {}}
+                            showDayCheckbox={true}
+                        />
+                    </div>
+                    <RouteMap 
+                        markers={[]}
+                        temporalMarkers={[]}
+                        onSelectStore={() => {}}
+                    />
                 </div>
                 
-                {/* Collapsible bottom panel */}
+                {/* Route organization */}
                 <div className="relative w-full">
                     {/* Toggle button */}
                     <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
@@ -158,7 +207,9 @@ export default function Page() {
                     </div>
                     
                     <Collapse in={bottomPanelOpen}>
-                        <div className="w-full h-32 bg-teal-400"></div>
+                        <div className="w-full h-96">
+                            <RouteDayContainer />
+                        </div>
                     </Collapse>
                 </div>
             </div>
