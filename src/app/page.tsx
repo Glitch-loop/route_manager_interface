@@ -119,7 +119,7 @@ export default function Home() {
         </div>
         {/* <div className='w-full flex flex-row bg-slate-400'> */}
         <div className='w-11/12 flex flex-row justify-center items-center'>
-          <DragAndDropContainer />
+          {/* <DragAndDropContainer /> */}
         </div>
 
         {/* </div> */}

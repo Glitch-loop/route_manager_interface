@@ -158,11 +158,13 @@ export default function RouteExpandMenu({
             ...prev,
             [dayId]: !prev[dayId]
         }));
-
+        console.log("handleCheckboxChange: ", dayId)
         if (onDaySelectCheckbox !== undefined) {
+            console.log("lift state")
             if (checkedDays[dayId]) {
                 onDaySelectCheckbox(dayId, !checkedDays[dayId]); // If it was previously selected, now, determine the state
             } else {
+                console.log("first time selection: ", dayId)
                 onDaySelectCheckbox(dayId, true); // First time selection is always true
             }
         }

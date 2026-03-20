@@ -1,7 +1,7 @@
 import React from 'react';
 import {useSortable} from '@dnd-kit/react/sortable';
 
-export function Item({id, index, column}) {
+export default function DraggableItem({children, id, index, column}) {
   const {ref, isDragging} = useSortable({
     id,
     index,
@@ -12,7 +12,7 @@ export function Item({id, index, column}) {
 
   return (
     <button className="bg-blue-500 text-white p-2 rounded w-90" ref={ref} data-dragging={isDragging}>
-      {id}
+      {children}
     </button>
   );
 }

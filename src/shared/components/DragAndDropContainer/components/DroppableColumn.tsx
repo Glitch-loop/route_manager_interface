@@ -2,7 +2,7 @@ import React from 'react';
 import {useDroppable} from '@dnd-kit/react';
 import {CollisionPriority} from '@dnd-kit/abstract';
 
-export function Column({children, id}) {
+export default function DroppableColumn({children, id}) {
   const {ref} = useDroppable({
     id,
     type: 'column',
@@ -10,7 +10,7 @@ export function Column({children, id}) {
     collisionPriority: CollisionPriority.Low,
   });
   return (
-    <div className="Column my-2 rounded-lg flex flex-col w-36 gap-2 bg-system-secondary-background p-4" ref={ref}>
+    <div className="Column my-2 rounded-lg h-full flex flex-col w-full gap-2 p-4" ref={ref}>
       {children}
     </div>
   );

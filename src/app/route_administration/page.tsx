@@ -46,6 +46,7 @@ export default function Page() {
     const [stores, setStores] = useState<StoreDTO[]>([]);
     const [mapStores, setMapStores] = useState<Map<string, StoreDTO>>(new Map()); // Map of store ID to StoreDTO for quick access
     
+    const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]);
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -111,8 +112,25 @@ export default function Page() {
         setAdministrationView(option);
     }
 
-    const handleRouteDaySelect = (dayId: string, state: boolean) => {
-        console.log(`Day ${dayId} selected with state: ${state}`);
+    const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
+        const routeDaySelected:RouteDayDTO | undefined = selectedRouteDay.find(routeDay => routeDay.id_route_day === routeDayId);
+        console.log("Route day selected: ", routeDaySelected);
+        if (routeDaySelected === undefined && routes !== null) {
+            for (const route of routes) {
+                const { route_day_by_day } = route;
+                console.log("Route day by day: ", route_day_by_day);
+                if (route_day_by_day === undefined || route_day_by_day === null) continue;
+                
+                for (const [idDay, routeDay] of route_day_by_day) {
+                    const { id_route_day } = routeDay;
+                    if (id_route_day === routeDayId) {
+                        const routeDayToAdd = {...routeDay, stores: routeDay.stores.map(store => ({...store, selected: state}))};
+                        setSelectedRouteDay([...selectedRouteDay, routeDayToAdd]);
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     return (
@@ -229,7 +247,10 @@ export default function Page() {
                     
                     <Collapse in={bottomPanelOpen}>
                         <div className="w-full h-96">
-                            <RouteDayContainer />
+                            <RouteDayContainer 
+                                routesDay={selectedRouteDay} 
+                                storeMap={mapStores} 
+                            />
                         </div>
                     </Collapse>
                 </div>

@@ -2,7 +2,7 @@ import { useRef, useState } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import {move} from '@dnd-kit/helpers';
 import { Column } from "./components/DroppableColumn";
-import { Item } from "./components/Item";
+import { Item } from "./components/DraggableItem";
 import { DndContext } from "@dnd-kit/core";
 
 const DragAndDropContainer = () => {
