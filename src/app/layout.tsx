@@ -3,7 +3,8 @@ import 'reflect-metadata';
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import Sidebar from "../components/main/Sidebar";
+import Sidebar from '@/shared/components/Sidebar/Sidebar';
+// import Sidebar from "../components/main/Sidebar";
 
 // Styles
 import "react-toastify/dist/ReactToastify.css";
@@ -31,18 +32,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`
-          ${geistSans.variable} ${geistMono.variable}
-        bg-system-primary-background
-        w-full h-full flex flex-row`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} bg-system-primary-background text-black  w-screen h-screen flex flex-row`}>
         <ToastContainer />
-        <div className="w-2/12 h-screen">
-          <Sidebar />
+        <div className="w-2/12 h-full p-5">
+          <div className='w-full h-full rounded-lg bg-system-secondary-background'>
+            <Sidebar />
+          </div>
         </div>
-        <div className="w-10/12 h-screen flex flex-col justify-center items-center">
-          <div className="w-11/12 h-full my-6 flex flex-col  bg-system-secondary-background rounded-md">
+        <div className="w-10/12 h-full p-5 flex">
+          <div className="w-full h-full rounded-lg flex items-center justify-center bg-system-secondary-background">
             {children}
           </div>
         </div>

@@ -24,6 +24,12 @@ import { getDataFromApiResponse } from "@/utils/responseUtils";
 import { createSubscriptionToRouteTransactions, getOpenWorkDays } from "@/controllers/WorkDayController";
 import { getAllStores } from "@/controllers/StoreController";
 import StoreMap from "@/components/general/mapComponent/StoreMap";
+import SortableList from '@/shared/components/SortableList';
+
+
+// New imports
+import SimpleCard from '@/shared/components/Cards/SimpleCard/SimpleCard';
+import DragAndDropContainer from '@/shared/components/DragAndDropContainer/DragAndDropContainer';
 
 // Initializing database repository.
 const repository = RepositoryFactory.createRepository('supabase');
@@ -103,8 +109,21 @@ export default function Home() {
   }
 
   return (
-    <div className="w-full h-full flex flex-row justify-center items-start overflow-y-hidden">
+    <div className="w-full h-full flex flex-col justify-center items-start overflow-y-hidden">
       {/* <main className="w-full "> */}
+        {/* <SortableList /> */}
+        <div className='w-full bg-slate-500 flex flex-row'>
+          <button>
+            <SimpleCard cardName="Client 1" cardDetails="This is a client that needs special attention." />
+          </button>
+        </div>
+        {/* <div className='w-full flex flex-row bg-slate-400'> */}
+        <div className='w-11/12 flex flex-row justify-center items-center'>
+          <DragAndDropContainer />
+        </div>
+
+        {/* </div> */}
+        {/* <h1 className="text-2xl font-bold mb-4">Route Manager Interface</h1>
         <div className={`w-full h-5/6 flex flex-row justify-start items-start ml-3 overflow-x-auto`}>
             { openWorkDays !== undefined &&
               openWorkDays.map((workday) => {
@@ -119,7 +138,8 @@ export default function Home() {
                 )
               })
             }
-        </div>
+        </div> */}
+
         {/* <div className="w-full h-full flex flex-row items-center justify-center">
             { stores !== undefined &&
               <StoreMap stores={stores} onSelectStore={(item) => console.log(item)}/>

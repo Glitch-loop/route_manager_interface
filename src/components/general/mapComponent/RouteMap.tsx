@@ -16,7 +16,7 @@ const containerStyle = { width: "100%", height: "100%" };
 const defaultCenter = { lat: 20.648043093256433, lng: -105.21612612535338 }; // Default: Mexico City
  
 export default function RouteMap({ markers, temporalMarkers, onSelectStore }: StoreMapProps) {
-  console.log("Markers in RouteMap:", markers);
+  // console.log("Markers in RouteMap:", markers);
   const [selectedStore, setSelectedStore] = useState<IMapMarker | null>(null);
   const [hoveredPosition, setHoveredPosition] = useState<IMapMarker | null>(null);
   const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);

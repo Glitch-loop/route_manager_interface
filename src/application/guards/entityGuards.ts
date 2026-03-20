@@ -6,6 +6,7 @@ import { Store } from '@/core/entities/Store';
 import { WorkDayInformation } from '@/core/entities/WorkDayInformation';
 import { ProductInventory } from '@/core/entities/ProductInventory';
 import { DayOperation } from '@/core/entities/DayOperation';
+import { RouteDayStore } from '@/core/object-values/RouteDayStore';
 
 import { RouteTransactionDescription } from '@/core/object-values/RouteTransactionDescription';
 
@@ -145,5 +146,17 @@ export function isDayOperation(entity: any): entity is DayOperation {
     return (
         entity instanceof DayOperation ||
         ('id_day_operation' in entity && 'id_item' in entity && 'operation_type' in entity && 'created_at' in entity)
+    );
+}
+
+export function isRouteDayStore(entity: any): entity is RouteDayStore {
+    return (
+        entity instanceof RouteDayStore ||
+        (
+            'id_route_day_store' in entity &&
+            'position_in_route' in entity &&
+            'id_route_day' in entity &&
+            'id_store' in entity
+        )
     );
 }

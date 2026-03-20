@@ -79,6 +79,16 @@ export function isRouteDayDTO(dto: any): dto is RouteDayDTO {
     )
 }
 
+export function isRouteDayStoreDTO(dto: any): dto is RouteDayStoreDTO {
+    return (
+        dto && typeof dto === 'object' &&
+        'id_route_day_store' in dto &&
+        'position_in_route' in dto &&
+        'id_route_day' in dto &&
+        'id_store' in dto
+    );
+}
+
 export function isRouteTransactionDescriptionDTO(dto: any): dto is RouteTransactionDescriptionDTO {
     return (
         dto && typeof dto === 'object' &&

@@ -54,6 +54,7 @@ export default function DroppableContainer({ id, title, items, allItems, onAddIt
   return (
     <Paper ref={setNodeRef} className="w-1/3 p-4">
       <h2 className="text-lg font-semibold">{title}</h2>
+      <h3 className="text-lg font-semibold">Total clientes: {items.length}</h3>
       <div className="flex justify-between my-4">
         <Button variant="contained" color="primary" onClick={handleSave}>
           Guardar

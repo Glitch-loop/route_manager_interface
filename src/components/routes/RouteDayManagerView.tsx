@@ -52,10 +52,10 @@ import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdS
 import StoreDTO from "@/application/dto/StoreDTO";
 import RouteDayDTO from "@/application/dto/RouteDayDTO";
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
+import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
 
-function createMarker() {
 
-}
+
 
 export default function RouteDayManagerView() {
   const [stores, setStores] = useState<IStore[]>([]);
@@ -125,6 +125,37 @@ export default function RouteDayManagerView() {
 
   };
 
+  function createMarker(id_store: string, id_route_day: string): IMapMarker | undefined {
+    // Verifications of states
+    if (mapStoreDTOs === null) {
+      console.error("mapStoreDTOs is null, cannot fetch store information for the route day.");  
+      return
+    };
+
+      if(mapStoreDTOs.has(id_store) === true) {
+        // const colorAccordingThePosition:string = getGradientColor(colorOfRoute, position_in_route, totalstoresInRouteDay );
+        
+        const currentStore:StoreDTO = mapStoreDTOs.get(id_store)!;
+        const { store_name, latitude, longitude } = currentStore;
+        const nameOfStore:string = store_name ? store_name : 'Nombre de tienda no encontrado.';
+
+
+        return {
+          id_marker: generateUUIDv4(),
+          id_item: id_store,
+          hoverComponent: <InfoStoreHover store_name={nameOfStore} route_name={""} day_name={""} position_in_route={1} />,
+          clickComponent: <InfoStoreClick store={currentStore} routeDayStores={[]} routeDays={mapRouteDays} routes={mapRoutes} />,
+          color_item: '#5b1e1e',
+          id_group: id_route_day,
+          latitude: latitude,
+          longitude: longitude
+        }
+
+      }
+  
+  
+      }
+
   // ----------Handlers----------
   const handleAddRouteDay = async (route: RouteDTO, routeDay: RouteDayDTO) => {
     // Variables related to the route day to add
@@ -181,6 +212,8 @@ export default function RouteDayManagerView() {
 
   
     // Get stores position from the route day
+    stores.sort((a:RouteDayStoreDTO, b:RouteDayStoreDTO) => a.position_in_route - b.position_in_route);
+    console.log("Stores sorted by position in route day: ", stores);
     stores.forEach((routeDayStore:RouteDayStoreDTO) => {
         const { id_store, id_route_day, position_in_route } = routeDayStore;
         
@@ -214,7 +247,7 @@ export default function RouteDayManagerView() {
         }
     });
 
-    // setSelectedRouteDay(routeDay);
+    setSelectedRouteDay(routeDay);
     setMapRouteDays(new Map(mapRouteDays.set(id_route_day, routeDay)));
     setRouteDayStores(stores);
 
@@ -237,17 +270,18 @@ export default function RouteDayManagerView() {
     // the list that lists the route day will be taken as the truth table.
     if (catalogsRoutes) {
       if(catalogsRoutes[column]) {
-
         if (!selectedRouteDay) return;
         
-        const routeDay:IRouteDay = {
+        const routeDay:RouteDayDTO = {
           id_route_day: routeCatalogItem.id_item,
           id_route: '',
-          id_day: ''
+          id_day: '',
+          stores: []
         }
 
-        const routeDayStores:IRouteDayStores[] = catalogsRoutes[column].map((itemCatalog:ICatalogItem) => {
+        const routeDayStores:RouteDayStoreDTO[] = catalogsRoutes[column].map((itemCatalog:ICatalogItem) => {
           const { id_item, id_group, order_to_show} = itemCatalog;
+          console.log("Order to show: " , order_to_show)
           return {
             id_route_day_store: '',
             position_in_route: order_to_show,
@@ -255,15 +289,19 @@ export default function RouteDayManagerView() {
             id_store: id_item
           }
         })
+        
+        const organizeRouteDayCommand = di_container.resolve<OrganizeRouteDayCommand>(OrganizeRouteDayCommand)
 
-        const responseRouteDayStore:IResponse<null> = await updateRouteDayStores(routeDay, routeDayStores);
+        await organizeRouteDayCommand.execute(routeDay, routeDayStores);
 
-        if(apiResponseStatus(responseRouteDayStore, 201)) {
-          handleDeleteRouteFromStates(column)
-          toast.success("Se ha actualizado la ruta correctamente");
-        } else {
-          toast.error("Ha habido un error al momento de actualizar la ruta");
-        }
+        // const responseRouteDayStore:IResponse<null> = await updateRouteDayStores(routeDay, routeDayStores);
+
+        // if(apiResponseStatus(responseRouteDayStore, 201)) {
+        //   handleDeleteRouteFromStates(column)
+        //   toast.success("Se ha actualizado la ruta correctamente");
+        // } else {
+        //   toast.error("Ha habido un error al momento de actualizar la ruta");
+        // }
       }
     }
 
@@ -338,7 +376,7 @@ export default function RouteDayManagerView() {
 
       // Making route
       currentCatalog.forEach((currentItem:ICatalogItem) => {
-        const {id_item, id_group, order_to_show  } = currentItem;
+        const { id_item_in_container, id_item, id_group, order_to_show  } = currentItem;
         
         if(mapStoreDTOs.has(id_item) === true) {
           const currentStore:StoreDTO = mapStoreDTOs.get(id_item)!;
@@ -361,7 +399,7 @@ export default function RouteDayManagerView() {
 
           markerOfTheRouteDay.push({
             id_marker: generateUUIDv4(),
-            id_item: id_item,
+            id_item: id_item_in_container,
             hoverComponent: <InfoStoreHover store_name={nameOfStore} route_name={route_name} day_name={day_name} position_in_route={order_to_show} />,
             clickComponent: <InfoStoreClick store={currentStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
             color_item: colorAccordingThePosition,
@@ -383,7 +421,7 @@ export default function RouteDayManagerView() {
     
     if (item) {
       const { order_to_show, id_group, id_item } = item;
-      const foundStore:undefined|IStore = stores.find((store) => store.id_store === item.id_item);
+      const foundStore:undefined|StoreDTO = storeDTOs.find((store) => store.id_store === item.id_item);
 
       if (foundStore) {
         const routeDayStore:IRouteDayStores = {
@@ -392,19 +430,23 @@ export default function RouteDayManagerView() {
           id_route_day: id_group,
           id_store: id_item
         }
+        const newMarker: IMapMarker|undefined = createMarker(item.id_item, item.id_group);
 
-        updatedHoveredStores.push(
-          {
-            id_marker: generateUUIDv4(),
-            id_item: foundStore.id_store,
-            hoverComponent: <InfoStoreHover store={foundStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
-            clickComponent: <InfoStoreClick store={foundStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
-            color_item: '#5b1e1e'	,
-            id_group: '',
-            latitude: foundStore.latitude,
-            longuitude: foundStore.longuitude,
-          },
-        )
+        if (newMarker) {
+          updatedHoveredStores.push(newMarker);
+        }
+        // updatedHoveredStores.push(
+        //   {
+        //     id_marker: generateUUIDv4(),
+        //     id_item: foundStore.id_store,
+        //     hoverComponent: <InfoStoreHover store={foundStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
+        //     clickComponent: <InfoStoreClick store={foundStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
+        //     color_item: '#5b1e1e'	,
+        //     id_group: '',
+        //     latitude: foundStore.latitude,
+        //     longitude: foundStore.longitude,
+        //   },
+        // )
       }
     } else {
       /* Do nothing */
@@ -428,23 +470,27 @@ export default function RouteDayManagerView() {
 
 
     if (foundMarker === undefined) {
-      const foundStore:undefined|IStore = stores.find((store) => store.id_store === selectedItem.id_item);
+      const foundStore:undefined|StoreDTO = storeDTOs.find((store) => store.id_store === selectedItem.id_item);
       
       updatedSelectedStores = storeSelected.filter((marker) => marker.id_group !== selectedItem.id_group);
-      
-        if (foundStore) {
-          updatedSelectedStores.push(
-            {
-              id_marker: generateUUIDv4(),
-              id_item: foundStore.id_store,
-              hoverComponent: <InfoStoreHover store={foundStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
-              clickComponent: <InfoStoreClick store={foundStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
-              color_item: '#FF9980'	,
-              id_group: selectedItem.id_group,
-              latitude: foundStore.latitude,
-              longuitude: foundStore.longuitude,
-            }
-          );
+      if (foundStore) {
+          const newMarker: IMapMarker|undefined = createMarker(selectedItem.id_item, selectedItem.id_group);
+    
+          if (newMarker) {
+            updatedSelectedStores.push(newMarker);
+          }      
+          // updatedSelectedStores.push(
+          //   {
+          //     id_marker: generateUUIDv4(),
+          //     id_item: foundStore.id_store,
+          //     hoverComponent: <InfoStoreHover store={foundStore} routeDayStore={routeDayStore} routeDays={mapRouteDays} routes={mapRoutes}/>,
+          //     clickComponent: <InfoStoreClick store={foundStore} routeDayStores={routeDayStores} routeDays={mapRouteDays} routes={mapRoutes} />,
+          //     color_item: '#FF9980'	,
+          //     id_group: selectedItem.id_group,
+          //     latitude: foundStore.latitude,
+          //     longuitude: foundStore.longuitude,
+          //   }
+          // );
         }
     } else {
       updatedSelectedStores.filter((marker) => marker.id_item !== foundMarker.id_item);
@@ -500,11 +546,11 @@ export default function RouteDayManagerView() {
         </div>
         {/* Right Side - Store Map */}
         <div className="basis-1/2 ml-2 overflow-hidden">
-          {/* <RouteMap 
+          <RouteMap 
             markers={markersToShow}
             temporalMarkers={temporalMarkers}
             onSelectStore={(store) => console.log("Selected Store:", store)} 
-          /> */}
+          />
         </div>
       </div>
       <div className="h-1/2 mt-3 flex basis-2/3 overflow-y-auto">

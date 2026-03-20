@@ -2,9 +2,9 @@ import type { Config } from "tailwindcss";
 
 export default {
   content: [
-    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/shared/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -13,7 +13,7 @@ export default {
         foreground: "var(--foreground)",
         "system-primary-background": "#EAEAEA",
         "system-secondary-background": "#F2F2F2",
-        "system-third-background": "#D493A0",
+        "system-third-background": "#C9C9C9",
         "system-third-background-opacity": "#c08297",
         "color-info-primary": "#007BFF",
         "color-warning-primary": "#FF851B",
@@ -24,14 +24,14 @@ export default {
         "color-danger-secondary": "#F18C8E",
       },
       fontSize: {
-        "style-h0": "50",
-        "style-h1": "48",
-        "style-h2": "32",
-        "style-h3": "26",
-        "style-h4": "18",
-        "style-p-base": "16",
-        "style-p-small": "13",
-        "style-coment": "10",
+        "style-h0": "50px",
+        "style-h1": "48px",
+        "style-h2": "32px",
+        "style-h3": "26px",
+        "style-h4": "18px",
+        "style-p-base": "16px",
+        "style-p-small": "13px",
+        "style-coment": "10px",
       }
     },
   },

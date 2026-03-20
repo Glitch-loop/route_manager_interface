@@ -17,11 +17,14 @@ export default class OrganizeRouteDayCommand {
     private async executeUseCase(routeDayDTO: RouteDay, routeDayStoresDTO: RouteDayStore[]): Promise<void> {
         // TODO: Verify route day only contains active stores.
         // TODO: Verify the order of the stores is ascendent and there is not missing positions.
+        const { id_route_day } = routeDayDTO;
         
-
+        await this.routeRepository.deleteRouteDayStores(id_route_day);
+        await this.routeRepository.insertRouteDayStores(routeDayStoresDTO);
     } 
 
     async execute(routeDayDTO: RouteDayDTO, routeDayStoresDTO: RouteDayStoreDTO[]): Promise<void> {
+        
         await this.executeUseCase(
             this.MapperDTO.toEntity(routeDayDTO),
             routeDayStoresDTO.map(storeDTO => this.MapperDTO.toEntity(storeDTO))

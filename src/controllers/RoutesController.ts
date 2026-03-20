@@ -38,10 +38,8 @@ export async function createRouteDays(route:IRoute):Promise<IResponse<IRouteDay[
       id_day: key,
     });
   }
-
+  
   return await repository.insertDaysOfRoute(routeDaysOfRoute);
-
-
 }
 
 export async function insertRoute(routeToInsert:IRoute):Promise<IResponse<IRoute>> {
@@ -52,6 +50,7 @@ export async function insertRoute(routeToInsert:IRoute):Promise<IResponse<IRoute
     route_name: routeToInsert.route_name.toLocaleLowerCase()
   }
 
+  
 
   const reponseInsertRoute:IResponse<IRoute> = await repository.insertRoute(record);
   if (apiResponseStatus(reponseInsertRoute, 201)) {

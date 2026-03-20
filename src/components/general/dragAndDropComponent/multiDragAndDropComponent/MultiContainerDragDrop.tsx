@@ -48,15 +48,19 @@ export default function MultiContainerDragDrop({
   
   // Handle Drag & Drop Movement
   const handleDragEnd = (event: any) => {
+    console.log("End drag item")
     const { active, over } = event;
     if (!over || active.id === over.id) return;
 
+    // Find item to be moved.
     const fromIndex = catalogMatrix.findIndex((list) => list.some((item) => item.id_item_in_container === active.id));
     const toIndex = catalogMatrix.findIndex((list) => list.some((item) => item.id_item_in_container === over.id));
 
     if (fromIndex !== toIndex) {
       const itemToMove = catalogMatrix[fromIndex].find((item) => item.id_item_in_container === active.id);
+      console.log("Item to move: ", itemToMove);
       if (!itemToMove) return;
+
 
       setPendingTransfer({ item: itemToMove, fromIndex, toIndex });
       setDialogOpen(true);
@@ -64,10 +68,12 @@ export default function MultiContainerDragDrop({
       const updatedList = arrayMove(catalogMatrix[fromIndex], active.data.current.sortable.index, over.data.current.sortable.index)
         .map((item, index) => ({ ...item, order_to_show: index + 1 }));
 
+      console.log("Updated list: ")
+      updatedList.map((item) => console.log(item.item_name, " - ", item.order_to_show, " - id container: ", item.id_item_in_container))
 
-        onModifyCatalogMatrix(catalogMatrix.map((catalog, index) => 
-          index === fromIndex ? updatedList : catalog
-        ));
+      onModifyCatalogMatrix(catalogMatrix.map((catalog, index) => 
+        index === fromIndex ? updatedList : catalog
+      ));
     }
 
     handleCleanDeleteItemsStates();
@@ -144,6 +150,7 @@ export default function MultiContainerDragDrop({
 
   // Handle Container Save
   const handleSaveContainer = (index: number, catalogItem:ICatalogItem) => {
+    console.log("Saving container")
     onSave(index, catalogItem);
   };
 

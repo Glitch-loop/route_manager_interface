@@ -1,39 +1,16 @@
-import Link from "next/link";
-import ButtonWithNotification from "../general/ButtonWithNotificaion";
-
-
-
+import ButtonWithNotification from "../../../components/general/ButtonWithNotificaion";
+import Link from 'next/link'
 
 const Sidebar = () => {
-
-    // const optionsMenu:any[] = [
-    //     {
-    //         optionName: 'Menú principal'
-    //     },
-    //     {
-    //         optionName: 'Comisiones'
-    //     },
-    //     {
-    //         optionName: 'Auditoria'
-    //     },
-    //     {
-    //         optionName: 'Operaciones de inventario'
-    //     },
-    //     {
-    //         optionName: 'Consultar informacion'
-    //     },
-    // ]
-
     return (
-        <aside className={`h-full w-full
-            bg-system-secondary-background
-            flex flex-col items-center 
+        <aside className={`h-full w-full flex flex-col items-center 
             `}>
                 <div className="my-2 w-11/12">
-                    <ButtonWithNotification 
+                    <Link href="/">Menú principal</Link>
+                    {/* <ButtonWithNotification 
                         label={"Menú principal"}
                         notificationAlert={true}
-                        href={"/"}/>
+                        href={"/"}/> */}
                 </div>
                 <div className="my-2  w-11/12">
                     <ButtonWithNotification 
@@ -52,9 +29,16 @@ const Sidebar = () => {
                         href={"/consult_information"}/>
                 </div>
                 <div className="my-2 w-11/12">
-                    <ButtonWithNotification 
+                    <Link href="/routes">Administración de rutas</Link>
+                    {/* <ButtonWithNotification 
                         label={"Administración de rutas"}
-                        href={"/routes"}/>
+                        href={"/routes"}/> */}
+                </div>
+                <div className="my-2 w-11/12">
+                    <Link href="/route_administration">Rutas</Link>
+                    {/* <ButtonWithNotification 
+                        label={"Rutas"}
+                        href={"/route_administration"}/> */}
                 </div>
                 <div className="my-2 w-11/12">
                     <ButtonWithNotification 

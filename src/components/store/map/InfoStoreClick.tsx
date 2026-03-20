@@ -15,13 +15,19 @@ interface InfoStoreClickProps {
 }
 
 export default function InfoStoreClick({ store, routeDayStores, routeDays, routes }: InfoStoreClickProps) {
-    const { id_store, store_name, street, ext_number, colony, address_reference, postal_code } = store;
+    const { id_store, store_name, street, ext_number, colony, address_reference, postal_code, latitude, longitude } = store;
 
     const routeDaysStoreAppear:RouteDayStoreDTO[] = routeDayStores.filter((routeDayStore:RouteDayStoreDTO) => routeDayStore.id_store === id_store);
 
     return (
         <div className="flex flex-col text-black">
             <span className="text-2xl font-bold">{capitalizeFirstLetterOfEachWord(store_name)}</span>
+            <div className="text-lg">
+                <span className="mr-1">id:</span><span>{id_store}</span>
+            </div>
+            <div className="text-lg">
+                <span className="mr-1">coords:</span><span>{`${latitude}, ${longitude}`}</span>
+            </div>
             <div className="text-lg">
                 <span className="mr-1">Dirección:</span><span>{capitalizeFirstLetterOfEachWord(street)} #{ext_number}, {capitalizeFirstLetterOfEachWord(colony)}</span>
             </div>
@@ -45,7 +51,7 @@ export default function InfoStoreClick({ store, routeDayStores, routeDays, route
                     if (routeDays.get(id_route_day)) {
                         const { id_day, id_route } = routeDays.get(id_route_day)!;
                         dayName = DAYS[id_day].day_name
-                        routeName = routes.get(id_route)!.route_name
+                        // routeName = routes.get(id_route)!.route_name
                     }
 
                     return (
