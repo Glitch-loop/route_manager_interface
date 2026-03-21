@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button, Select, MenuItem, FormControl } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
@@ -19,6 +19,12 @@ export default function RangeDateSelection({ onRangeChange }: RangeDateSelection
     const [toDate, setToDate] = useState<Dayjs>(dayjs());
     const [selectedRange, setSelectedRange] = useState<RangeOption | "">("");
     const [direction, setDirection] = useState<Direction>("before");
+
+    useEffect(() => { 
+        if (onRangeChange) {
+            onRangeChange(dayjs(), dayjs());
+        }
+    } , [])
 
     const rangeOptions: { value: RangeOption; label: string; days: number }[] = [
         { value: "1week", label: "1 semana", days: 7 },
