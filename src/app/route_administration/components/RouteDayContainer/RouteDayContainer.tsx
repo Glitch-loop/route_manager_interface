@@ -2,42 +2,59 @@ import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDate
 import { Switch } from "@mui/material";
 import RouteDayStoreContainer from "./RouteDayStoreContainer";
 import { DragDropProvider } from "@dnd-kit/react";
+import { move } from "@dnd-kit/helpers";
 import StoreDTO from "@/application/dto/StoreDTO";
 import RouteDayDTO from "@/application/dto/RouteDayDTO";
 import { useEffect, useState } from "react";
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
+import RouteDTO from "@/application/dto/RouteDTO";
+
+// Extended type that adds 'id' property for dnd-kit compatibility
+type DraggableRouteDayStore = RouteDayStoreDTO & { id: string };
 
 
 type RouteDayContainerProps = {
     routesDay: RouteDayDTO[];
-    storeMap:Map<string, StoreDTO>;
+    storeMap: Map<string, StoreDTO>; // id_store -> StoreDTO
+    routes: RouteDTO[]; // List of routes to find where each route day belongs
 }
 
 
 export default function RouteDayContainer({ 
         routesDay,
         storeMap, 
+        routes
     }: 
     RouteDayContainerProps) {
     
-    const [routeDayModified, setRouteDayModified] = useState<RouteDayDTO[]>([]);
+    // State to keep track of stores in each route day column
+    // Key: id_route_day, Value: array with 'id' property for dnd-kit compatibility
+    const [currentRoutesDay, setCurrentRoutesDay] = useState<Record<string, DraggableRouteDayStore[]>>({});
 
-    const [currentRoutesDay, setCurrentRoutesDay] = useState<Record<string, RouteDayStoreDTO[]>>({});
-
-
+    // Initialize state from routesDay prop - adds 'id' property for dnd-kit
     useEffect(() => {
-        setCurrentRoutesDay((prev) => {
-            const updatedRouteDayModifiedRecord: Record<string, RouteDayStoreDTO[]> = {...prev};
-            
-            routesDay.forEach((routeDay) => {
-                const { id_route_day } = routeDay;
-                if(updatedRouteDayModifiedRecord[id_route_day] === undefined) {
-                    updatedRouteDayModifiedRecord[id_route_day] = routeDay.stores;
-                } 
-            });
-            return updatedRouteDayModifiedRecord;
-        })
+        const initialState: Record<string, DraggableRouteDayStore[]> = {};
+        
+        routesDay.forEach((routeDay) => {
+            const { id_route_day, stores } = routeDay;
+            // Transform stores to include 'id' property (maps to id_route_day_store)
+            const draggableStores: DraggableRouteDayStore[] = (stores || []).map(store => ({
+                ...store,
+                id: store.id_route_day_store, // Add id for dnd-kit compatibility
+            }));
+            initialState[id_route_day] = draggableStores;
+        });
+        
+        setCurrentRoutesDay(initialState);
     }, [routesDay]);
+
+    // Handle drag over event - moves items between columns
+    const handleDragOver = (event: Parameters<NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragOver']>>[0]) => {
+        setCurrentRoutesDay((items) => {
+            const result = move(items, event);
+            return result as Record<string, DraggableRouteDayStore[]>;
+        });
+    };
 
     return (
         <div className="w-full h-full bg-system-secondary-background flex flex-row p-2">
@@ -48,11 +65,17 @@ export default function RouteDayContainer({
                 </div>
                 <RangeDateSelection />
             </div>
-            <DragDropProvider>
-                <div className="ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2">
-                    { Object.entries(currentRoutesDay).map(([id_route_day, stores]) => {
-                        return (<RouteDayStoreContainer key={id_route_day} id_column={id_route_day} stores={stores} />)
-                    })}
+            <DragDropProvider onDragOver={handleDragOver}>
+                <div className="ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2 overflow-x-auto">
+                    {Object.entries(currentRoutesDay).map(([idRouteDay, stores]) => (
+                        <RouteDayStoreContainer 
+                            key={idRouteDay} 
+                            idRouteDayColumn={idRouteDay} 
+                            storesToAttend={stores} 
+                            storesMap={storeMap} 
+                            routes={routes}
+                        />
+                    ))}
                 </div>
             </DragDropProvider>
         </div>

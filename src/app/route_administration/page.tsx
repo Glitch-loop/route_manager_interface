@@ -34,6 +34,7 @@ import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDate
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
 import RouteMap from "@/components/general/mapComponent/RouteMap";
 import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer";
+import { getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
 
 export default function Page() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -45,6 +46,7 @@ export default function Page() {
     const [routes, setRoutes] = useState<RouteDTO[]>([]);
     const [stores, setStores] = useState<StoreDTO[]>([]);
     const [mapStores, setMapStores] = useState<Map<string, StoreDTO>>(new Map()); // Map of store ID to StoreDTO for quick access
+
     
     const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]);
 
@@ -114,21 +116,11 @@ export default function Page() {
 
     const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
         const routeDaySelected:RouteDayDTO | undefined = selectedRouteDay.find(routeDay => routeDay.id_route_day === routeDayId);
-        console.log("Route day selected: ", routeDaySelected);
         if (routeDaySelected === undefined && routes !== null) {
-            for (const route of routes) {
-                const { route_day_by_day } = route;
-                console.log("Route day by day: ", route_day_by_day);
-                if (route_day_by_day === undefined || route_day_by_day === null) continue;
-                
-                for (const [idDay, routeDay] of route_day_by_day) {
-                    const { id_route_day } = routeDay;
-                    if (id_route_day === routeDayId) {
-                        const routeDayToAdd = {...routeDay, stores: routeDay.stores.map(store => ({...store, selected: state}))};
-                        setSelectedRouteDay([...selectedRouteDay, routeDayToAdd]);
-                        break;
-                    }
-                }
+            const routeDayFound:RouteDayDTO|null = getRouteDayFromRoutesList(routes, routeDayId);
+            if (routeDayFound !== null) {
+                const routeDayToAdd = {...routeDayFound, stores: routeDayFound.stores.map(store => ({...store, selected: state}))};
+                setSelectedRouteDay([...selectedRouteDay, routeDayToAdd]);
             }
         }
     }
@@ -249,7 +241,8 @@ export default function Page() {
                         <div className="w-full h-96">
                             <RouteDayContainer 
                                 routesDay={selectedRouteDay} 
-                                storeMap={mapStores} 
+                                storeMap={mapStores}
+                                routes={routes}
                             />
                         </div>
                     </Collapse>

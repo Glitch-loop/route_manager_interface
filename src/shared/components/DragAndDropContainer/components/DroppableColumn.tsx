@@ -10,7 +10,7 @@ export default function DroppableColumn({children, id}) {
     collisionPriority: CollisionPriority.Low,
   });
   return (
-    <div className="Column my-2 rounded-lg h-full flex flex-col w-full gap-2 p-4" ref={ref}>
+    <div className="Column my-2 rounded-lg h-full flex flex-col w-full gap-1 p-2" ref={ref}>
       {children}
     </div>
   );

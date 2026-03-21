@@ -11,8 +11,8 @@ export default function DraggableItem({children, id, index, column}) {
   });
 
   return (
-    <button className="bg-blue-500 text-white p-2 rounded w-90" ref={ref} data-dragging={isDragging}>
+    <div className="p-2 rounded w-90" ref={ref} data-dragging={isDragging}>
       {children}
-    </button>
+    </div>
   );
 }
