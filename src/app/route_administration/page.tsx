@@ -77,24 +77,31 @@ export default function Page() {
         // Retrieve routes.
         const routes:RouteDTO[] =  await listRouteQuery.execute();
         const routeIds:string[] = routes.map(route => route.id_route);
-        const routesWithInformation:RouteDTO[] = await retrieveRouteInformationQuery.execute(routeIds);
-        setRoutes(routesWithInformation);
+        // const routesWithInformation:RouteDTO[] = await 
+        retrieveRouteInformationQuery.execute(routeIds)
+        .then((routesWithInformation:RouteDTO[]) => {
+            setRoutes(routesWithInformation);
+
+        });
 
 
         // Retrieve stores.
-        await fetchStores();
+        fetchStores();
     }
 
 
     const fetchStores = async () => {
         const listStoresQuery = di_container.resolve<ListAllRegisterdStoresQuery>(ListAllRegisterdStoresQuery);
-        const stores:StoreDTO[] = await listStoresQuery.execute();
-        setStores(stores);
-        const storeMap = new Map<string, StoreDTO>();
-        stores.forEach(store => {
-            storeMap.set(store.id_store, store);
+        // const stores:StoreDTO[] = await 
+        listStoresQuery.execute()
+        .then((stores:StoreDTO[]) => {
+            setStores(stores);
+            const storeMap = new Map<string, StoreDTO>();
+            stores.forEach(store => {
+                storeMap.set(store.id_store, store);
+            });
+            setMapStores(storeMap);
         });
-        setMapStores(storeMap);
     }
 
     // Handlers
