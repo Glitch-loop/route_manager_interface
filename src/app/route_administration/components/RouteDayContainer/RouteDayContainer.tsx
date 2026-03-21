@@ -8,6 +8,7 @@ import RouteDayDTO from "@/application/dto/RouteDayDTO";
 import { useEffect, useState } from "react";
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
 import RouteDTO from "@/application/dto/RouteDTO";
+import { generateUUIDv4 } from "@/utils/generalUtils";
 
 // Extended type that adds 'id' property for dnd-kit compatibility
 type DraggableRouteDayStore = RouteDayStoreDTO & { id: string };
@@ -45,16 +46,38 @@ export default function RouteDayContainer({
             initialState[id_route_day] = draggableStores;
         });
         
+        console.log("New initial state: ", initialState)
+
         setCurrentRoutesDay(initialState);
     }, [routesDay]);
 
     // Handle drag over event - moves items between columns
     const handleDragOver = (event: Parameters<NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragOver']>>[0]) => {
         setCurrentRoutesDay((items) => {
+            console.log("Items: ", items)
             const result = move(items, event);
             return result as Record<string, DraggableRouteDayStore[]>;
         });
     };
+
+    const handleAddNewStore = (idRouteDay: string, idStore: string) => {
+        if (currentRoutesDay[idRouteDay]) {
+            const existingStores = currentRoutesDay[idRouteDay];
+            const idRouteDayStore = generateUUIDv4();
+            const newStore: DraggableRouteDayStore = {
+                id_route_day_store: idRouteDayStore, // Temporary ID for new store
+                id_route_day: idRouteDay,
+                id_store: idStore,
+                position_in_route: existingStores.length, // Add to the end of the list
+                id: idRouteDayStore, // Add id for dnd-kit compatibility
+            };
+
+            setCurrentRoutesDay((prev) => ({
+                ...prev,
+                [idRouteDay]: [...prev[idRouteDay], newStore],
+            }));
+        }
+    }
 
     return (
         <div className="w-full h-full bg-system-secondary-background flex flex-row p-2">
@@ -65,7 +88,10 @@ export default function RouteDayContainer({
                 </div>
                 <RangeDateSelection />
             </div>
-            <DragDropProvider onDragOver={handleDragOver}>
+            <DragDropProvider 
+                // onDragEnd={handleDragOver}
+                onDragOver={handleDragOver}
+                >
                 <div className="ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2 overflow-x-auto">
                     {Object.entries(currentRoutesDay).map(([idRouteDay, stores]) => (
                         <RouteDayStoreContainer 
@@ -74,6 +100,7 @@ export default function RouteDayContainer({
                             storesToAttend={stores} 
                             storesMap={storeMap} 
                             routes={routes}
+                            onAddStore={handleAddNewStore}
                         />
                     ))}
                 </div>

@@ -11,7 +11,7 @@ export default function DraggableItem({children, id, index, column}) {
   });
 
   return (
-    <div className="p-2 rounded w-90" ref={ref} data-dragging={isDragging}>
+    <div ref={ref} data-dragging={isDragging}>
       {children}
     </div>
   );
