@@ -26,6 +26,9 @@ type RouteDayStoreContainerProps = {
     routes: RouteDTO[]; // List of routes to find where each route day belongs
     routeTransactionsMap: Map<string, RouteTransactionDTO[]>; // Map of store ID to list of route transactions
     onAddStore: (idRouteDay: string, idStore: string) => void;
+    onRemoveStores: (idsRouteDayStore: string[]) => void; // Callback to remove stores from route day, receives list of id_route_day_store to remove
+    onCancelRouteModification: (idRouteDay: string) => void; // Callback when user cancels modifications
+    onStoreModification: (idRouteDay: string) => void;
 }
 
 export default function RouteDayStoreContainer({ 
@@ -34,7 +37,11 @@ export default function RouteDayStoreContainer({
         storesMap, 
         routes, 
         routeTransactionsMap,
-        onAddStore 
+        onAddStore,
+        onRemoveStores,
+        onCancelRouteModification,
+        onStoreModification
+        
     }: RouteDayStoreContainerProps) { 
 
     /**
@@ -64,10 +71,23 @@ export default function RouteDayStoreContainer({
     /**
      * Calculate total estimated sales for all stores in this column.
      */
-    const calculateColumnEstimatedTotal = (): number => {
-        return storesToAttend.reduce((total, store) => {
-            return total + calculateStoreTotalSales(store.id_store);
-        }, 0);
+    const calculateColumnEstimatedTotal = (deleteModeActive: boolean, selectedStores: Set<string>): number => {
+        let totalAmount: number = 0;
+        if (deleteModeActive) {
+            totalAmount = storesToAttend.reduce((total, store) => {
+                if (selectedStores.has(store.id_route_day_store)) {
+                    return total; // Skip stores selected for deletion
+                } else {
+                    return total + calculateStoreTotalSales(store.id_store);
+                }
+            }, 0);
+        } else {
+            totalAmount = storesToAttend.reduce((total, store) => {
+                return total + calculateStoreTotalSales(store.id_store);
+            }, 0);
+        }
+
+        return totalAmount;
     };
 
     // State 
@@ -141,23 +161,38 @@ export default function RouteDayStoreContainer({
 
 
     const handleCancelDeleteMode = () => {
-        setDeleteMode(false);
-        setSelectedStores(new Set());
+        if (deleteMode) {
+            // Just exit delete mode without removing anything
+            setDeleteMode(false);
+            setSelectedStores(new Set());
+        } else {
+            // Cancel all modifications and reset to original state
+            onCancelRouteModification(idRouteDayColumn);
+        }
     }
 
     const handleAcceptDeleteStores = () => {
-        setDeleteMode(false);
-        setSelectedStores(new Set());   
+        if (deleteMode) {
+            // Remove selected stores
+            if (selectedStores.size > 0) {
+                onRemoveStores(Array.from(selectedStores));
+            }
+            setDeleteMode(false);
+            setSelectedStores(new Set());
+        } else {
+            // Save modifications
+            onStoreModification(idRouteDayColumn);
+        }
     }
 
 
     
     return (
-        <div className="min-w-[280px] flex flex-col">
+        <div className="min-w-[280px] flex flex-col bg-system-primary-background rounded-t-lg">
             {/* <Dialog open={showDeleteDialog}>
 
             </Dialog> */}
-            <div className="p-2 bg-system-primary-background rounded-t-lg flex flex-col">
+            <div className="p-2  flex flex-col">
                 {/* Title and main actions */}
                 <div className="flex flex-row justify-start items-center my-2">
                     <div className="flex basis-1/2 gap-2 items-center">
@@ -208,21 +243,27 @@ export default function RouteDayStoreContainer({
                         </Tooltip>
                     </div>
                     <div className="flex basis-1/2 justify-end mr-3">
-                        <IconButton
-                            sx={{
-                                backgroundColor: '#f3281a',
-                                color: 'white',
-                                '&:hover': {
-                                    backgroundColor: '#c72418',
-                                },
-                                width: 40,
-                                height: 40,
-                            }}
-                            onClick={() => handleStartDeleteMode()}
-                            className="h-fit my-auto shadow-md"
-                            size="small">
-                                <DeleteOutline />
-                        </IconButton>
+                        <Tooltip 
+                            title={"Remover clientes de este día"}
+                            placement="top"
+                            enterDelay={300}
+                            arrow>
+                            <IconButton
+                                sx={{
+                                    backgroundColor: '#f3281a',
+                                    color: 'white',
+                                    '&:hover': {
+                                        backgroundColor: '#c72418',
+                                    },
+                                    width: 40,
+                                    height: 40,
+                                }}
+                                onClick={() => handleStartDeleteMode()}
+                                className="h-fit my-auto shadow-md"
+                                size="small">
+                                    <DeleteOutline />
+                            </IconButton>
+                        </Tooltip>
                     </div>
                 </div>
                 {/* Menu */}
@@ -247,41 +288,60 @@ export default function RouteDayStoreContainer({
                                     size="small"/>
                                 <span className="text-sm">{`Buscar por ${searchStoreBy === "name" ? "nombre" : "dirección"}`}</span>
                             </div>
-                            <Autocomplete
-                                options={Array.from(storesMap.values()).map((item) => { return { id: item.id_store, ...item }})}
-                                limitTags={10}
-                                getOptionKey={(option) => option.id_store}
-                                getOptionLabel={(option) => searchStoreBy === "name" ? option.store_name ?? "Nombre no disponible" : getAddressOfStore(option)}
-                                inputValue={inputValue}
-                                onChange={(event, newValue) => { 
-                                    setInputValue("");
-                                    if (newValue) {
-                                        onAddStore(idRouteDayColumn, newValue.id);
-                                    }
-                                }}
-                            renderOption={(props, option) => (
-                                <li
-                                {...props}
-                                key={option.id_store}
-                                // onMouseEnter={() => onHoverOption(option)} // Detect hover
-                                // onMouseLeave={() => onHoverOption(null)} // Detect hover
-                                >
-                                    <div className="flex flex-col">
-                                        <span>{option.store_name ?? "Nombre no disponible"}</span>
-                                        <span className="text-sm">{getAddressOfStore(option)}</span>
-                                    </div>
-                                </li>
-                            )}
-                    
-                            renderInput={(params) => <TextField 
-                                onChange={(event) => { setInputValue(event.target.value); }}
-                                {...params} label="Add Item" />}
-                            />
+                            <div className="flex flex-row gap-3">
+                                <div className="flex basis-4/5">   
+                                    <Autocomplete
+                                        options={Array.from(storesMap.values()).map((item) => { return { id: item.id_store, ...item }})}
+                                        className="w-full"
+                                        getOptionKey={(option) => option.id_store}
+                                        getOptionLabel={(option) => searchStoreBy === "name" ? option.store_name ?? "Nombre no disponible" : getAddressOfStore(option)}
+                                        inputValue={inputValue}
+                                        onChange={(event, newValue) => { 
+                                            setInputValue("");
+                                            if (newValue) {
+                                                onAddStore(idRouteDayColumn, newValue.id);
+                                            }
+                                        }}
+                                    renderOption={(props, option) => (
+                                        <li
+                                        {...props}
+                                        key={option.id_store}
+                                        // onMouseEnter={() => onHoverOption(option)} // Detect hover
+                                        // onMouseLeave={() => onHoverOption(null)} // Detect hover
+                                        >
+                                            <div className="flex flex-col">
+                                                <span>{option.store_name ?? "Nombre no disponible"}</span>
+                                                <span className="text-sm">{getAddressOfStore(option)}</span>
+                                            </div>
+                                        </li>
+                                    )}
+                            
+                                    renderInput={(params) => <TextField 
+                                        onChange={(event) => { setInputValue(event.target.value); }}
+                                        {...params} label="Add Item" />}
+                                    />
+                                </div>
+                            <Tooltip 
+                                title={"Revierte los cambios al ultimo estado guardado"}
+                                placement="top"
+                                enterDelay={300}
+                                arrow>
+                                <Button variant="contained">Reset</Button>
+                            </Tooltip>
+                            </div>
                         </div>            
                     }
                 </div>
             </div>
-            <div className="flex-1 overflow-y-auto bg-system-secondary-background rounded-b-lg min-h-[200px]"
+            {/* Estimated total section */}
+            <div className="flex flex-row justify-end items-center px-4 py-2 ">
+                <span className="font-bold text-lg mr-2">Total vendido entre el rango de fechas seleccionado: </span>
+                <span className="font-bold text-lg text-black">
+                    {formatNumberAsAccountingCurrency(calculateColumnEstimatedTotal(deleteMode, selectedStores))}
+                </span>
+            </div>
+            {/* Droppable container */}
+            <div className="flex-1 overflow-y-auto bg-system-secondary-background min-h-[200px]"
                 style={{scrollBehavior: 'smooth'}}>
                 <DroppableColumn id={idRouteDayColumn}>
                     {storesToAttend.map((store, index) => {
@@ -302,7 +362,7 @@ export default function RouteDayStoreContainer({
                                 <div
                                     key={id_route_day_store} 
                                     onDoubleClick={() => { handleSelect(id_route_day_store); }}
-                                    className={deleteMode ? "relative p-2 cursor-pointer" : "relative p-2"}>
+                                    className={deleteMode ? "relative p-2 cursor-pointer" : "relative p-2 cursor-default"}>
                                     { selectedStores.has(id_route_day_store) && 
                                         <div className="absolute right-3 top-3 bg-red-600 w-6 h-6 text-slate-200 rounded-full flex items-center justify-center">
                                             <RemoveCircleOutline fontSize="small" />
@@ -336,20 +396,13 @@ export default function RouteDayStoreContainer({
                     })}
                 </DroppableColumn>
             </div>
-            {/* Estimated total section */}
-            <div className="flex flex-row justify-end items-center px-4 py-2 bg-system-primary-background">
-                <span className="font-bold text-lg mr-2">Estimado</span>
-                <span className="font-bold text-lg text-green-600">
-                    {formatNumberAsAccountingCurrency(calculateColumnEstimatedTotal())}
-                </span>
-            </div>
-            <div className="w-full flex flex-row gap-5 justify-center">
+            <div className="w-full flex flex-row mt-3 gap-5 justify-center">
                 { deleteMode ? 
                     <Button
                         variant="contained" 
                         color="error"
                         onClick={handleAcceptDeleteStores}>
-                            Eliminar
+                            Aceptar
                     </Button> :
                     <Button
                         variant="contained" 

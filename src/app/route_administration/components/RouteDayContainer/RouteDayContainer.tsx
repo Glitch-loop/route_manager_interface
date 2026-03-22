@@ -57,16 +57,13 @@ export default function RouteDayContainer({
             }));
             initialState[id_route_day] = draggableStores;
         });
-        
-        console.log("New initial state: ", initialState)
-
+    
         setCurrentRoutesDay(initialState);
     }, [routesDay]);
 
     // Handle drag over event - moves items between columns
     const handleDragOver = (event: Parameters<NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragOver']>>[0]) => {
         setCurrentRoutesDay((items) => {
-            console.log("Items: ", items)
             const result = move(items, event);
             return result as Record<string, DraggableRouteDayStore[]>;
         });
@@ -91,6 +88,81 @@ export default function RouteDayContainer({
         }
     }
 
+    /**
+     * Remove stores from a route day by their id_route_day_store.
+     * Filters out stores that match the provided IDs.
+     */
+    const handleRemoveStores = (idsRouteDayStore: string[]) => {
+        const idsToRemove = new Set(idsRouteDayStore);
+        
+        setCurrentRoutesDay((prev) => {
+            const updated: Record<string, DraggableRouteDayStore[]> = {};
+            
+            for (const [routeDayId, stores] of Object.entries(prev)) {
+                updated[routeDayId] = stores.filter(
+                    store => !idsToRemove.has(store.id_route_day_store)
+                );
+            }
+            
+            return updated;
+        });
+    };
+
+    /**
+     * Cancel modifications for a specific route day.
+     * Resets the route day back to its original state from props.
+     */
+    const handleResetRouteModification = (idRouteDay: string) => {
+        const originalRouteDay = routesDay.find(rd => rd.id_route_day === idRouteDay);
+        
+        if (originalRouteDay) {
+            const originalStores: DraggableRouteDayStore[] = (originalRouteDay.stores || []).map(store => ({
+                ...store,
+                id: store.id_route_day_store,
+            }));
+            
+            setCurrentRoutesDay((prev) => ({
+                ...prev,
+                [idRouteDay]: originalStores,
+            }));
+        }
+    };
+
+    const handleCancelRouteModification = (idRouteDay: string) => {
+        const newCurrentRoutesDay:Record<string, DraggableRouteDayStore[]> = {};
+        for (const [routeDayId, stores] of Object.entries(currentRoutesDay)) {
+            if(routeDayId !== idRouteDay) {
+                newCurrentRoutesDay[routeDayId] = stores;
+            }
+        }
+        setCurrentRoutesDay(newCurrentRoutesDay);
+    }
+
+    /**
+     * Handle store modification save for a specific route day.
+     * Updates positions based on current order.
+     */
+    const handleStoreModification = (idRouteDay: string) => {
+        // Update positions based on current array order
+        setCurrentRoutesDay((prev) => {
+            const stores = prev[idRouteDay];
+            if (!stores) return prev;
+            
+            const updatedStores = stores.map((store, index) => ({
+                ...store,
+                position_in_route: index,
+            }));
+            
+            return {
+                ...prev,
+                [idRouteDay]: updatedStores,
+            };
+        });
+        
+        // TODO: Call parent save callback here if needed
+        console.log(`Modifications saved for route day: ${idRouteDay}`);
+    };
+
     const handleDateRangeChange = (start: Dayjs | null, end: Dayjs | null) => {
         setStartDateSelected(start);
         setEndDateSelected(end);
@@ -111,7 +183,13 @@ export default function RouteDayContainer({
                     <span className="text-center align-middle">Abrir callout: </span><Switch />
                 </div> */}
                 <RangeDateSelection onRangeChange={handleDateRangeChange} />
-                <div className="flex flex-row justify-center items-center w-full">
+                <div className="flex flex-col justify-center items-center w-full gap-2">
+                    <span className="text-base font-bold">Fechas seleccionadas:</span>
+                    <div className="flex flex-row justify-center">
+                        <span>{startDateSelected ? startDateSelected.format("DD/MM/YYYY") : "N/A"}</span>
+                        <span className="mx-2">-</span>
+                        <span>{endDateSelected ? endDateSelected.format("DD/MM/YYYY") : "N/A"}</span>
+                    </div>
                     <Button
                         variant="contained"
                         color="primary"
@@ -120,7 +198,6 @@ export default function RouteDayContainer({
                             Aplicar fechas
                     </Button>
                 </div>
-                
             </div>
             <DragDropProvider 
                 // onDragEnd={handleDragOver}
@@ -136,6 +213,9 @@ export default function RouteDayContainer({
                             routes={routes}
                             routeTransactionsMap={routeTransactionsMap}
                             onAddStore={handleAddNewStore}
+                            onRemoveStores={handleRemoveStores}
+                            onCancelRouteModification={handleCancelRouteModification}
+                            onStoreModification={handleStoreModification}
                         />
                     ))}
                 </div>

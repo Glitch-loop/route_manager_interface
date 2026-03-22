@@ -41,6 +41,7 @@ import { getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
 export default function Page() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
+    const [topPanelOpen, setTopPanelOpen] = useState(true);
     const [selectedRoute, setSelectedRoute] = useState<RouteDTO | null>(null);
     const [selectedStore, setSelectedStore] = useState<StoreDTO | null>(null);
     const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(null);
@@ -150,8 +151,11 @@ export default function Page() {
             ListRouteTransactionsByStoreWithinDateRange
         );
 
-        const transactionsMap = await listTransactionsQuery.execute(storeIds, startDate, endDate);
-        setMapRouteTransactionByStore(transactionsMap);
+        listTransactionsQuery.execute(storeIds, startDate, endDate)
+        .then((transactionsMap: Map<string, RouteTransactionDTO[]>) => {
+            setMapRouteTransactionByStore(transactionsMap);
+        })
+        .catch(error => { console.error("Error retrieving route transactions: ", error)});
     }
 
     return (
@@ -213,9 +217,22 @@ export default function Page() {
             {/* Main content */}
             <div className="flex flex-col flex-1">
                 {/* Search content */}
-                <div className="w-full h-1/6 bg-green-900">
-                    <h1 className="text-white text-2xl font-bold p-4">Search content</h1>
-                    {/* <RangeDateSelection /> */}
+                <div className="relative w-full">
+                    <Collapse in={topPanelOpen}>
+                        <div className="w-full h-1/6 bg-green-900">
+                            <h1 className="text-white text-2xl font-bold p-4">Search content</h1>
+                            {/* <RangeDateSelection /> */}
+                        </div>
+                    </Collapse>
+                    {/* Toggle button */}
+                    <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
+                        <IconButton
+                            onClick={() => setTopPanelOpen(!topPanelOpen)}
+                            size="small"
+                        >
+                            {topPanelOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                        </IconButton>
+                    </div>
                 </div>
 
                 {/* Map content */}
@@ -265,7 +282,6 @@ export default function Page() {
                             {bottomPanelOpen ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
                         </IconButton>
                     </div>
-                    
                     <Collapse in={bottomPanelOpen}>
                         <div className="w-full h-96">
                             <RouteDayContainer 
