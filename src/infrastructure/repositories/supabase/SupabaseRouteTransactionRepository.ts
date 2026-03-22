@@ -9,7 +9,6 @@ import { RouteTransactionRepository } from '@/core/interfaces/RouteTransactionRe
 
 // Entities
 import { RouteTransaction } from '@/core/entities/RouteTransaction';
-import { Store } from '@/core/entities/Store';
 
 // Object values
 import { RouteTransactionDescription } from '@/core/object-values/RouteTransactionDescription';
@@ -143,12 +142,12 @@ export class SupabaseRouteTransactionRepository implements RouteTransactionRepos
         }
     }
 
-    async listRouteTransactionByStore(store: Store, startDate: Date, endDate: Date): Promise<RouteTransaction[]> {
+    async listRouteTransactionByIdStore(id_store: string[], startDate: Date, endDate: Date): Promise<RouteTransaction[]> {
         try {
             const { data, error } = await this.supabase
                 .from(SERVER_DATABASE_ENUM.ROUTE_TRANSACTIONS)
                 .select('*')
-                .eq('id_store', store.id_store)
+                .in('id_store', id_store)
                 .gte('date', startDate.toISOString())
                 .lte('date', endDate.toISOString());
 

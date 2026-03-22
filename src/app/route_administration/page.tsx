@@ -12,12 +12,14 @@ import RouteDTO from "@/application/dto/RouteDTO";
 import StoreDTO from "@/application/dto/StoreDTO";
 import RouteDayDTO from "@/application/dto/RouteDayDTO";
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
+import RouteTransactionDTO from "@/application/dto/RouteTransactionDTO";
 
 // Queries
 import ListRoutesQuery from "@/application/queries/ListRoutesQuery";
 import RetrieveRouteInformationQuery  from "@/application/queries/RetrieveRouteInformationQuery";
 import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdStoresQuery";
 import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
+import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/ListRouteTransactionsByStoreWithinDateRange";
 
 // Core - Constant
 
@@ -46,7 +48,7 @@ export default function Page() {
     const [routes, setRoutes] = useState<RouteDTO[]>([]);
     const [stores, setStores] = useState<StoreDTO[]>([]);
     const [mapStores, setMapStores] = useState<Map<string, StoreDTO>>(new Map()); // Map of store ID to StoreDTO for quick access
-
+    const [mapRouteTransactionByStore, setMapRouteTransactionByStore] = useState<Map<string, RouteTransactionDTO[]>>(new Map()); // Map of store ID to list of route transactions
     
     const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]);
 
@@ -130,6 +132,26 @@ export default function Page() {
                 setSelectedRouteDay([...selectedRouteDay, routeDayToAdd]);
             }
         }
+    }
+
+    const handleRetrieveRouteTransactions = async (startDate: Date, endDate: Date) => {
+        // Get all store IDs from selectedRouteDay
+        const storeIds: string[] = selectedRouteDay.flatMap(routeDay => 
+            routeDay.stores.map(store => store.id_store)
+        );
+
+        if (storeIds.length === 0) {
+            console.warn("No stores selected to retrieve transactions.");
+            return;
+        }
+
+        // Inject and execute the query
+        const listTransactionsQuery = di_container.resolve<ListRouteTransactionsByStoreWithinDateRange>(
+            ListRouteTransactionsByStoreWithinDateRange
+        );
+
+        const transactionsMap = await listTransactionsQuery.execute(storeIds, startDate, endDate);
+        setMapRouteTransactionByStore(transactionsMap);
     }
 
     return (
@@ -250,6 +272,8 @@ export default function Page() {
                                 routesDay={selectedRouteDay} 
                                 storeMap={mapStores}
                                 routes={routes}
+                                routeTransactionsMap={mapRouteTransactionByStore}
+                                onApplyDateRange={handleRetrieveRouteTransactions}
                             />
                         </div>
                     </Collapse>

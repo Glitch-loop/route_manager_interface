@@ -8,6 +8,7 @@ import RouteDayDTO from "@/application/dto/RouteDayDTO";
 import { useEffect, useState } from "react";
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
 import RouteDTO from "@/application/dto/RouteDTO";
+import RouteTransactionDTO from "@/application/dto/RouteTransactionDTO";
 import { generateUUIDv4 } from "@/utils/generalUtils";
 import { Dayjs } from "dayjs";
 
@@ -19,13 +20,17 @@ type RouteDayContainerProps = {
     routesDay: RouteDayDTO[];
     storeMap: Map<string, StoreDTO>; // id_store -> StoreDTO
     routes: RouteDTO[]; // List of routes to find where each route day belongs
+    routeTransactionsMap: Map<string, RouteTransactionDTO[]>; // Map of store ID to list of route transactions
+    onApplyDateRange: (startDate: Date, endDate: Date) => void; // Callback when user clicks "Aplicar fechas"
 }
 
 
 export default function RouteDayContainer({ 
         routesDay,
         storeMap, 
-        routes
+        routes,
+        routeTransactionsMap,
+        onApplyDateRange
     }: 
     RouteDayContainerProps) {
     
@@ -92,7 +97,10 @@ export default function RouteDayContainer({
     }
 
     const handleApplyDateRange = () => {
-        console.log("Applying date range: ", startDateSelected, endDateSelected);
+        if (startDateSelected && endDateSelected) {
+            // Convert Dayjs to Date and call the parent callback
+            onApplyDateRange(startDateSelected.toDate(), endDateSelected.toDate());
+        }
     }
 
     return (
@@ -126,6 +134,7 @@ export default function RouteDayContainer({
                             storesToAttend={stores} 
                             storesMap={storeMap} 
                             routes={routes}
+                            routeTransactionsMap={routeTransactionsMap}
                             onAddStore={handleAddNewStore}
                         />
                     ))}

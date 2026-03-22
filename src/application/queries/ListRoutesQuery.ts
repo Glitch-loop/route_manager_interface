@@ -19,7 +19,6 @@ export default class ListRoutesQuery {
     async execute(): Promise<RouteDTO[]> {
         try {
             const routes = await this.routeRepository.listRoutes();
-            console.log(routes)
             return routes.map(route => this.mapperDTO.toDTO(route));
         } catch (error) {
             throw new Error('Error listing routes: ' + error);

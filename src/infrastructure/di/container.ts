@@ -17,12 +17,13 @@ import { SupabaseDataSource } from '@/infrastructure/datasources/SupabaseDataSou
 // Interfaces
 import { RouteRepository } from '@/core/interfaces/RouteRepository'
 import { StoreRepository } from '@/core/interfaces/StoreRepository'
+import { RouteTransactionRepository } from '@/core/interfaces/RouteTransactionRepository'
 
 // Implementations - Supabase
 import { SupabaseRouteRepository } from '@/infrastructure/repositories/supabase/SupabaseRouteRepository'
 import { SupabaseStoreRepository } from '@/infrastructure/repositories/supabase/SupabaseStoreRepository'
+import { SupabaseRouteTransactionRepository } from '@/infrastructure/repositories/supabase/SupabaseRouteTransactionRepository'
 // import { SupabaseProductRepository } from '@/infrastructure/repositories/supabase/SupabaseProductRepository'
-// import { SupabaseRouteTransactionRepository } from '@/infrastructure/repositories/supabase/SupabaseRouteTransactionRepository'
 // import { SupabaseInventoryOperationRepository } from '@/infrastructure/repositories/supabase/SupabaseInventoryOperationRepository'
 // import { SupabaseWorkdayInformationRepository } from '@/infrastructure/repositories/supabase/SupabaseWorkdayInformationRepository'
 
@@ -62,6 +63,10 @@ container.register<StoreRepository>(TOKENS.SupabaseStoreRepository, {
 
 container.register<RouteRepository>(TOKENS.SupabaseRouteRepository, {
     useClass: SupabaseRouteRepository
+});
+
+container.register<RouteTransactionRepository>(TOKENS.SupabaseRouteTransactionRepository, {
+    useClass: SupabaseRouteTransactionRepository
 });
 
 // container.register<ProductRepository>(TOKENS.SupabaseProductRepository, {

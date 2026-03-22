@@ -7,6 +7,8 @@ import { capitalizeFirstLetterOfEachWord, formatNumberAsAccountingCurrency } fro
 import RouteDTO from "@/application/dto/RouteDTO";
 import { getRouteDayFromRoutesList, getRouteWhereRouteDayBelongs } from "@/shared/utils/routes/utils";
 import NumericValueCard from "@/shared/components/Cards/NumericValueCard/NumericValueCard";
+import RouteTransactionDTO from "@/application/dto/RouteTransactionDTO";
+import DAY_OPERATIONS from "@/core/enums/DayOperations";
 
 // UI components
 import { LockOutline, LockOpen, VisibilityOff, Visibility, DeleteOutline, RemoveCircleOutline } from "@mui/icons-material"
@@ -22,6 +24,7 @@ type RouteDayStoreContainerProps = {
     storesToAttend: RouteDayStoreDTO[];
     storesMap: Map<string, StoreDTO>;
     routes: RouteDTO[]; // List of routes to find where each route day belongs
+    routeTransactionsMap: Map<string, RouteTransactionDTO[]>; // Map of store ID to list of route transactions
     onAddStore: (idRouteDay: string, idStore: string) => void;
 }
 
@@ -30,8 +33,43 @@ export default function RouteDayStoreContainer({
         storesToAttend, 
         storesMap, 
         routes, 
+        routeTransactionsMap,
         onAddStore 
     }: RouteDayStoreContainerProps) { 
+
+    /**
+     * Calculate total sales amount for a store from its transactions.
+     * Only counts transactions with operation type "sales".
+     * @param storeId - The ID of the store
+     * @returns Total sales amount or 0 if no transactions
+     */
+    const calculateStoreTotalSales = (storeId: string): number => {
+        const transactions = routeTransactionsMap.get(storeId);
+        if (!transactions || transactions.length === 0) {
+            return 0;
+        }
+
+        let total = 0;
+        for (const transaction of transactions) {
+            for (const description of transaction.transaction_description) {
+                // Only count sales operations
+                if (description.id_transaction_operation_type === DAY_OPERATIONS.sales) {
+                    total += description.price_at_moment * description.amount;
+                }
+            }
+        }
+        return total;
+    };
+
+    /**
+     * Calculate total estimated sales for all stores in this column.
+     */
+    const calculateColumnEstimatedTotal = (): number => {
+        return storesToAttend.reduce((total, store) => {
+            return total + calculateStoreTotalSales(store.id_store);
+        }, 0);
+    };
+
     // State 
     const [inputValue, setInputValue] = useState<string>('');
     const [onlyViewMode, setOnlyViewMode] = useState<boolean>(true);
@@ -273,7 +311,7 @@ export default function RouteDayStoreContainer({
                                     <NumericValueCard
                                         cardName={capitalizeFirstLetterOfEachWord(storeName)}
                                         cardDetails={capitalizeFirstLetterOfEachWord(storeAddress)}
-                                        numericValue={formatNumberAsAccountingCurrency(1000)}/>
+                                        numericValue={formatNumberAsAccountingCurrency(calculateStoreTotalSales(id_store))}/>
                                 </div>
                             )
                         } else {
@@ -290,13 +328,20 @@ export default function RouteDayStoreContainer({
                                         <NumericValueCard 
                                             cardName={capitalizeFirstLetterOfEachWord(storeName)}
                                             cardDetails={capitalizeFirstLetterOfEachWord(storeAddress)}
-                                            numericValue={formatNumberAsAccountingCurrency(1000)}/>
+                                            numericValue={formatNumberAsAccountingCurrency(calculateStoreTotalSales(id_store))}/>
                                     </div>
                                 </DraggableItem> 
                             )
                         }
                     })}
                 </DroppableColumn>
+            </div>
+            {/* Estimated total section */}
+            <div className="flex flex-row justify-end items-center px-4 py-2 bg-system-primary-background">
+                <span className="font-bold text-lg mr-2">Estimado</span>
+                <span className="font-bold text-lg text-green-600">
+                    {formatNumberAsAccountingCurrency(calculateColumnEstimatedTotal())}
+                </span>
             </div>
             <div className="w-full flex flex-row gap-5 justify-center">
                 { deleteMode ? 
@@ -312,8 +357,6 @@ export default function RouteDayStoreContainer({
                         onClick={handleAcceptDeleteStores}>
                             Guardar
                     </Button>
-
-                    
                 }
                 <Button 
                     variant="contained" 
