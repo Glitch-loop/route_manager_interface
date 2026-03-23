@@ -191,7 +191,12 @@ export default function RouteDayContainer({
                 {/* <div className="flex flex-row items-center gap-2">
                     <span className="text-center align-middle">Abrir callout: </span><Switch />
                 </div> */}
-                <RangeDateSelection onRangeChange={handleDateRangeChange} />
+                <RangeDateSelection 
+                    initialDirection="before"
+                    initialSelectedRange="1month"
+                    onRangeChange={handleDateRangeChange}
+
+                    />
                 <div className="flex flex-col justify-center items-center w-full gap-2">
                     <span className="text-base font-bold">Fechas seleccionadas:</span>
                     <div className="flex flex-row justify-center">

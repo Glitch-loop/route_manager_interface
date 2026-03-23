@@ -9,49 +9,85 @@ import dayjs, { Dayjs } from "dayjs";
 
 type RangeOption = "1week" | "2weeks" | "1month" | "3months" | "6months" | "1year";
 type Direction = "before" | "after";
+type RangeDate = { fromDate: Dayjs; toDate: Dayjs }
 
 interface RangeDateSelectionProps {
     onRangeChange?: (fromDate: Dayjs, toDate: Dayjs) => void;
+    initialDirection?: Direction;
+    initialSelectedRange?: RangeOption | "";
 }
 
-export default function RangeDateSelection({ onRangeChange }: RangeDateSelectionProps) {
+const rangeOptions: { value: RangeOption; label: string; days: number }[] = [
+    { value: "1week", label: "1 semana", days: 7 },
+    { value: "2weeks", label: "Quincena", days: 14 },
+    { value: "1month", label: "1 mes", days: 30 },
+    { value: "3months", label: "3 meses", days: 90 },
+    { value: "6months", label: "6 meses", days: 180 },
+    { value: "1year", label: "1 año", days: 365 },
+];
+
+const calculateDateRange = (toDate: Dayjs, fromDate: Dayjs, range: RangeOption, direction: Direction): RangeDate | null => {
+    let newFromDate: Dayjs;
+    let newToDate: Dayjs;
+
+    const option = rangeOptions.find((opt) => opt.value === range);
+    if (!option) return null;
+
+    if (direction === "before") {
+        // Calculate backwards from "to" date
+        newToDate = toDate;
+        newFromDate = toDate.subtract(option.days, "day");
+    } else {
+        // Calculate forward from "from" date
+        newFromDate = fromDate;
+        newToDate = fromDate.add(option.days, "day");
+    }
+
+    return { fromDate: newFromDate, toDate: newToDate };
+}
+
+export default function RangeDateSelection({ 
+    onRangeChange,
+    initialDirection = "before",
+    initialSelectedRange = ""
+}: RangeDateSelectionProps) {
     const [fromDate, setFromDate] = useState<Dayjs>(dayjs());
     const [toDate, setToDate] = useState<Dayjs>(dayjs());
-    const [selectedRange, setSelectedRange] = useState<RangeOption | "">("");
-    const [direction, setDirection] = useState<Direction>("before");
+    const [selectedRange, setSelectedRange] = useState<RangeOption | "">(initialSelectedRange);
+    const [direction, setDirection] = useState<Direction>(initialDirection);
 
     useEffect(() => { 
         if (onRangeChange) {
-            onRangeChange(dayjs(), dayjs());
+            const calculatedRange = calculateDateRange(dayjs(), dayjs(), initialSelectedRange as RangeOption, initialDirection);
+            if (calculatedRange !== null) {
+                setFromDate(calculatedRange.fromDate);
+                setToDate(calculatedRange.toDate);
+                onRangeChange(calculatedRange.fromDate, calculatedRange.toDate);
+            }
         }
     } , [])
 
-    const rangeOptions: { value: RangeOption; label: string; days: number }[] = [
-        { value: "1week", label: "1 semana", days: 7 },
-        { value: "2weeks", label: "Quincena", days: 14 },
-        { value: "1month", label: "1 mes", days: 30 },
-        { value: "3months", label: "3 meses", days: 90 },
-        { value: "6months", label: "6 meses", days: 180 },
-        { value: "1year", label: "1 año", days: 365 },
-    ];
 
-    const handleRangeSelect = (range: RangeOption) => {
+    const handleRangeSelect = (range: RangeOption, dateDirection: Direction) => {
         setSelectedRange(range);
         const option = rangeOptions.find((opt) => opt.value === range);
         if (!option) return;
 
-        let newFromDate: Dayjs;
-        let newToDate: Dayjs;
+        // if (dateDirection === "before") {
+        //     // Calculate backwards from "to" date
+        //     newToDate = toDate;
+        //     newFromDate = toDate.subtract(option.days, "day");
+        // } else {
+        //     // Calculate forward from "from" date
+        //     newFromDate = fromDate;
+        //     newToDate = fromDate.add(option.days, "day");
+        // }
 
-        if (direction === "before") {
-            // Calculate backwards from "to" date
-            newToDate = toDate;
-            newFromDate = toDate.subtract(option.days, "day");
-        } else {
-            // Calculate forward from "from" date
-            newFromDate = fromDate;
-            newToDate = fromDate.add(option.days, "day");
-        }
+        const calculatedRange: RangeDate | null = calculateDateRange(toDate, fromDate, range, dateDirection);
+        if (calculatedRange === null) return;
+
+        const newFromDate: Dayjs = calculatedRange.fromDate;
+        const newToDate: Dayjs = calculatedRange.toDate;
 
         setFromDate(newFromDate);
         setToDate(newToDate);
@@ -94,7 +130,7 @@ export default function RangeDateSelection({ onRangeChange }: RangeDateSelection
                     <FormControl size="small" sx={{ minWidth: 100 }}>
                         <Select
                             value={selectedRange}
-                            onChange={(e) => handleRangeSelect(e.target.value as RangeOption)}
+                            onChange={(e) => handleRangeSelect(e.target.value as RangeOption, direction)}
                             displayEmpty
                             variant="standard"
                             disableUnderline
