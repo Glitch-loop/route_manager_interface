@@ -18,11 +18,14 @@ import { DAYS } from "@/core/constants/Days";
 import { useState } from "react";
 import { Autocomplete, Button, Collapse, Dialog, IconButton, Switch, TextField, Tooltip } from "@mui/material";
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
+import ColorPicker from "@/shared/components/ColorPicker/ColorPicker";
+import { RouteDayEffect } from "../../types/types";
 
 
 type RouteDayStoreContainerProps = {
     idRouteDayColumn: string;
     storesToAttend: RouteDayStoreDTO[];
+    routeDayEffectsMap: Map<string, RouteDayEffect>; // Map of id_route_day to its effect (showStores and assignedColor)
     storesMap: Map<string, StoreDTO>;
     routes: RouteDTO[]; // List of routes to find where each route day belongs
     routeTransactionsMap: Map<string, RouteTransactionDTO[]>; // Map of store ID to list of route transactions
@@ -31,13 +34,16 @@ type RouteDayStoreContainerProps = {
     onCancelRouteModification: (idRouteDay: string) => void; // Callback when user cancels modifications
     onSaveRouteModification: (idRouteDay: string) => void;
     onResetRouteModification: (idRouteDay: string) => void;
+    onShowInformation: (idRouteDay: string, state: boolean) => void;
+    onSelectRouteDayColor: (idRouteDay: string, color: string) => void;
 }
 
 type RouteDayContainerActions = "reset" | "remove" | "save" | "close";
 
 export default function RouteDayStoreContainer({ 
         idRouteDayColumn, 
-        storesToAttend, 
+        storesToAttend,
+        routeDayEffectsMap, 
         storesMap, 
         routes, 
         routeTransactionsMap,
@@ -46,6 +52,8 @@ export default function RouteDayStoreContainer({
         onCancelRouteModification,
         onSaveRouteModification,
         onResetRouteModification,
+        onShowInformation,
+        onSelectRouteDayColor,
     }: RouteDayStoreContainerProps) { 
 
     /**
@@ -100,7 +108,8 @@ export default function RouteDayStoreContainer({
     const [showInformation, setShowInformation] = useState<boolean>(true);
     const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">("name");
     const [menuExpanded, setMenuExpanded] = useState<boolean>(true);
-    
+    const [colorSelected, setColorSelected] = useState<string>(routeDayEffectsMap.get(idRouteDayColumn)?.assignedColor ?? "#000000");
+
     // Selected states
     const [selectedStores, setSelectedStores] = useState<Set<string>>(new Set()); // Track selected stores for deletion
     const [selectAll, setSelectAll] = useState<boolean>(false);
@@ -216,6 +225,16 @@ export default function RouteDayStoreContainer({
         setDialogAction(null);
     }
 
+    const handleShowInformation = (idRouteDay: string, state: boolean) => {
+        onShowInformation(idRouteDay, state);
+        setShowInformation(state);
+    }
+    
+    const handleSelectRouteDayColor = (idRouteDay: string, color: string) => {
+        onSelectRouteDayColor(idRouteDay, color);
+        setColorSelected(color);
+    }
+
     return (
         <div className="min-w-[400px] max-w-[550px] h-full flex flex-col bg-system-primary-background rounded-lg">
             <Dialog open={dialogAction !== null} onClose={() => handleCloseDeleteDialog()}>
@@ -306,12 +325,21 @@ export default function RouteDayStoreContainer({
                                         width: 40,
                                         height: 40,
                                     }}
-                                    onClick={() => setShowInformation(!showInformation)}
+                                    onClick={() => handleShowInformation(idRouteDayColumn, !showInformation)}
                                     className="h-fit my-auto shadow-md"
                                     size="small">
                                         
                                     {showInformation ? <Visibility /> : <VisibilityOff />}
                                 </IconButton>
+                        </Tooltip>
+                        <Tooltip 
+                            title={"Cambiar color del día de ruta"}
+                            placement="top"
+                            enterDelay={300}
+                            arrow>
+                                <ColorPicker 
+                                    initialColor={colorSelected}
+                                    onChange={(color) => handleSelectRouteDayColor(idRouteDayColumn, color)} />
                         </Tooltip>
                     </div>
                     <div className="flex basis-1/2 justify-end mr-3">

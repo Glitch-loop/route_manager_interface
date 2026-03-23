@@ -11,6 +11,7 @@ import RouteDTO from "@/application/dto/RouteDTO";
 import RouteTransactionDTO from "@/application/dto/RouteTransactionDTO";
 import { generateUUIDv4 } from "@/utils/generalUtils";
 import { Dayjs } from "dayjs";
+import { RouteDayEffect } from "../../types/types";
 
 // Extended type that adds 'id' property for dnd-kit compatibility
 type DraggableRouteDayStore = RouteDayStoreDTO & { id: string };
@@ -19,22 +20,28 @@ type DraggableRouteDayStore = RouteDayStoreDTO & { id: string };
 type RouteDayContainerProps = {
     routesDay: RouteDayDTO[];
     storeMap: Map<string, StoreDTO>; // id_store -> StoreDTO
+    routeDayEffectsMap: Map<string, RouteDayEffect>; // id_route_day -> RouteDayEffect (for UI state like showStores and assignedColor)
     routes: RouteDTO[]; // List of routes to find where each route day belongs
     routeTransactionsMap: Map<string, RouteTransactionDTO[]>; // Map of store ID to list of route transactions
     onRequireRouteTransactions: (startDate: Date, endDate: Date, idStores: string[]) => void; // Callback when user clicks "Aplicar fechas"
     onSaveRouteModification: (idRouteDayColumn: string, storesInRouteDay: RouteDayStoreDTO[]) => void; // Callback when user saves route modifications
     oncloseRouteDay: (idRouteDay: string) => void; // Callback when user wants to close a route day (remove it from the view)
+    onShowInformation: (idRouteDay: string, state: boolean) => void;
+    onSelectRouteDayColor: (idRouteDay: string, color: string) => void;
 }
 
 
 export default function RouteDayContainer({ 
         routesDay,
         storeMap, 
+        routeDayEffectsMap,
         routes,
         routeTransactionsMap,
         onRequireRouteTransactions,
         onSaveRouteModification,
-        oncloseRouteDay
+        oncloseRouteDay, 
+        onShowInformation,
+        onSelectRouteDayColor,
     }: 
     RouteDayContainerProps) {
     
@@ -225,11 +232,14 @@ export default function RouteDayContainer({
                             storesMap={storeMap} 
                             routes={routes}
                             routeTransactionsMap={routeTransactionsMap}
+                            routeDayEffectsMap={routeDayEffectsMap}
                             onAddStore={handleAddNewStore}
                             onRemoveStores={handleRemoveStores}
                             onCancelRouteModification={handleCancelRouteModification}
                             onSaveRouteModification={handleSaveRouteModification}
                             onResetRouteModification={handleResetRouteModification}
+                            onShowInformation={onShowInformation}
+                            onSelectRouteDayColor={onSelectRouteDayColor}
                         />
                     ))}
                 </div>

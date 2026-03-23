@@ -3,7 +3,7 @@
 import 'reflect-metadata';
 
 // Libraries
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Button, ButtonGroup, Collapse, Dialog, IconButton, Tooltip } from "@mui/material";
 
 // DTOs
@@ -37,12 +37,19 @@ import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer"
 // Utils
 import { getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
 
-import { IMapMarker } from '@/interfaces/interfaces';
+import { IMapMarker } from '@/shared/components/MarkerMap/interfaces/interfaces';
+import { coordinates } from '@/shared/components/MarkerMap/types/types';
+import MarkerMap from '@/shared/components/MarkerMap/MarkerMap';
+import ColorPicker from '@/shared/components/ColorPicker/ColorPicker';
+import { generateRandomColor, getGradientColor } from '@/shared/utils/styles/utils';
+
+import { RouteDayEffect } from './types/types';
 
 
 
 
 export default function Page() {
+    // Collapse menu states
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
     const [topPanelOpen, setTopPanelOpen] = useState(false);
@@ -50,14 +57,17 @@ export default function Page() {
     const [selectedStore, setSelectedStore] = useState<StoreDTO | null>(null);
     const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(null);
 
+    // Application states
     const [routes, setRoutes] = useState<RouteDTO[]>([]);
     const [stores, setStores] = useState<StoreDTO[]>([]);
     const [mapStores, setMapStores] = useState<Map<string, StoreDTO>>(new Map()); // Map of store ID to StoreDTO for quick access
     const [mapRouteTransactionByStore, setMapRouteTransactionByStore] = useState<Map<string, RouteTransactionDTO[]>>(new Map()); // Map of store ID to list of route transactions
-    
     const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]);
+    const [effectSelectedRouteDay, setEffectSelectedRouteDay] = useState<Map<string, RouteDayEffect>>(new Map());
     const [checkedRouteDays, setCheckedRouteDays] = useState<Record<string, boolean>>({});
     const [pendingUnselectRouteDayId, setPendingUnselectRouteDayId] = useState<string | null>(null);
+    const [selectedMapMarker, setSelectedMapMarker] = useState<IMapMarker | null>(null);
+
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -70,6 +80,65 @@ export default function Page() {
     ]);
 
     const [administrationView, setAdministrationView] = useState(1); // 1 for Routes, 2 for Stores
+
+    // Generate markers from selected route days
+    const mapMarkers = useMemo<IMapMarker[]>(() => {
+        const markers: IMapMarker[] = [];
+        
+        selectedRouteDay.forEach((routeDay) => {
+            const effect = effectSelectedRouteDay.get(routeDay.id_route_day);
+            
+            // Skip if showStores is false
+            if (!effect?.showStores) return;
+            
+            const baseColor = effect.assignedColor;
+            const totalStores = routeDay.stores.length;
+            
+            routeDay.stores.forEach((routeDayStore, storeIndex) => {
+                const store = mapStores.get(routeDayStore.id_store);
+                if (store && store.latitude && store.longitude) {
+                    const storeName = store.store_name ?? 'Sin nombre';
+                    const storeAddress = `${store.street} ${store.ext_number ?? ''}, ${store.colony}`;
+                    
+                    // Calculate gradient color: first store is lightest, last store is darkest
+                    const gradientColor = totalStores > 1 
+                        ? getGradientColor(baseColor, totalStores - 1 - storeIndex, totalStores) 
+                        : baseColor;
+                    
+                    markers.push({
+                        id_marker: `${routeDay.id_route_day}-${store.id_store}`,
+                        id_item: store.id_store,
+                        id_group: routeDay.id_route_day,
+                        color_item: gradientColor,
+                        latitude: store.latitude,
+                        longitude: store.longitude,
+                        hoverComponent: (
+                            <div className="p-2">
+                                <p className="font-semibold">{storeName}</p>
+                                <p className="text-sm text-gray-600">{storeAddress}</p>
+                            </div>
+                        ),
+                        clickComponent: (
+                            <div className="p-3 min-w-[200px]">
+                                <h4 className="font-bold text-lg mb-2">{storeName}</h4>
+                                <p className="text-sm text-gray-600 mb-1">{storeAddress}</p>
+                                <p className="text-sm text-gray-500">CP: {store.postal_code}</p>
+                                {store.address_reference && (
+                                    <p className="text-sm text-gray-500 mt-1">Ref: {store.address_reference}</p>
+                                )}
+                            </div>
+                        ),
+                    });
+                }
+            });
+        });
+        
+        return markers;
+    }, [selectedRouteDay, mapStores, effectSelectedRouteDay]);
+
+    const handleCoordSelected = (coords: coordinates) => {
+        console.log('Coordinates selected:', coords);
+    };
 
 
     useEffect(() => { fetchScreenInformation(); }, [])
@@ -88,7 +157,6 @@ export default function Page() {
         retrieveRouteInformationQuery.execute(routeIds)
         .then((routesWithInformation:RouteDTO[]) => {
             setRoutes(routesWithInformation);
-
         });
 
 
@@ -122,11 +190,23 @@ export default function Page() {
 
     const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
         if(state) { // Add route day because it was selected
+            // Check if already selected to avoid duplication
+            const alreadySelected = selectedRouteDay.some(rd => rd.id_route_day === routeDayId);
+            if (alreadySelected) return;
+            
             const routeDayFound:RouteDayDTO|null = getRouteDayFromRoutesList(routes, routeDayId);
             
             if (routeDayFound !== null) {
                 const routeDayToAdd = {...routeDayFound, stores: routeDayFound.stores.map(store => ({...store, selected: state}))};
                 setSelectedRouteDay([...selectedRouteDay, routeDayToAdd]);
+                setEffectSelectedRouteDay(prev => {
+                    const newMap = new Map(prev);
+                    newMap.set(routeDayId, {
+                        showStores: true,
+                        assignedColor: generateRandomColor()
+                    });
+                    return newMap;
+                });
             }
         } else { // Show confirmation dialog before unselecting
             setPendingUnselectRouteDayId(routeDayId);
@@ -143,6 +223,13 @@ export default function Page() {
                 const newCheckedDays = { ...prev };
                 delete newCheckedDays[pendingUnselectRouteDayId];
                 return newCheckedDays;
+            });
+
+            // Remove effects
+            setEffectSelectedRouteDay(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(pendingUnselectRouteDayId);
+                return newMap;
             });
         }
         setPendingUnselectRouteDayId(null);
@@ -195,6 +282,20 @@ export default function Page() {
             delete newCheckedDays[idRouteDay];
             return newCheckedDays;
         });
+    }
+
+    const handleShowInformation = (idRouteDay: string, state: boolean) => {
+        if(effectSelectedRouteDay.has(idRouteDay)) {
+            effectSelectedRouteDay.get(idRouteDay)!.showStores = state;
+            setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
+        }
+    }
+
+    const handleSelectRouteDayColor = (idRouteDay: string, color: string) => {
+        if(effectSelectedRouteDay.has(idRouteDay)) {
+            effectSelectedRouteDay.get(idRouteDay)!.assignedColor = color;
+            setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
+        }
     }
 
     return (
@@ -337,10 +438,10 @@ export default function Page() {
                             onCheckedDaysChange={setCheckedRouteDays}
                         />
                     </div>
-                    <RouteMap 
-                        markers={[]}
-                        temporalMarkers={[]}
-                        onSelectStore={() => {}}
+                    <MarkerMap 
+                        markers={mapMarkers}
+                        selectedMarker={selectedMapMarker}
+                        coordSelected={handleCoordSelected}
                     />
                 </div>
 
@@ -366,11 +467,14 @@ export default function Page() {
                             <RouteDayContainer 
                                 routesDay={selectedRouteDay} 
                                 storeMap={mapStores}
+                                routeDayEffectsMap={effectSelectedRouteDay}
                                 routes={routes}
                                 routeTransactionsMap={mapRouteTransactionByStore}
                                 onRequireRouteTransactions={handleRetrieveRouteTransactions}
                                 onSaveRouteModification={handleSaveRouteModification}
                                 oncloseRouteDay={handleCloseRouteDay}
+                                onShowInformation={handleShowInformation}
+                                onSelectRouteDayColor={handleSelectRouteDayColor}
                             />
                         </div>
                     </Collapse>

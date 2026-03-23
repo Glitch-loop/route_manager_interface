@@ -375,7 +375,6 @@ export default function RouteExpandMenu({
                                             </Tooltip>
                                         )
                                     }
-                                    
                                     )}
                                 </MenuList>
                             </ClickAwayListener>
