@@ -162,7 +162,6 @@ export default function RouteDayContainer({
         }));
 
         // TODO: Call parent save callback here if needed
-        console.log(`Modifications saved for route day: ${idRouteDay}`);
         await onSaveRouteModification(idRouteDay, updatedStoresInRouteDay);
         
         setCurrentRoutesDay((prev) => ({

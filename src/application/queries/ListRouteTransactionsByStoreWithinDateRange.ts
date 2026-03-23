@@ -30,7 +30,7 @@ export default class ListRouteTransactionsByStoreWithinDateRange {
     async execute(storesId: string[], startDate: Date, endDate: Date): Promise<Map<string, RouteTransactionDTO[]>> {
         // 1. Create result map
         const resultMap = new Map<string, RouteTransactionDTO[]>();
-        console.log(storesId)
+
         // 2. Retrieve route transactions for the given store IDs within the date range
         const transactions = await this.routeTransactionRepo.listRouteTransactionByIdStore(
             storesId,

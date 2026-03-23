@@ -35,6 +35,8 @@ interface RoutesExpandMenuProps {
     onDaySelect?: (routesDaySelected: string) => void;
     onDaySelectCheckbox?: (routesDaySelected: string, selected: boolean) => void;
     showDayCheckbox?: boolean;
+    checkedDays?: Record<string, boolean>; // Controlled state for checked days
+    onCheckedDaysChange?: (checkedDays: Record<string, boolean>) => void; // Callback when checked days change
 }
 
 export default function RouteExpandMenu({ 
@@ -46,12 +48,13 @@ export default function RouteExpandMenu({
     onDaySelect,
     onDaySelectCheckbox,
     showDayCheckbox = false,
+    checkedDays = {},
+    onCheckedDaysChange,
 }: RoutesExpandMenuProps) {
     
     // States
     const [submenuAnchorEl, setSubmenuAnchorEl] = React.useState<null | HTMLElement>(null);
     const [activeRoute, setActiveRoute] = React.useState<RouteDTO | null>(null);
-    const [checkedDays, setCheckedDays] = React.useState<Record<string, boolean>>({});
     const [hoveredDayTooltip, setHoveredDayTooltip] = React.useState<string | null>(null);
     
     // Refs
@@ -153,20 +156,19 @@ export default function RouteExpandMenu({
     const handleCheckboxChange = (dayId: string, event: React.MouseEvent) => {
         event.stopPropagation();
         
-        // Determine selected days.
-        setCheckedDays(prev => ({
-            ...prev,
-            [dayId]: !prev[dayId]
-        }));
-        console.log("handleCheckboxChange: ", dayId)
+        const newCheckedState = !checkedDays[dayId];
+        const newCheckedDays = {
+            ...checkedDays,
+            [dayId]: newCheckedState
+        };
+
+        // Notify parent of state change
+        if (onCheckedDaysChange) {
+            onCheckedDaysChange(newCheckedDays);
+        }
+
         if (onDaySelectCheckbox !== undefined) {
-            console.log("lift state")
-            if (checkedDays[dayId]) {
-                onDaySelectCheckbox(dayId, !checkedDays[dayId]); // If it was previously selected, now, determine the state
-            } else {
-                console.log("first time selection: ", dayId)
-                onDaySelectCheckbox(dayId, true); // First time selection is always true
-            }
+            onDaySelectCheckbox(dayId, newCheckedState);
         }
     };
 
@@ -189,16 +191,20 @@ export default function RouteExpandMenu({
 
     const handleDayClick = (dayId: string) => {
         if (showDayCheckbox) {
-            setCheckedDays(prev => ({
-                ...prev,
-                [dayId]: !prev[dayId]
-            }));
+            const newCheckedState = !checkedDays[dayId];
+            const newCheckedDays = {
+                ...checkedDays,
+                [dayId]: newCheckedState
+            };
+
+            // Notify parent of state change
+            if (onCheckedDaysChange) {
+                onCheckedDaysChange(newCheckedDays);
+            }
+
             if (onDaySelectCheckbox !== undefined) {
-                if (checkedDays[dayId]) {
-                    onDaySelectCheckbox(dayId, !checkedDays[dayId]); // If it was previously selected, now, determine the state
-                } else {
-                    onDaySelectCheckbox(dayId, true); // First time selection is always true
-                }
+                console.log(`Day ${dayId} checkbox clicked. New state: ${newCheckedState}`);
+                onDaySelectCheckbox(dayId, newCheckedState);
             }
         } else {
             if (activeRoute && onDaySelect) {

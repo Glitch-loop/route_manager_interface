@@ -36,6 +36,8 @@ import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDate
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
 import RouteMap from "@/components/general/mapComponent/RouteMap";
 import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer";
+
+// Utils
 import { getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
 
 export default function Page() {
@@ -52,6 +54,7 @@ export default function Page() {
     const [mapRouteTransactionByStore, setMapRouteTransactionByStore] = useState<Map<string, RouteTransactionDTO[]>>(new Map()); // Map of store ID to list of route transactions
     
     const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]);
+    const [checkedRouteDays, setCheckedRouteDays] = useState<Record<string, boolean>>({});
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -115,13 +118,15 @@ export default function Page() {
     const handleAdministrationView = (option: number) => { setAdministrationView(option); }
 
     const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
-        const routeDaySelected:RouteDayDTO | undefined = selectedRouteDay.find(routeDay => routeDay.id_route_day === routeDayId);
-        if (routeDaySelected === undefined && routes !== null) {
+        if(state) { // Add route day because it was selected
             const routeDayFound:RouteDayDTO|null = getRouteDayFromRoutesList(routes, routeDayId);
+            
             if (routeDayFound !== null) {
                 const routeDayToAdd = {...routeDayFound, stores: routeDayFound.stores.map(store => ({...store, selected: state}))};
                 setSelectedRouteDay([...selectedRouteDay, routeDayToAdd]);
             }
+        } else { // Remove route day because it was unselected
+            setSelectedRouteDay(selectedRouteDay.filter(routeDay => routeDay.id_route_day !== routeDayId));
         }
     }
 
@@ -132,16 +137,8 @@ export default function Page() {
         );
         
         await  listTransactionsQuery.execute(idStores, startDate, endDate)
-        .then((transactionsMap: Map<string, RouteTransactionDTO[]>) => {
-            transactionsMap.forEach((transactions, storeId) => {
-                console.log(`Store ID: ${storeId}`);
-                transactions.forEach(transaction => {
-                    console.log(`  Transaction: ${transaction}`);
-                }
-                );
-            });
-            setMapRouteTransactionByStore(transactionsMap);
-        })
+        .then((transactionsMap: Map<string, RouteTransactionDTO[]>) => { 
+            setMapRouteTransactionByStore(transactionsMap); })
         .catch(error => { console.error("Error retrieving route transactions: ", error)});
     }
 
@@ -160,7 +157,15 @@ export default function Page() {
     }
 
     const handleCloseRouteDay = (idRouteDay: string) => {
+        // Remove route day from selectedRouteDay
         setSelectedRouteDay(selectedRouteDay.filter(routeDay => routeDay.id_route_day !== idRouteDay));
+
+        // Remove from checkedRouteDays
+        setCheckedRouteDays(prev => {
+            const newCheckedDays = { ...prev };
+            delete newCheckedDays[idRouteDay];
+            return newCheckedDays;
+        });
     }
 
     return (
@@ -230,7 +235,6 @@ export default function Page() {
                     <Collapse in={topPanelOpen}>
                         <div className="w-full bg-green-900">
                             <h1 className="text-white text-2xl font-bold p-4">Search content</h1>
-                            {/* <RangeDateSelection /> */}
                         </div>
                     </Collapse>
                     {/* Toggle button */}
@@ -277,6 +281,8 @@ export default function Page() {
                             onDaySelect={() => {}}
                             onDaySelectCheckbox={handleRouteDaySelect}
                             showDayCheckbox={true}
+                            checkedDays={checkedRouteDays}
+                            onCheckedDaysChange={setCheckedRouteDays}
                         />
                     </div>
                     <RouteMap 
