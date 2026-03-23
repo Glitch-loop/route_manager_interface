@@ -215,7 +215,7 @@ export default function RouteDayStoreContainer({
     }
 
     return (
-        <div className="min-w-[280px] flex flex-col bg-system-primary-background rounded-t-lg">
+        <div className="min-w-[280px] max-w-[400px] flex flex-col bg-system-primary-background rounded-lg">
             <Dialog open={dialogAction !== null} onClose={() => handleCloseDeleteDialog()}>
                 <div className="p-3 flex flex-col gap-2 justify-center items-center">
                     <h3 className="text-center font-bold text-lg">¿Estas seguro de hacer la acción?</h3>
@@ -468,7 +468,8 @@ export default function RouteDayStoreContainer({
                     })}
                 </DroppableColumn>
             </div>
-            <div className="w-full flex flex-row mt-3 gap-5 justify-center">
+            {/* Actions buttons bar */}
+            <div className="bg-system-primary-background w-full flex flex-row gap-5 justify-center">
                 { deleteMode ? 
                     <Button
                         variant="contained" 

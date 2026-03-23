@@ -126,8 +126,7 @@ export default function Page() {
     }
 
     const handleRetrieveRouteTransactions = async (startDate: Date, endDate: Date, idStores: string[]) => {
-        console.log("Consult route transactions")
-        // Inject and execute the query
+        // TODO: Optimize logic to avoid retrieving transactions that are already in the map and are within the date range.
         const listTransactionsQuery = di_container.resolve<ListRouteTransactionsByStoreWithinDateRange>(
             ListRouteTransactionsByStoreWithinDateRange
         );
