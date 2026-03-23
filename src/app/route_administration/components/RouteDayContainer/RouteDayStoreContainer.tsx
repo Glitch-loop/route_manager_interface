@@ -16,7 +16,8 @@ import { LockOutline, LockOpen, VisibilityOff, Visibility, DeleteOutline, Remove
 // Core - constants
 import { DAYS } from "@/core/constants/Days";
 import { useState } from "react";
-import { Autocomplete, Button, Dialog, IconButton, Switch, TextField, Tooltip } from "@mui/material";
+import { Autocomplete, Button, Collapse, Dialog, IconButton, Switch, TextField, Tooltip } from "@mui/material";
+import { ExpandMore, ExpandLess } from "@mui/icons-material";
 
 
 type RouteDayStoreContainerProps = {
@@ -98,6 +99,7 @@ export default function RouteDayStoreContainer({
     const [onlyViewMode, setOnlyViewMode] = useState<boolean>(true);
     const [showInformation, setShowInformation] = useState<boolean>(true);
     const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">("name");
+    const [menuExpanded, setMenuExpanded] = useState<boolean>(true);
     
     // Selected states
     const [selectedStores, setSelectedStores] = useState<Set<string>>(new Set()); // Track selected stores for deletion
@@ -215,7 +217,7 @@ export default function RouteDayStoreContainer({
     }
 
     return (
-        <div className="min-w-[280px] max-w-[400px] flex flex-col bg-system-primary-background rounded-lg">
+        <div className="min-w-[400px] max-w-[550px] h-full flex flex-col bg-system-primary-background rounded-lg">
             <Dialog open={dialogAction !== null} onClose={() => handleCloseDeleteDialog()}>
                 <div className="p-3 flex flex-col gap-2 justify-center items-center">
                     <h3 className="text-center font-bold text-lg">¿Estas seguro de hacer la acción?</h3>
@@ -336,7 +338,17 @@ export default function RouteDayStoreContainer({
                         </Tooltip>
                     </div>
                 </div>
-                {/* Menu */}
+                {/* Menu toggle button */}
+                <div 
+                    className="flex flex-row items-center justify-between cursor-pointer hover:bg-gray-100 rounded px-2 py-1"
+                    onClick={() => setMenuExpanded(!menuExpanded)}>
+                    <span className="font-semibold text-sm text-gray-600">
+                        {deleteMode ? "Opciones de eliminación" : "Opciones de cliente"}
+                    </span>
+                    {menuExpanded ? <ExpandLess /> : <ExpandMore />}
+                </div>
+                {/* Menu - Collapsible */}
+                <Collapse in={menuExpanded}>
                 <div className="flex flex-row w-full justify-center items-center gap-2">
                     { deleteMode ?
                         <div className="flex flex-row w-full justify-between">
@@ -404,6 +416,7 @@ export default function RouteDayStoreContainer({
                         </div>            
                     }
                 </div>
+                </Collapse>
             </div>
             {/* Estimated total section */}
             <div className="flex flex-row justify-end items-center px-4 py-2 ">
@@ -468,8 +481,8 @@ export default function RouteDayStoreContainer({
                     })}
                 </DroppableColumn>
             </div>
-            {/* Actions buttons bar */}
-            <div className="bg-system-primary-background w-full flex flex-row gap-5 justify-center">
+            {/* Actions buttons bar - Always visible */}
+            <div className="bg-system-primary-background w-full flex flex-row gap-5 justify-center py-2 flex-shrink-0">
                 { deleteMode ? 
                     <Button
                         variant="contained" 

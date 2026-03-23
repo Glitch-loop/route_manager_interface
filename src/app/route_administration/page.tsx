@@ -4,7 +4,7 @@ import 'reflect-metadata';
 
 // Libraries
 import { useEffect, useState } from "react";
-import { Button, ButtonGroup, Collapse, IconButton } from "@mui/material";
+import { Button, ButtonGroup, Collapse, IconButton, Tooltip } from "@mui/material";
 
 // DTOs
 import UserDTO from "@/application/dto/UserDTO";
@@ -39,9 +39,9 @@ import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer"
 import { getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
 
 export default function Page() {
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
     const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
-    const [topPanelOpen, setTopPanelOpen] = useState(true);
+    const [topPanelOpen, setTopPanelOpen] = useState(false);
     const [selectedRoute, setSelectedRoute] = useState<RouteDTO | null>(null);
     const [selectedStore, setSelectedStore] = useState<StoreDTO | null>(null);
     const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(null);
@@ -208,37 +208,49 @@ export default function Page() {
                 </Collapse>
                 {/* Toggle button - stays at right edge of sidebar area */}
                 <div className="absolute -right-10 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full">
-                    <IconButton
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                        className="h-fit my-auto bg-color-info-primary shadow-md"
-                        size="small">
-                        {sidebarOpen ? <ChevronLeft /> : <ChevronRight />}
-                    </IconButton>
+                    <Tooltip 
+                        title={"Administracion tiendas / rutas"}
+                        placement="right"
+                        enterDelay={300}
+                        arrow>
+                        <IconButton
+                            onClick={() => setSidebarOpen(!sidebarOpen)}
+                            className="h-fit my-auto bg-color-info-primary shadow-md"
+                            size="small">
+                            {sidebarOpen ? <ChevronLeft /> : <ChevronRight />}
+                        </IconButton>
+                    </Tooltip>
                 </div>
             </div>
 
             {/* Main content */}
-            <div className="flex flex-col flex-1">
-                {/* Search content */}
-                <div className="relative w-full">
+            <div className="flex flex-col flex-1 h-full">
+                {/* Search content - collapses to top */}
+                <div className="relative w-full flex-shrink-0">
                     <Collapse in={topPanelOpen}>
-                        <div className="w-full h-1/6 bg-green-900">
+                        <div className="w-full bg-green-900">
                             <h1 className="text-white text-2xl font-bold p-4">Search content</h1>
                             {/* <RangeDateSelection /> */}
                         </div>
                     </Collapse>
                     {/* Toggle button */}
-                    <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
-                        <IconButton
-                            onClick={() => setTopPanelOpen(!topPanelOpen)}
-                            size="small"
-                        >
-                            {topPanelOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-                        </IconButton>
+                    <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
+                        <Tooltip 
+                            title={"Buscar clientes"}
+                            placement="bottom"
+                            enterDelay={300}
+                            arrow>
+                                <IconButton
+                                    onClick={() => setTopPanelOpen(!topPanelOpen)}
+                                    size="small"
+                                >
+                                    {topPanelOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
+                                </IconButton>
+                        </Tooltip>
                     </div>
                 </div>
 
-                {/* Map content */}
+                {/* Map content - takes remaining space */}
                 <div className="relative w-full flex-1 bg-blue-900">
                     {/* Button that displays the menu */}
                     <div className="absolute left-48 top-2 z-10">
@@ -273,20 +285,26 @@ export default function Page() {
                         onSelectStore={() => {}}
                     />
                 </div>
-                
-                {/* Route organization */}
-                <div className="relative w-full">
+
+                {/* Route organization - collapses to bottom */}
+                <div className="relative w-full flex-shrink-0">
                     {/* Toggle button */}
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
-                        <IconButton
-                            onClick={() => setBottomPanelOpen(!bottomPanelOpen)}
-                            size="small"
-                        >
-                            {bottomPanelOpen ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
-                        </IconButton>
+                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
+                        <Tooltip 
+                            title={"Organizar ruta"}
+                            placement="top"
+                            enterDelay={300}
+                            arrow>
+                            <IconButton
+                                onClick={() => setBottomPanelOpen(!bottomPanelOpen)}
+                                size="small"
+                            >
+                                {bottomPanelOpen ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
+                            </IconButton>
+                        </Tooltip>
                     </div>
                     <Collapse in={bottomPanelOpen}>
-                        <div className="w-full h-96">
+                        <div className="w-full h-[50vh]">
                             <RouteDayContainer 
                                 routesDay={selectedRouteDay} 
                                 storeMap={mapStores}
