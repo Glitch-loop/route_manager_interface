@@ -21,7 +21,9 @@ type RouteDayContainerProps = {
     storeMap: Map<string, StoreDTO>; // id_store -> StoreDTO
     routes: RouteDTO[]; // List of routes to find where each route day belongs
     routeTransactionsMap: Map<string, RouteTransactionDTO[]>; // Map of store ID to list of route transactions
-    onApplyDateRange: (startDate: Date, endDate: Date) => void; // Callback when user clicks "Aplicar fechas"
+    onRequireRouteTransactions: (startDate: Date, endDate: Date, idStores: string[]) => void; // Callback when user clicks "Aplicar fechas"
+    onSaveRouteModification: (idRouteDayColumn: string, storesInRouteDay: RouteDayStoreDTO[]) => void; // Callback when user saves route modifications
+    oncloseRouteDay: (idRouteDay: string) => void; // Callback when user wants to close a route day (remove it from the view)
 }
 
 
@@ -30,7 +32,9 @@ export default function RouteDayContainer({
         storeMap, 
         routes,
         routeTransactionsMap,
-        onApplyDateRange
+        onRequireRouteTransactions,
+        onSaveRouteModification,
+        oncloseRouteDay
     }: 
     RouteDayContainerProps) {
     
@@ -38,9 +42,7 @@ export default function RouteDayContainer({
     // Key: id_route_day, Value: array with 'id' property for dnd-kit compatibility
     const [currentRoutesDay, setCurrentRoutesDay] = useState<Record<string, DraggableRouteDayStore[]>>({});
 
-    // Days selected
-    const [selectedDays, setSelectedDays] = useState<string[]>([]);
-
+    // Related to route transactions
     const [startDateSelected, setStartDateSelected] = useState<Dayjs | null>(null);
     const [endDateSelected, setEndDateSelected] = useState<Dayjs | null>(null);
 
@@ -58,6 +60,10 @@ export default function RouteDayContainer({
             initialState[id_route_day] = draggableStores;
         });
     
+        if (startDateSelected !== null && endDateSelected !== null) {
+            handleApplyDateRange(startDateSelected, endDateSelected, initialState);
+        }
+
         setCurrentRoutesDay(initialState);
     }, [routesDay]);
 
@@ -136,31 +142,34 @@ export default function RouteDayContainer({
             }
         }
         setCurrentRoutesDay(newCurrentRoutesDay);
+
+        oncloseRouteDay(idRouteDay);
     }
 
     /**
      * Handle store modification save for a specific route day.
      * Updates positions based on current order.
      */
-    const handleStoreModification = (idRouteDay: string) => {
+    const handleSaveRouteModification = async (idRouteDay: string) => {
         // Update positions based on current array order
-        setCurrentRoutesDay((prev) => {
-            const stores = prev[idRouteDay];
-            if (!stores) return prev;
-            
-            const updatedStores = stores.map((store, index) => ({
-                ...store,
-                position_in_route: index,
-            }));
-            
-            return {
-                ...prev,
-                [idRouteDay]: updatedStores,
-            };
-        });
+        const storesInRouteDay = currentRoutesDay[idRouteDay];
         
+        if (!storesInRouteDay) return;
+        
+        const updatedStoresInRouteDay = storesInRouteDay.map((store, index) => ({
+            ...store,
+            position_in_route: index,
+        }));
+
         // TODO: Call parent save callback here if needed
         console.log(`Modifications saved for route day: ${idRouteDay}`);
+        await onSaveRouteModification(idRouteDay, updatedStoresInRouteDay);
+        
+        setCurrentRoutesDay((prev) => ({
+            ...prev,
+            [idRouteDay]: updatedStoresInRouteDay,
+        }));
+        
     };
 
     const handleDateRangeChange = (start: Dayjs | null, end: Dayjs | null) => {
@@ -168,10 +177,10 @@ export default function RouteDayContainer({
         setEndDateSelected(end);
     }
 
-    const handleApplyDateRange = () => {
-        if (startDateSelected && endDateSelected) {
+    const handleApplyDateRange = (startDate: Dayjs | null, endDate: Dayjs | null, routeDaysToFindRouteTransactions: Record<string, DraggableRouteDayStore[]>) => {
+        if (startDate && endDate) {
             // Convert Dayjs to Date and call the parent callback
-            onApplyDateRange(startDateSelected.toDate(), endDateSelected.toDate());
+            onRequireRouteTransactions(startDate.toDate(), endDate.toDate(), Object.values(routeDaysToFindRouteTransactions).flat().map(store => store.id_store));
         }
     }
 
@@ -194,7 +203,7 @@ export default function RouteDayContainer({
                         variant="contained"
                         color="primary"
                         size="small"
-                        onClick={handleApplyDateRange}>
+                        onClick={() => handleApplyDateRange(startDateSelected, endDateSelected, currentRoutesDay)}>
                             Aplicar fechas
                     </Button>
                 </div>
@@ -215,7 +224,8 @@ export default function RouteDayContainer({
                             onAddStore={handleAddNewStore}
                             onRemoveStores={handleRemoveStores}
                             onCancelRouteModification={handleCancelRouteModification}
-                            onStoreModification={handleStoreModification}
+                            onSaveRouteModification={handleSaveRouteModification}
+                            onResetRouteModification={handleResetRouteModification}
                         />
                     ))}
                 </div>

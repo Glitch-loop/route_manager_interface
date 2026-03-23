@@ -28,8 +28,11 @@ type RouteDayStoreContainerProps = {
     onAddStore: (idRouteDay: string, idStore: string) => void;
     onRemoveStores: (idsRouteDayStore: string[]) => void; // Callback to remove stores from route day, receives list of id_route_day_store to remove
     onCancelRouteModification: (idRouteDay: string) => void; // Callback when user cancels modifications
-    onStoreModification: (idRouteDay: string) => void;
+    onSaveRouteModification: (idRouteDay: string) => void;
+    onResetRouteModification: (idRouteDay: string) => void;
 }
+
+type RouteDayContainerActions = "reset" | "remove" | "save" | "close";
 
 export default function RouteDayStoreContainer({ 
         idRouteDayColumn, 
@@ -40,8 +43,8 @@ export default function RouteDayStoreContainer({
         onAddStore,
         onRemoveStores,
         onCancelRouteModification,
-        onStoreModification
-        
+        onSaveRouteModification,
+        onResetRouteModification,
     }: RouteDayStoreContainerProps) { 
 
     /**
@@ -108,7 +111,7 @@ export default function RouteDayStoreContainer({
     const routeDayBeingModified = getRouteDayFromRoutesList(routes, idRouteDayColumn);
 
     // Dialog states
-    const [showDeleteDialog, setShowDeleteDialog] = useState<boolean>(false);
+    const [dialogAction, setDialogAction] = useState<RouteDayContainerActions | null>(null);
 
     // Build the column title: "Ruta X - Día"
     let columnTitle: string = "Día no encontrado";
@@ -154,20 +157,13 @@ export default function RouteDayStoreContainer({
         setSelectAll(!selectAll);
     }
 
-    const handleStartDeleteMode = () => {
-        setDeleteMode(!deleteMode)
-        // setOnlyViewMode(true);
-    }
-
+    const handleStartDeleteMode = () => { setDeleteMode(!deleteMode); }
 
     const handleCancelDeleteMode = () => {
         if (deleteMode) {
             // Just exit delete mode without removing anything
             setDeleteMode(false);
             setSelectedStores(new Set());
-        } else {
-            // Cancel all modifications and reset to original state
-            onCancelRouteModification(idRouteDayColumn);
         }
     }
 
@@ -179,19 +175,93 @@ export default function RouteDayStoreContainer({
             }
             setDeleteMode(false);
             setSelectedStores(new Set());
-        } else {
-            // Save modifications
-            onStoreModification(idRouteDayColumn);
         }
     }
 
+    const handleResetRouteModification = () => { onResetRouteModification(idRouteDayColumn); }
 
+    const handleSaveModifications = () => {
+        onSaveRouteModification(idRouteDayColumn);
+    }
+
+    const handleCloseRouteModification = () => {
+        onCancelRouteModification(idRouteDayColumn);
+    }
+
+    const handleOpenDialog = (actionType: RouteDayContainerActions) => {
+        setDialogAction(actionType);
+    }
     
+    const handleCloseDeleteDialog = () => {
+        setDialogAction(null);
+
+        if (dialogAction === "remove") {
+            handleCancelDeleteMode();
+        }
+    }
+
+    const handleAcceptDialog = () => {
+        if (dialogAction === "remove") {
+            handleAcceptDeleteStores();
+        } else if (dialogAction === "reset") {
+            handleResetRouteModification();
+        } else if (dialogAction === "save") {
+            handleSaveModifications();
+        }else if (dialogAction === "close") {
+            handleCloseRouteModification();
+        }
+
+        setDialogAction(null);
+    }
+
     return (
         <div className="min-w-[280px] flex flex-col bg-system-primary-background rounded-t-lg">
-            {/* <Dialog open={showDeleteDialog}>
+            <Dialog open={dialogAction !== null} onClose={() => handleCloseDeleteDialog()}>
+                <div className="p-3 flex flex-col gap-2 justify-center items-center">
+                    <h3 className="text-center font-bold text-lg">¿Estas seguro de hacer la acción?</h3>
+                    { dialogAction === "remove" && 
+                        <div className="flex flex-col justify-center items-center">
+                            <span className="text-center text-red-600 font-semibold">
+                                Se eliminarán {selectedStores.size} cliente(s) de este día de ruta.
+                            </span>
+                            <span className="text-center font-bold">
+                                Después aplica los cambios para que se guarden las modificaciones realizadas.
+                            </span>
+                        </div>
+                    }
+                    { dialogAction === "save" && 
+                        <span className="text-center text-red-600 font-semibold">
+                            Se guardarán los cambios realizados en este día de ruta.
+                        </span>
+                    }
+                    { dialogAction === "reset" && 
+                        <span className="text-center text-red-600 font-semibold">
+                            Se restablecerán los cambios realizados en este día de ruta hasta el último punto de guardado.
+                        </span>
+                    }
+                    { dialogAction === "close" && 
+                        <span className="text-center text-red-600 font-semibold">
+                            Se cerrará la modificación de este día de ruta. Cualquier cambio no guardado se perderá.
+                        </span>
+                    }
 
-            </Dialog> */}
+                    <div className="flex flex-row gap-5 justify-center mt-5">
+                        <Button
+                            variant="contained" 
+                            color="success"
+                            onClick={handleAcceptDialog}>
+                                Aceptar
+                        </Button>
+                    <Button 
+                        variant="contained" 
+                        color="warning" 
+                        onClick={handleCloseDeleteDialog}>
+                            Cancelar
+                    </Button>
+                </div>
+
+                </div>
+            </Dialog>
             <div className="p-2  flex flex-col">
                 {/* Title and main actions */}
                 <div className="flex flex-row justify-start items-center my-2">
@@ -258,7 +328,7 @@ export default function RouteDayStoreContainer({
                                     width: 40,
                                     height: 40,
                                 }}
-                                onClick={() => handleStartDeleteMode()}
+                                onClick={() => deleteMode ? handleCancelDeleteMode() : handleStartDeleteMode()}
                                 className="h-fit my-auto shadow-md"
                                 size="small">
                                     <DeleteOutline />
@@ -326,7 +396,9 @@ export default function RouteDayStoreContainer({
                                 placement="top"
                                 enterDelay={300}
                                 arrow>
-                                <Button variant="contained">Reset</Button>
+                                <Button
+                                    variant="contained"
+                                    onClick={() => handleOpenDialog("reset")}>Reset</Button>
                             </Tooltip>
                             </div>
                         </div>            
@@ -401,21 +473,21 @@ export default function RouteDayStoreContainer({
                     <Button
                         variant="contained" 
                         color="error"
-                        onClick={handleAcceptDeleteStores}>
+                        onClick={() => handleOpenDialog("remove")}>
                             Aceptar
                     </Button> :
                     <Button
                         variant="contained" 
                         color="success"
-                        onClick={handleAcceptDeleteStores}>
+                        onClick={() => handleOpenDialog("save")}>
                             Guardar
                     </Button>
                 }
                 <Button 
                     variant="contained" 
                     color="warning" 
-                    onClick={handleCancelDeleteMode}>
-                        Cancelar
+                    onClick={() => deleteMode ? handleCancelDeleteMode() : handleOpenDialog("close")}> 
+                        { deleteMode ? "Cancelar eliminación" : "Cerrar día de ruta" }
                 </Button>
             </div>
         </div>

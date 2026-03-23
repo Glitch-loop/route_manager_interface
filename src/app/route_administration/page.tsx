@@ -66,9 +66,7 @@ export default function Page() {
     const [administrationView, setAdministrationView] = useState(1); // 1 for Routes, 2 for Stores
 
 
-    useEffect(() => {
-        fetchScreenInformation();
-    }, [])
+    useEffect(() => { fetchScreenInformation(); }, [])
 
     // Auxiliar functions
     const fetchScreenInformation = async () => {
@@ -108,21 +106,13 @@ export default function Page() {
     }
 
     // Handlers
-    const handleRouteSelect = (route: RouteDTO) => {
-        setSelectedRoute(route);
-    };
+    const handleRouteSelect = (route: RouteDTO) => { setSelectedRoute(route); };
 
-    const handleCancel = () => {
-        setSelectedRoute(null);
-    };
+    const handleCancel = () => { setSelectedRoute(null); };
 
-    const handleStoreCancel = () => {
-        setSelectedStore(null);
-    };
+    const handleStoreCancel = () => { setSelectedStore(null); };
 
-    const handleAdministrationView = (option: number) => {
-        setAdministrationView(option);
-    }
+    const handleAdministrationView = (option: number) => { setAdministrationView(option); }
 
     const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
         const routeDaySelected:RouteDayDTO | undefined = selectedRouteDay.find(routeDay => routeDay.id_route_day === routeDayId);
@@ -135,27 +125,43 @@ export default function Page() {
         }
     }
 
-    const handleRetrieveRouteTransactions = async (startDate: Date, endDate: Date) => {
-        // Get all store IDs from selectedRouteDay
-        const storeIds: string[] = selectedRouteDay.flatMap(routeDay => 
-            routeDay.stores.map(store => store.id_store)
-        );
-
-        if (storeIds.length === 0) {
-            console.warn("No stores selected to retrieve transactions.");
-            return;
-        }
-
+    const handleRetrieveRouteTransactions = async (startDate: Date, endDate: Date, idStores: string[]) => {
+        console.log("Consult route transactions")
         // Inject and execute the query
         const listTransactionsQuery = di_container.resolve<ListRouteTransactionsByStoreWithinDateRange>(
             ListRouteTransactionsByStoreWithinDateRange
         );
-
-        listTransactionsQuery.execute(storeIds, startDate, endDate)
+        
+        await  listTransactionsQuery.execute(idStores, startDate, endDate)
         .then((transactionsMap: Map<string, RouteTransactionDTO[]>) => {
+            transactionsMap.forEach((transactions, storeId) => {
+                console.log(`Store ID: ${storeId}`);
+                transactions.forEach(transaction => {
+                    console.log(`  Transaction: ${transaction}`);
+                }
+                );
+            });
             setMapRouteTransactionByStore(transactionsMap);
         })
         .catch(error => { console.error("Error retrieving route transactions: ", error)});
+    }
+
+    const handleSaveRouteModification = (idRouteDayColumn: string, storesInRouteDay: RouteDayStoreDTO[]) => {
+        console.log("Save route modification")
+        storesInRouteDay.forEach(store => {
+            let name = "Unknown store";
+            const storeData = mapStores.get(store.id_store);
+            if (storeData) {
+                const { store_name } = storeData;
+                name = store_name === null ? "Store without name" : store_name;
+            }
+
+            console.log(`Store in route day: ${name}, position: ${store.position_in_route}`);
+        });
+    }
+
+    const handleCloseRouteDay = (idRouteDay: string) => {
+        setSelectedRouteDay(selectedRouteDay.filter(routeDay => routeDay.id_route_day !== idRouteDay));
     }
 
     return (
@@ -171,8 +177,6 @@ export default function Page() {
                                 <Button onClick={() => handleAdministrationView(2)}>Clientes</Button>
                             </ButtonGroup>                        
                         </div>
-
-
                         {/* Search Route */}
                         {/* <div className="w-64 md:w-72 bg-system-third-background overflow-y-auto"> */}
                             {administrationView === 1 && (
@@ -289,7 +293,9 @@ export default function Page() {
                                 storeMap={mapStores}
                                 routes={routes}
                                 routeTransactionsMap={mapRouteTransactionByStore}
-                                onApplyDateRange={handleRetrieveRouteTransactions}
+                                onRequireRouteTransactions={handleRetrieveRouteTransactions}
+                                onSaveRouteModification={handleSaveRouteModification}
+                                oncloseRouteDay={handleCloseRouteDay}
                             />
                         </div>
                     </Collapse>

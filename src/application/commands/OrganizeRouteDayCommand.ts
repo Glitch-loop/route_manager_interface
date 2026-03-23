@@ -19,8 +19,17 @@ export default class OrganizeRouteDayCommand {
         // TODO: Verify the order of the stores is ascendent and there is not missing positions.
         const { id_route_day } = routeDayDTO;
         
+        const routeDayStore = [...routeDayStoresDTO]
+
+        routeDayStore.sort((a, b) => a.position_in_route - b.position_in_route);
+
+        const routeDayStoreToUpdate = routeDayStore.map((store, index) => ({ 
+            ...store,
+            position_in_route: index + 1,
+        }))
+
         await this.routeRepository.deleteRouteDayStores(id_route_day);
-        await this.routeRepository.insertRouteDayStores(routeDayStoresDTO);
+        await this.routeRepository.insertRouteDayStores(routeDayStoreToUpdate);
     } 
 
     async execute(routeDayDTO: RouteDayDTO, routeDayStoresDTO: RouteDayStoreDTO[]): Promise<void> {
