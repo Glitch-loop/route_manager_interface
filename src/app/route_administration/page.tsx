@@ -21,9 +21,6 @@ import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdS
 import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
 import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/ListRouteTransactionsByStoreWithinDateRange";
 
-// Core - Constant
-
-
 // DI container
 import { di_container } from "@/infrastructure/di/container";
 
@@ -39,6 +36,11 @@ import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer"
 
 // Utils
 import { getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
+
+import { IMapMarker } from '@/interfaces/interfaces';
+
+
+
 
 export default function Page() {
     const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -288,7 +290,7 @@ export default function Page() {
                         </div>
                     </Collapse>
                     {/* Toggle button */}
-                    <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
+                    <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
                         <Tooltip 
                             title={"Buscar clientes"}
                             placement="bottom"
@@ -345,7 +347,7 @@ export default function Page() {
                 {/* Route organization - collapses to bottom */}
                 <div className="relative w-full flex-shrink-0">
                     {/* Toggle button */}
-                    <div className="absolute -top-5 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
                         <Tooltip 
                             title={"Organizar ruta"}
                             placement="top"
