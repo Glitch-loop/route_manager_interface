@@ -4,7 +4,7 @@ import 'reflect-metadata';
 
 // Libraries
 import { useEffect, useState } from "react";
-import { Button, ButtonGroup, Collapse, IconButton, Tooltip } from "@mui/material";
+import { Button, ButtonGroup, Collapse, Dialog, IconButton, Tooltip } from "@mui/material";
 
 // DTOs
 import UserDTO from "@/application/dto/UserDTO";
@@ -55,6 +55,7 @@ export default function Page() {
     
     const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]);
     const [checkedRouteDays, setCheckedRouteDays] = useState<Record<string, boolean>>({});
+    const [pendingUnselectRouteDayId, setPendingUnselectRouteDayId] = useState<string | null>(null);
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -125,9 +126,35 @@ export default function Page() {
                 const routeDayToAdd = {...routeDayFound, stores: routeDayFound.stores.map(store => ({...store, selected: state}))};
                 setSelectedRouteDay([...selectedRouteDay, routeDayToAdd]);
             }
-        } else { // Remove route day because it was unselected
-            setSelectedRouteDay(selectedRouteDay.filter(routeDay => routeDay.id_route_day !== routeDayId));
+        } else { // Show confirmation dialog before unselecting
+            setPendingUnselectRouteDayId(routeDayId);
         }
+    }
+
+    const handleConfirmUnselectRouteDay = () => {
+        if (pendingUnselectRouteDayId) {
+            // Remove route day from selectedRouteDay
+            setSelectedRouteDay(selectedRouteDay.filter(routeDay => routeDay.id_route_day !== pendingUnselectRouteDayId));
+            
+            // Remove from checkedRouteDays
+            setCheckedRouteDays(prev => {
+                const newCheckedDays = { ...prev };
+                delete newCheckedDays[pendingUnselectRouteDayId];
+                return newCheckedDays;
+            });
+        }
+        setPendingUnselectRouteDayId(null);
+    }
+
+    const handleCancelUnselectRouteDay = () => {
+        // Revert the checkbox state since user cancelled
+        if (pendingUnselectRouteDayId) {
+            setCheckedRouteDays(prev => ({
+                ...prev,
+                [pendingUnselectRouteDayId]: true
+            }));
+        }
+        setPendingUnselectRouteDayId(null);
     }
 
     const handleRetrieveRouteTransactions = async (startDate: Date, endDate: Date, idStores: string[]) => {
@@ -170,6 +197,29 @@ export default function Page() {
 
     return (
         <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
+            {/* Confirmation dialog for unselecting route day */}
+            <Dialog open={pendingUnselectRouteDayId !== null} onClose={handleCancelUnselectRouteDay}>
+                <div className="p-5 flex flex-col gap-2 justify-center items-center">
+                    <h3 className="text-center font-bold text-lg">¿Estas seguro de deseleccionar este día de ruta?</h3>
+                    <span className="text-center text-red-600 font-semibold">
+                        Se cerrará la modificación de este día de ruta. Cualquier cambio no guardado se perderá.
+                    </span>
+                    <div className="flex flex-row gap-5 justify-center mt-5">
+                        <Button
+                            variant="contained" 
+                            color="success"
+                            onClick={handleConfirmUnselectRouteDay}>
+                                Aceptar
+                        </Button>
+                        <Button 
+                            variant="contained" 
+                            color="warning" 
+                            onClick={handleCancelUnselectRouteDay}>
+                                Cancelar
+                        </Button>
+                    </div>
+                </div>
+            </Dialog>
             {/* Route and store section */}
             <div className="relative flex">
                 <Collapse in={sidebarOpen} orientation="horizontal">
