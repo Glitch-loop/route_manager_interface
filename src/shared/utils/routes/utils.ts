@@ -2,7 +2,7 @@
 import RouteDTO from "@/application/dto/RouteDTO";
 import RouteDayDTO from "@/application/dto/RouteDayDTO";
 import { DAYS } from "@/core/constants/Days";
-import { PositionInRouteType, StorePositionInRouteType, StorePositionInRouteType } from "@/shared/types/types";
+import { StorePositionInRouteType } from "@/shared/types/types";
 
 
 export function getRouteDayFromRoutesList(routes: RouteDTO[], idRouteDayToFind: string): RouteDayDTO | null {
@@ -64,7 +64,8 @@ export function createMapStoresInRouteDay(routes: RouteDTO[]): Map<string, Store
                     position: routeDayStore.position_in_route,
                     dayName: DAYS[routeDay.id_day].day_name,
                     idDay: idDay,
-                    idStore: routeDayStore.id_store
+                    idStore: routeDayStore.id_store,
+                    idRouteDayStore: routeDayStore.id_route_day_store
                 });
             }
         }

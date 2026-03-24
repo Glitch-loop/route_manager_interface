@@ -8,4 +8,5 @@ export type StorePositionInRouteType = {
     dayName: string;
     idDay: string;
     idStore: string;
+    idRouteDayStore: string;
 }

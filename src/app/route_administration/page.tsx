@@ -43,7 +43,8 @@ import { generateRandomColor, getGradientColor } from '@/shared/utils/styles/uti
 import { DraggableRouteDayStore, RouteDayEffect } from './types/types';
 import { getAddressOfStore } from '@/shared/utils/stores/utils';
 import { StorePositionInRouteType } from '@/shared/types/types';
-import { capitalizeFirstLetterOfEachWord } from '@/shared/utils/strings/utils';
+import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord } from '@/shared/utils/strings/utils';
+import StoreSearchBar from './components/StoreSearchBar';
 
 
 function createMapHoverComponent(store: StoreDTO): any {
@@ -89,9 +90,9 @@ function createMapClickComponent(store: StoreDTO, storePositions: StorePositionI
                             {storePositions.map((pos) => {
                                 const isBeingModified = modifiedRouteDayIds.has(pos.idRouteDay);
                                 return (
-                                    <tr key={pos.idRouteDay} className="border-b border-gray-100">
-                                        <td className="py-1 pr-2">{pos.routeName}</td>
-                                        <td className="py-1 pr-2">{pos.dayName}</td>
+                                    <tr key={pos.idRouteDayStore} className="border-b border-gray-100">
+                                        <td className="py-1 pr-2">{capitalizeFirstLetter(pos.routeName)}</td>
+                                        <td className="py-1 pr-2">{capitalizeFirstLetter(pos.dayName)}</td>
                                         <td className="py-1 text-center">{pos.position}</td>
                                         <td className="py-1 text-center">
                                             {isBeingModified && (
@@ -142,6 +143,8 @@ export default function Page() {
     // State for the map
     const [hoveredStore, setHoveredStore] = useState<StoreDTO | null>(null);
     const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<string | null>(null);
+	const [searchByCoords, setSearchByCoords] = useState<boolean>(false);
+	const [includeDeactiveStores, setIncludeDeactiveStores] = useState<boolean>(false);
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -456,6 +459,24 @@ export default function Page() {
             setSelectedRouteDayStore(idRouteDayStore);
         }
     }
+
+	// Handlers for store search bar
+	const handlerSwitchSearchByCoords = (active: boolean) => {
+		setSearchByCoords(active);
+	}
+
+	const handleSelectedRange = (range: number) => {
+	}
+
+	const handleSelectStore = (store: StoreDTO | null) => {
+		setSelectedStore(store);
+	}
+
+	const handleIncludeDeactiveStores = (active: boolean) => {
+		setIncludeDeactiveStores(active);
+	}
+
+
     return (
         <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
             {/* Confirmation dialog for unselecting route day */}
@@ -538,14 +559,22 @@ export default function Page() {
                     </Tooltip>
                 </div>
             </div>
-
             {/* Main content */}
             <div className="flex flex-col flex-1 h-full">
                 {/* Search content - collapses to top */}
                 <div className="relative w-full flex-shrink-0">
                     <Collapse in={topPanelOpen}>
-                        <div className="w-full bg-green-900">
-                            <h1 className="text-white text-2xl font-bold p-4">Search content</h1>
+                        <div className="w-full bg-system-primary-background h-fit">
+                            <StoreSearchBar 
+                                  	stores={stores}
+                                    onSelectStore={handleSelectStore}
+                                    searchByCoords={searchByCoords}
+                                    onSwitchSearchByCoords={handlerSwitchSearchByCoords}
+                                    onSelectRange={handleSelectedRange}
+                                    includeDesactiveStores={includeDeactiveStores}
+                                    onHandleIncludeDesactiveStores={handleIncludeDeactiveStores}
+									onHoverAutocompleteOption={handleOverStoreAutoComplete}
+                                /> 
                         </div>
                     </Collapse>
                     {/* Toggle button */}
