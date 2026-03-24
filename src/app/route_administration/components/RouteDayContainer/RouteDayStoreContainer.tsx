@@ -20,6 +20,7 @@ import { Autocomplete, Button, Collapse, Dialog, IconButton, Switch, TextField, 
 import { ExpandMore, ExpandLess } from "@mui/icons-material";
 import ColorPicker from "@/shared/components/ColorPicker/ColorPicker";
 import { RouteDayEffect } from "../../types/types";
+import { on } from "events";
 
 
 type RouteDayStoreContainerProps = {
@@ -36,6 +37,7 @@ type RouteDayStoreContainerProps = {
     onResetRouteModification: (idRouteDay: string) => void;
     onShowInformation: (idRouteDay: string, state: boolean) => void;
     onSelectRouteDayColor: (idRouteDay: string, color: string) => void;
+    onHoverAutocompleteOption: (store: StoreDTO|null) => void; // Callback to detect hover over autocomplete options, receives the hovered store or null if not hovering any option
 }
 
 type RouteDayContainerActions = "reset" | "remove" | "save" | "close";
@@ -54,6 +56,7 @@ export default function RouteDayStoreContainer({
         onResetRouteModification,
         onShowInformation,
         onSelectRouteDayColor,
+        onHoverAutocompleteOption
     }: RouteDayStoreContainerProps) { 
 
     /**
@@ -144,6 +147,7 @@ export default function RouteDayStoreContainer({
 
     // Handlers
     const handleSelect = (id_route_day_store: string) => {
+        console.log("Selected store: ", id_route_day_store)
         if (deleteMode) {
             if (selectedStores.has(id_route_day_store)) {
                 // If already selected, deselect it
@@ -208,10 +212,6 @@ export default function RouteDayStoreContainer({
     
     const handleCloseDeleteDialog = () => {
         setDialogAction(null);
-
-        if (dialogAction === "remove") {
-            handleCancelDeleteMode();
-        }
     }
 
     const handleAcceptDialog = () => {
@@ -242,6 +242,7 @@ export default function RouteDayStoreContainer({
         if (onlyViewMode) return; // Do not allow add new clients if we are in view mode
         onAddStore(idRouteDay, idStore);
         setInputValue("");
+        onHoverAutocompleteOption(null); // Reset hover state after adding a store
     }
 
     return (
@@ -410,13 +411,13 @@ export default function RouteDayStoreContainer({
                             <div className="flex flex-row gap-3">
                                 <div className="flex basis-4/5">   
                                     <Autocomplete
+                                        disabled={onlyViewMode}
                                         options={Array.from(storesMap.values()).map((item) => { return { id: item.id_store, ...item }})}
                                         className="w-full"
                                         getOptionKey={(option) => option.id_store}
                                         getOptionLabel={(option) => searchStoreBy === "name" ? option.store_name ?? "Nombre no disponible" : getAddressOfStore(option)}
                                         inputValue={inputValue}
                                         onChange={(event, newValue) => { 
-                                            setInputValue("");
                                             if (newValue) {
                                                 handleAddStore(idRouteDayColumn, newValue.id_store);
                                             }
@@ -425,8 +426,8 @@ export default function RouteDayStoreContainer({
                                         <li
                                         {...props}
                                         key={option.id_store}
-                                        // onMouseEnter={() => onHoverOption(option)} // Detect hover
-                                        // onMouseLeave={() => onHoverOption(null)} // Detect hover
+                                        onMouseEnter={() => onHoverAutocompleteOption(option)} // Detect hover
+                                        onMouseLeave={() => onHoverAutocompleteOption(null)} // Detect hover
                                         >
                                             <div className="flex flex-col">
                                                 <span>{option.store_name ?? "Nombre no disponible"}</span>
@@ -506,7 +507,7 @@ export default function RouteDayStoreContainer({
                             return (
                                 <DraggableItem key={id_route_day_store} id={id_route_day_store} index={index} column={idRouteDayColumn}>
                                     <div
-                                        onDoubleClick={() => { handleSelect(id_route_day_store); }}
+                                        onClick={() => { handleSelect(id_route_day_store); }}
                                         className={"relative p-2"}>
                                         { selectedStores.has(id_route_day_store) && 
                                             <div className="absolute right-3 top-3 bg-red-600 w-6 h-6 text-slate-200 rounded-full flex items-center justify-center">

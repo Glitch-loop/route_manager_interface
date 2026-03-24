@@ -1,133 +1,115 @@
-import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDateSelection";
-import { Button, Switch } from "@mui/material";
-import RouteDayStoreContainer from "./RouteDayStoreContainer";
+// Libraries
+import { useEffect, useState } from "react";
 import { DragDropProvider } from "@dnd-kit/react";
 import { move } from "@dnd-kit/helpers";
+
+// DTOs
 import StoreDTO from "@/application/dto/StoreDTO";
 import RouteDayDTO from "@/application/dto/RouteDayDTO";
-import { useEffect, useState } from "react";
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
 import RouteDTO from "@/application/dto/RouteDTO";
 import RouteTransactionDTO from "@/application/dto/RouteTransactionDTO";
+
+// UI components
+import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDateSelection";
+import { Button } from "@mui/material";
+import RouteDayStoreContainer from "./RouteDayStoreContainer";
+
+// Utils
 import { generateUUIDv4 } from "@/utils/generalUtils";
 import { Dayjs } from "dayjs";
-import { RouteDayEffect } from "../../types/types";
-import { DraggableRouteDayStore } from "../../types/types";
+import { RouteDayEffect, DraggableRouteDayStore } from "../../types/types";
+import { getRouteDayFromRoutesList } from "@/shared/utils/routes/utils";
 
 
 type RouteDayContainerProps = {
-    routesDay: RouteDayDTO[];
+    routeDaysInModification: Record<string, DraggableRouteDayStore[]>; // id_route_day -> array of DraggableRouteDayStore (stores in modification for each route day)
     storeMap: Map<string, StoreDTO>; // id_store -> StoreDTO
     routeDayEffectsMap: Map<string, RouteDayEffect>; // id_route_day -> RouteDayEffect (for UI state like showStores and assignedColor)
-    routes: RouteDTO[]; // List of routes to find where each route day belongs
+    routes: RouteDTO[]; // List of routes to find where each route day belongs (also used for reset)
     routeTransactionsMap: Map<string, RouteTransactionDTO[]>; // Map of store ID to list of route transactions
+    onModifyRouteDays: (modifiedRouteDays: Record<string, DraggableRouteDayStore[]>) => void; // Callback when a route day is modified (stores added/removed/reordered)
     onRequireRouteTransactions: (startDate: Date, endDate: Date, idStores: string[]) => void; // Callback when user clicks "Aplicar fechas"
     onSaveRouteModification: (idRouteDayColumn: string, storesInRouteDay: RouteDayStoreDTO[]) => void; // Callback when user saves route modifications
-    oncloseRouteDay: (idRouteDay: string) => void; // Callback when user wants to close a route day (remove it from the view)
+    onCloseRouteDay: (idRouteDay: string) => void; // Callback when user wants to close a route day (remove it from the view)
     onShowInformation: (idRouteDay: string, state: boolean) => void;
     onSelectRouteDayColor: (idRouteDay: string, color: string) => void;
+    onHoverAutocompleteOption: (store: StoreDTO|null) => void; // Callback to detect hover over autocomplete options, receives the hovered store or null if not hovering any option
 }
 
 
 export default function RouteDayContainer({ 
-        routesDay, // Delete
         routeDaysInModification,
         storeMap, 
         routeDayEffectsMap,
         routes,
         routeTransactionsMap,
-        onPassLastChanges, // Changes that are not saved.
+        onModifyRouteDays,
         onRequireRouteTransactions,
         onSaveRouteModification,
-        oncloseRouteDay, 
+        onCloseRouteDay, 
         onShowInformation,
         onSelectRouteDayColor,
+        onHoverAutocompleteOption,
     }: 
     RouteDayContainerProps) {
-    
-    // State to keep track of stores in each route day column
-    // Key: id_route_day, Value: array with 'id' property for dnd-kit compatibility
-    // Delete
-    const [currentRoutesDay, setCurrentRoutesDay] = useState<Record<string, DraggableRouteDayStore[]>>({}); // id route day -> Draggable route day store items.
+
+    useEffect(() => {
+        if (startDateSelected !== null && endDateSelected !== null) {
+            handleApplyDateRange(startDateSelected, endDateSelected);
+        }
+    }, [routeDaysInModification]);
 
     // Related to route transactions
     const [startDateSelected, setStartDateSelected] = useState<Dayjs | null>(null);
     const [endDateSelected, setEndDateSelected] = useState<Dayjs | null>(null);
 
-    // Initialize state from routesDay prop - adds 'id' property for dnd-kit
-    useEffect(() => {
-        const initialState: Record<string, DraggableRouteDayStore[]> = {};
-        
-        routesDay.forEach((routeDay) => {
-            const { id_route_day, stores } = routeDay;
-            // Transform stores to include 'id' property (maps to id_route_day_store)
-            const draggableStores: DraggableRouteDayStore[] = (stores || []).map(store => ({
-                ...store,
-                id: store.id_route_day_store, // Add id for dnd-kit compatibility
-            }));
-            initialState[id_route_day] = draggableStores;
-        });
-    
-        if (startDateSelected !== null && endDateSelected !== null) {
-            handleApplyDateRange(startDateSelected, endDateSelected, initialState);
-        }
-
-        setCurrentRoutesDay(initialState);
-    }, [routesDay]);
-
     // Handle drag over event - moves items between columns
     const handleDragOver = (event: Parameters<NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragOver']>>[0]) => {
-        setCurrentRoutesDay((items) => {
-            const result = move(items, event);
-            return result as Record<string, DraggableRouteDayStore[]>;
-        });
+        const result = move(routeDaysInModification, event);
+        onModifyRouteDays(result as Record<string, DraggableRouteDayStore[]>);
     };
 
     const handleAddNewStore = (idRouteDay: string, idStore: string) => {
-        if (currentRoutesDay[idRouteDay]) {
-            const existingStores = currentRoutesDay[idRouteDay];
+        if (routeDaysInModification[idRouteDay]) {
+            const existingStores = routeDaysInModification[idRouteDay];
             const idRouteDayStore = generateUUIDv4();
             const newStore: DraggableRouteDayStore = {
-                id_route_day_store: idRouteDayStore, // Temporary ID for new store
+                id_route_day_store: idRouteDayStore,
                 id_route_day: idRouteDay,
                 id_store: idStore,
-                position_in_route: existingStores.length, // Add to the end of the list
-                id: idRouteDayStore, // Add id for dnd-kit compatibility
+                position_in_route: existingStores.length,
+                id: idRouteDayStore,
             };
 
-            setCurrentRoutesDay((prev) => ({
-                ...prev,
-                [idRouteDay]: [...prev[idRouteDay], newStore],
-            }));
+            onModifyRouteDays({
+                ...routeDaysInModification,
+                [idRouteDay]: [...routeDaysInModification[idRouteDay], newStore],
+            });
         }
     }
 
     /**
      * Remove stores from a route day by their id_route_day_store.
-     * Filters out stores that match the provided IDs.
      */
     const handleRemoveStores = (idsRouteDayStore: string[]) => {
         const idsToRemove = new Set(idsRouteDayStore);
+        const updated: Record<string, DraggableRouteDayStore[]> = {};
         
-        setCurrentRoutesDay((prev) => {
-            const updated: Record<string, DraggableRouteDayStore[]> = {};
-            
-            for (const [routeDayId, stores] of Object.entries(prev)) {
-                updated[routeDayId] = stores.filter(
-                    store => !idsToRemove.has(store.id_route_day_store)
-                );
-            }
-            
-            return updated;
-        });
+        for (const [routeDayId, stores] of Object.entries(routeDaysInModification)) {
+            updated[routeDayId] = stores.filter(
+                store => !idsToRemove.has(store.id_route_day_store)
+            );
+        }
+        
+        onModifyRouteDays(updated);
     };
 
     /**
-     * Cancel modifications for a specific route day.
-     * Resets the route day back to its original state from props.
+     * Reset modifications for a specific route day back to original state from routes.
      */
     const handleResetRouteModification = (idRouteDay: string) => {
-        const originalRouteDay = routesDay.find(rd => rd.id_route_day === idRouteDay);
+        const originalRouteDay: RouteDayDTO | null = getRouteDayFromRoutesList(routes, idRouteDay);
         
         if (originalRouteDay) {
             const originalStores: DraggableRouteDayStore[] = (originalRouteDay.stores || []).map(store => ({
@@ -135,32 +117,32 @@ export default function RouteDayContainer({
                 id: store.id_route_day_store,
             }));
             
-            setCurrentRoutesDay((prev) => ({
-                ...prev,
+            onModifyRouteDays({
+                ...routeDaysInModification,
                 [idRouteDay]: originalStores,
-            }));
+            });
         }
     };
 
+    /**
+     * Cancel and close a route day modification.
+     */
     const handleCancelRouteModification = (idRouteDay: string) => {
-        const newCurrentRoutesDay:Record<string, DraggableRouteDayStore[]> = {};
-        for (const [routeDayId, stores] of Object.entries(currentRoutesDay)) {
-            if(routeDayId !== idRouteDay) {
-                newCurrentRoutesDay[routeDayId] = stores;
+        const updated: Record<string, DraggableRouteDayStore[]> = {};
+        for (const [routeDayId, stores] of Object.entries(routeDaysInModification)) {
+            if (routeDayId !== idRouteDay) {
+                updated[routeDayId] = stores;
             }
         }
-        setCurrentRoutesDay(newCurrentRoutesDay);
-
-        oncloseRouteDay(idRouteDay);
+        onModifyRouteDays(updated);
+        onCloseRouteDay(idRouteDay);
     }
 
     /**
-     * Handle store modification save for a specific route day.
-     * Updates positions based on current order.
+     * Save route modification for a specific route day.
      */
     const handleSaveRouteModification = async (idRouteDay: string) => {
-        // Update positions based on current array order
-        const storesInRouteDay = currentRoutesDay[idRouteDay];
+        const storesInRouteDay = routeDaysInModification[idRouteDay];
         
         if (!storesInRouteDay) return;
         
@@ -169,14 +151,13 @@ export default function RouteDayContainer({
             position_in_route: index,
         }));
 
-        // TODO: Call parent save callback here if needed
         await onSaveRouteModification(idRouteDay, updatedStoresInRouteDay);
         
-        setCurrentRoutesDay((prev) => ({
-            ...prev,
+        // Update local state with new positions
+        onModifyRouteDays({
+            ...routeDaysInModification,
             [idRouteDay]: updatedStoresInRouteDay,
-        }));
-        
+        });
     };
 
     const handleDateRangeChange = (start: Dayjs | null, end: Dayjs | null) => {
@@ -184,26 +165,24 @@ export default function RouteDayContainer({
         setEndDateSelected(end);
     }
 
-    const handleApplyDateRange = (startDate: Dayjs | null, endDate: Dayjs | null, routeDaysToFindRouteTransactions: Record<string, DraggableRouteDayStore[]>) => {
+    const handleApplyDateRange = (startDate: Dayjs | null, endDate: Dayjs | null) => {
         if (startDate && endDate) {
-            // Convert Dayjs to Date and call the parent callback
-            onRequireRouteTransactions(startDate.toDate(), endDate.toDate(), Object.values(routeDaysToFindRouteTransactions).flat().map(store => store.id_store));
+            const allStoreIds = Object.values(routeDaysInModification)
+                .flat()
+                .map(store => store.id_store);
+            onRequireRouteTransactions(startDate.toDate(), endDate.toDate(), allStoreIds);
         }
     }
 
     return (
         <div className="w-full h-full bg-system-secondary-background flex flex-row p-2">
-            <div className="flex flex-col  bg-system-third-background p-1 rounded-lg gap-2">
+            <div className="flex flex-col bg-system-third-background p-1 rounded-lg gap-2">
                 <h2 className="text-lg md:text-xl font-bold mb-4">Administración de días en ruta</h2>
-                {/* <div className="flex flex-row items-center gap-2">
-                    <span className="text-center align-middle">Abrir callout: </span><Switch />
-                </div> */}
                 <RangeDateSelection 
                     initialDirection="before"
                     initialSelectedRange="1month"
                     onRangeChange={handleDateRangeChange}
-
-                    />
+                />
                 <div className="flex flex-col justify-center items-center w-full gap-2">
                     <span className="text-base font-bold">Fechas seleccionadas:</span>
                     <div className="flex flex-row justify-center">
@@ -215,17 +194,14 @@ export default function RouteDayContainer({
                         variant="contained"
                         color="primary"
                         size="small"
-                        onClick={() => handleApplyDateRange(startDateSelected, endDateSelected, currentRoutesDay)}>
+                        onClick={() => handleApplyDateRange(startDateSelected, endDateSelected)}>
                             Aplicar fechas
                     </Button>
                 </div>
             </div>
-            <DragDropProvider 
-                // onDragEnd={handleDragOver}
-                onDragOver={handleDragOver}
-                >
+            <DragDropProvider onDragOver={handleDragOver}>
                 <div className="ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2 overflow-x-auto">
-                    {Object.entries(currentRoutesDay).map(([idRouteDay, stores]) => (
+                    {Object.entries(routeDaysInModification).map(([idRouteDay, stores]) => (
                         <RouteDayStoreContainer 
                             key={idRouteDay} 
                             idRouteDayColumn={idRouteDay} 
@@ -241,6 +217,7 @@ export default function RouteDayContainer({
                             onResetRouteModification={handleResetRouteModification}
                             onShowInformation={onShowInformation}
                             onSelectRouteDayColor={onSelectRouteDayColor}
+                            onHoverAutocompleteOption={onHoverAutocompleteOption}
                         />
                     ))}
                 </div>
