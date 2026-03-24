@@ -4,6 +4,8 @@ import { APIProvider, Map, Marker, InfoWindow, useMap } from "@vis.gl/react-goog
 import { IMapMarker } from "./interfaces/interfaces";
 import { coordinates } from "./types/types";
 import { createCustomMarker } from "@/utils/stylesUtils";
+import { ChairAlt, ChatSharp, SpeakerNotesOff } from "@mui/icons-material";
+import { IconButton, Tooltip } from "@mui/material";
 
 
 interface MarkerMapProps {
@@ -25,7 +27,7 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelec
   const [hoveredMarker, setHoveredMarker] = useState<IMapMarker | null>(null);
   const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hideHoverTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [showCallout, setShowCallout] = useState(false);
+  const [showCallout, setShowCallout] = useState(true);
 
   // Center map when selectedMarker prop changes
   useEffect(() => {
@@ -41,7 +43,7 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelec
         });
       }
     }
-  }, [idMarkerSelected, map, markers]);
+  }, [idMarkerSelected, map]);
 
   // Cleanup timers on unmount
   useEffect(() => {
@@ -113,6 +115,27 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelec
 
   return (
     <>
+      <div className="absolute z-30 bottom-7 left-3">
+        <Tooltip 
+            title={showCallout ? "Ocultar panel de información" : "Mostrar panel de información"}
+            placement="right"
+            enterDelay={300}
+            arrow>                      
+          <IconButton
+              onClick={() => setShowCallout(!showCallout)}
+              sx={{
+                  backgroundColor: '#F39C12',
+                  color: 'white',
+                  '&:hover': {
+                      backgroundColor: '#ea950c',
+                  },
+                  width: 48,
+                  height: 48,
+              }}>
+              {showCallout ? <ChatSharp /> : <SpeakerNotesOff />}
+          </IconButton>
+        </Tooltip>
+      </div>
       {markers.map((marker) => (
         <Marker
           key={marker.id_marker}

@@ -495,7 +495,7 @@ export default function RouteDayStoreContainer({
                                 <div
                                     key={id_route_day_store} 
                                     onClick={() => { handleSelect(id_route_day_store); }}
-                                    className={deleteMode ? "relative p-2 cursor-pointer" : "relative p-2 cursor-default"}>
+                                    className={deleteMode ? "relative p-2 cursor-pointer" : "relative p-2 cursor-pointer"}>
                                     { selectedStores.has(id_route_day_store) && 
                                         <div className="absolute right-3 top-3 bg-red-600 w-6 h-6 text-slate-200 rounded-full flex items-center justify-center">
                                             <RemoveCircleOutline fontSize="small" />

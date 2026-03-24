@@ -450,7 +450,11 @@ export default function Page() {
 
     const handleSelectRouteDayStore = (idRouteDayStore: string) => {
         console.log("Selected route day store ID: ", idRouteDayStore);
-        setSelectedRouteDayStore(idRouteDayStore);
+        if (selectedRouteDayStore === idRouteDayStore) {
+            setSelectedRouteDayStore(null);
+        } else {
+            setSelectedRouteDayStore(idRouteDayStore);
+        }
     }
     return (
         <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
