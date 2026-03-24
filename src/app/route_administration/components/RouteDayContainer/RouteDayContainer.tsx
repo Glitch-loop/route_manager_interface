@@ -35,6 +35,7 @@ type RouteDayContainerProps = {
     onShowInformation: (idRouteDay: string, state: boolean) => void;
     onSelectRouteDayColor: (idRouteDay: string, color: string) => void;
     onHoverAutocompleteOption: (store: StoreDTO|null) => void; // Callback to detect hover over autocomplete options, receives the hovered store or null if not hovering any option
+    onSelectRouteDayStore: (idRouteDayStore: string) => void; // Callback when a store is selected (clicked) in the route day, receives id_route_day_store
 }
 
 
@@ -51,6 +52,7 @@ export default function RouteDayContainer({
         onShowInformation,
         onSelectRouteDayColor,
         onHoverAutocompleteOption,
+        onSelectRouteDayStore,
     }: 
     RouteDayContainerProps) {
 
@@ -218,6 +220,7 @@ export default function RouteDayContainer({
                             onShowInformation={onShowInformation}
                             onSelectRouteDayColor={onSelectRouteDayColor}
                             onHoverAutocompleteOption={onHoverAutocompleteOption}
+                            onSelectRouteDayStore={onSelectRouteDayStore}
                         />
                     ))}
                 </div>

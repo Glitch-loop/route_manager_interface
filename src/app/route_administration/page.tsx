@@ -140,8 +140,8 @@ export default function Page() {
     const [pendingUnselectRouteDayId, setPendingUnselectRouteDayId] = useState<string | null>(null);
     
     // State for the map
-    const [selectedMapMarker, setSelectedMapMarker] = useState<IMapMarker | null>(null);
     const [hoveredStore, setHoveredStore] = useState<StoreDTO | null>(null);
+    const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<string | null>(null);
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -215,9 +215,11 @@ export default function Page() {
             
             stores.forEach((routeDayStore, storeIndex) => {
                 const store = mapStores.get(routeDayStore.id_store);
-                if (store && store.latitude && store.longitude) {                    
+                if (store !== undefined) {
+                    const { latitude, longitude, id_store } = store;
+                    const { id_route_day_store } = routeDayStore;
                     // Get all route days where this store belongs
-                    const storePositions = mapStoresInRouteDay.get(store.id_store) ?? [];
+                    const storePositions = mapStoresInRouteDay.get(id_store) ?? [];
 
                     // Calculate gradient color: first store is lightest, last store is darkest
                     const gradientColor = totalStores > 1 
@@ -225,12 +227,12 @@ export default function Page() {
                         : baseColor;
                     
                     markers.push({
-                        id_marker: `${idRouteDay}-${store.id_store}`,
-                        id_item: store.id_store,
+                        id_marker: id_route_day_store,
+                        id_item: id_store,
                         id_group: idRouteDay,
                         color_item: gradientColor,
-                        latitude: store.latitude,
-                        longitude: store.longitude,
+                        latitude: latitude,
+                        longitude: longitude,
                         hoverComponent: createMapHoverComponent(store),
                         clickComponent: createMapClickComponent(store, storePositions),
                     });
@@ -446,6 +448,10 @@ export default function Page() {
         setHoveredStore(store);
     }
 
+    const handleSelectRouteDayStore = (idRouteDayStore: string) => {
+        console.log("Selected route day store ID: ", idRouteDayStore);
+        setSelectedRouteDayStore(idRouteDayStore);
+    }
     return (
         <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
             {/* Confirmation dialog for unselecting route day */}
@@ -588,7 +594,8 @@ export default function Page() {
                     </div>
                     <MarkerMap 
                         markers={mapMarkers}
-                        selectedMarker={selectedMapMarker}
+                        idMarkerSelected={selectedRouteDayStore}
+                        setIdMarkerSelected={setSelectedRouteDayStore}
                         coordSelected={handleCoordSelected}
                     />
                 </div>
@@ -625,6 +632,7 @@ export default function Page() {
                                 onSelectRouteDayColor={handleSelectRouteDayColor}
                                 onModifyRouteDays={handleModifyRouteDays}
                                 onHoverAutocompleteOption={handleOverStoreAutoComplete}
+                                onSelectRouteDayStore={handleSelectRouteDayStore}
                             />
                         </div>
                     </Collapse>

@@ -1,27 +1,29 @@
-import DroppableColumn from "@/shared/components/DragAndDropContainer/components/DroppableColumn"
-import DraggableItem from "@/shared/components/DragAndDropContainer/components/DraggableItem";
+import { useState } from "react";
+
+// DTOs
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
 import StoreDTO from "@/application/dto/StoreDTO";
-import { getAddressOfStore } from "@/shared/utils/stores/utils";
-import { capitalizeFirstLetterOfEachWord, formatNumberAsAccountingCurrency } from "@/shared/utils/strings/utils";
 import RouteDTO from "@/application/dto/RouteDTO";
-import { getRouteDayFromRoutesList, getRouteWhereRouteDayBelongs } from "@/shared/utils/routes/utils";
 import NumericValueCard from "@/shared/components/Cards/NumericValueCard/NumericValueCard";
 import RouteTransactionDTO from "@/application/dto/RouteTransactionDTO";
-import DAY_OPERATIONS from "@/core/enums/DayOperations";
 
 // UI components
 import { LockOutline, LockOpen, VisibilityOff, Visibility, DeleteOutline, RemoveCircleOutline } from "@mui/icons-material"
+import DroppableColumn from "@/shared/components/DragAndDropContainer/components/DroppableColumn"
+import DraggableItem from "@/shared/components/DragAndDropContainer/components/DraggableItem";
+import { ExpandMore, ExpandLess } from "@mui/icons-material";
+import ColorPicker from "@/shared/components/ColorPicker/ColorPicker";
+import { Autocomplete, Button, Collapse, Dialog, IconButton, Switch, TextField, Tooltip } from "@mui/material";
 
 // Core - constants
 import { DAYS } from "@/core/constants/Days";
-import { useState } from "react";
-import { Autocomplete, Button, Collapse, Dialog, IconButton, Switch, TextField, Tooltip } from "@mui/material";
-import { ExpandMore, ExpandLess } from "@mui/icons-material";
-import ColorPicker from "@/shared/components/ColorPicker/ColorPicker";
+import DAY_OPERATIONS from "@/core/enums/DayOperations";
 import { RouteDayEffect } from "../../types/types";
-import { on } from "events";
 
+// Utils
+import { getAddressOfStore } from "@/shared/utils/stores/utils";
+import { capitalizeFirstLetterOfEachWord, formatNumberAsAccountingCurrency } from "@/shared/utils/strings/utils";
+import { getRouteDayFromRoutesList, getRouteWhereRouteDayBelongs } from "@/shared/utils/routes/utils";
 
 type RouteDayStoreContainerProps = {
     idRouteDayColumn: string;
@@ -38,6 +40,7 @@ type RouteDayStoreContainerProps = {
     onShowInformation: (idRouteDay: string, state: boolean) => void;
     onSelectRouteDayColor: (idRouteDay: string, color: string) => void;
     onHoverAutocompleteOption: (store: StoreDTO|null) => void; // Callback to detect hover over autocomplete options, receives the hovered store or null if not hovering any option
+    onSelectRouteDayStore: (idRouteDayStore: string) => void; // Callback when a store is selected (clicked) in the route day, receives id_route_day_store
 }
 
 type RouteDayContainerActions = "reset" | "remove" | "save" | "close";
@@ -56,7 +59,8 @@ export default function RouteDayStoreContainer({
         onResetRouteModification,
         onShowInformation,
         onSelectRouteDayColor,
-        onHoverAutocompleteOption
+        onHoverAutocompleteOption,
+        onSelectRouteDayStore
     }: RouteDayStoreContainerProps) { 
 
     /**
@@ -147,7 +151,7 @@ export default function RouteDayStoreContainer({
 
     // Handlers
     const handleSelect = (id_route_day_store: string) => {
-        console.log("Selected store: ", id_route_day_store)
+        onSelectRouteDayStore(id_route_day_store);
         if (deleteMode) {
             if (selectedStores.has(id_route_day_store)) {
                 // If already selected, deselect it
@@ -490,7 +494,7 @@ export default function RouteDayStoreContainer({
                             return (
                                 <div
                                     key={id_route_day_store} 
-                                    onDoubleClick={() => { handleSelect(id_route_day_store); }}
+                                    onClick={() => { handleSelect(id_route_day_store); }}
                                     className={deleteMode ? "relative p-2 cursor-pointer" : "relative p-2 cursor-default"}>
                                     { selectedStores.has(id_route_day_store) && 
                                         <div className="absolute right-3 top-3 bg-red-600 w-6 h-6 text-slate-200 rounded-full flex items-center justify-center">
