@@ -168,7 +168,10 @@ export default function RouteDayStoreContainer({
         setSelectAll(!selectAll);
     }
 
-    const handleStartDeleteMode = () => { setDeleteMode(!deleteMode); }
+    const handleStartDeleteMode = () => { 
+        if (onlyViewMode) return; // Do not allow entering delete mode if we are in view mode
+        setDeleteMode(!deleteMode);
+    }
 
     const handleCancelDeleteMode = () => {
         if (deleteMode) {
@@ -233,6 +236,12 @@ export default function RouteDayStoreContainer({
     const handleSelectRouteDayColor = (idRouteDay: string, color: string) => {
         onSelectRouteDayColor(idRouteDay, color);
         setColorSelected(color);
+    }
+
+    const handleAddStore = (idRouteDay: string, idStore: string) => {
+        if (onlyViewMode) return; // Do not allow add new clients if we are in view mode
+        onAddStore(idRouteDay, idStore);
+        setInputValue("");
     }
 
     return (
@@ -409,7 +418,7 @@ export default function RouteDayStoreContainer({
                                         onChange={(event, newValue) => { 
                                             setInputValue("");
                                             if (newValue) {
-                                                onAddStore(idRouteDayColumn, newValue.id);
+                                                handleAddStore(idRouteDayColumn, newValue.id_store);
                                             }
                                         }}
                                     renderOption={(props, option) => (
@@ -451,6 +460,12 @@ export default function RouteDayStoreContainer({
                 <span className="font-bold text-lg mr-2">Total vendido entre el rango de fechas seleccionado: </span>
                 <span className="font-bold text-lg text-black">
                     {formatNumberAsAccountingCurrency(calculateColumnEstimatedTotal(deleteMode, selectedStores))}
+                </span>
+            </div>
+            <div className="flex flex-row justify-end items-center px-4 py-2 ">
+                <span className="font-bold text-lg mr-2">Total clientes en day de ruta: </span>
+                <span className="font-bold text-lg text-black">
+                    {storesToAttend.length}
                 </span>
             </div>
             {/* Droppable container */}

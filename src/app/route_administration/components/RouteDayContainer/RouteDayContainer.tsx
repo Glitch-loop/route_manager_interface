@@ -12,9 +12,7 @@ import RouteTransactionDTO from "@/application/dto/RouteTransactionDTO";
 import { generateUUIDv4 } from "@/utils/generalUtils";
 import { Dayjs } from "dayjs";
 import { RouteDayEffect } from "../../types/types";
-
-// Extended type that adds 'id' property for dnd-kit compatibility
-type DraggableRouteDayStore = RouteDayStoreDTO & { id: string };
+import { DraggableRouteDayStore } from "../../types/types";
 
 
 type RouteDayContainerProps = {
@@ -32,11 +30,13 @@ type RouteDayContainerProps = {
 
 
 export default function RouteDayContainer({ 
-        routesDay,
+        routesDay, // Delete
+        routeDaysInModification,
         storeMap, 
         routeDayEffectsMap,
         routes,
         routeTransactionsMap,
+        onPassLastChanges, // Changes that are not saved.
         onRequireRouteTransactions,
         onSaveRouteModification,
         oncloseRouteDay, 
@@ -47,7 +47,8 @@ export default function RouteDayContainer({
     
     // State to keep track of stores in each route day column
     // Key: id_route_day, Value: array with 'id' property for dnd-kit compatibility
-    const [currentRoutesDay, setCurrentRoutesDay] = useState<Record<string, DraggableRouteDayStore[]>>({});
+    // Delete
+    const [currentRoutesDay, setCurrentRoutesDay] = useState<Record<string, DraggableRouteDayStore[]>>({}); // id route day -> Draggable route day store items.
 
     // Related to route transactions
     const [startDateSelected, setStartDateSelected] = useState<Dayjs | null>(null);

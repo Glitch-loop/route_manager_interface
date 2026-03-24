@@ -29,23 +29,20 @@ import { ChevronLeft, ChevronRight, KeyboardArrowUp, KeyboardArrowDown, Menu as 
 import RouteForm from "./components/RouteForm";
 import SearchRoute from "./components/SearchRoute";
 import StoreForm from "./components/StoreForm";
-import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDateSelection";
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
-import RouteMap from "@/components/general/mapComponent/RouteMap";
 import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer";
 
 // Utils
-import { getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
+import { createMapOfRouteDay, createMapStoresInRouteDay, getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
 
 import { IMapMarker } from '@/shared/components/MarkerMap/interfaces/interfaces';
 import { coordinates } from '@/shared/components/MarkerMap/types/types';
 import MarkerMap from '@/shared/components/MarkerMap/MarkerMap';
-import ColorPicker from '@/shared/components/ColorPicker/ColorPicker';
 import { generateRandomColor, getGradientColor } from '@/shared/utils/styles/utils';
 
-import { RouteDayEffect } from './types/types';
-
-
+import { DraggableRouteDayStore, RouteDayEffect } from './types/types';
+import { getAddressOfStore } from '@/shared/utils/stores/utils';
+import { StorePositionInRouteType } from '@/shared/types/types';
 
 
 export default function Page() {
@@ -58,15 +55,26 @@ export default function Page() {
     const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(null);
 
     // Application states
-    const [routes, setRoutes] = useState<RouteDTO[]>([]);
+    const [routes, setRoutes] = useState<RouteDTO[]>([]); // Source of truth for route days.
+    
+    // States related to store information.
     const [stores, setStores] = useState<StoreDTO[]>([]);
     const [mapStores, setMapStores] = useState<Map<string, StoreDTO>>(new Map()); // Map of store ID to StoreDTO for quick access
     const [mapRouteTransactionByStore, setMapRouteTransactionByStore] = useState<Map<string, RouteTransactionDTO[]>>(new Map()); // Map of store ID to list of route transactions
-    const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]);
+    const [mapStoresInRouteDay, setMapStoresInRouteDay] = useState<Map<string, StorePositionInRouteType[]>>(new Map()); // Map of store ID to StoreDTO for stores in the selected route day
+    
+    // States related to route day.
+    const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]); // Keep track of the changes applied to route days.
+    const [routesInModification, setRoutesInModification] = useState<Map<string, DraggableRouteDayStore[]>>(new Map()); // Keep track of routes that are being modified to apply special effects on map markers.
     const [effectSelectedRouteDay, setEffectSelectedRouteDay] = useState<Map<string, RouteDayEffect>>(new Map());
+    
+    // States related to expand menu.
     const [checkedRouteDays, setCheckedRouteDays] = useState<Record<string, boolean>>({});
     const [pendingUnselectRouteDayId, setPendingUnselectRouteDayId] = useState<string | null>(null);
+    
+    // State for the map
     const [selectedMapMarker, setSelectedMapMarker] = useState<IMapMarker | null>(null);
+
 
 
     const [vendors, setVendors] = useState<UserDTO[]>([
@@ -81,75 +89,19 @@ export default function Page() {
 
     const [administrationView, setAdministrationView] = useState(1); // 1 for Routes, 2 for Stores
 
-    // Generate markers from selected route days
-    const mapMarkers = useMemo<IMapMarker[]>(() => {
-        const markers: IMapMarker[] = [];
-        
-        selectedRouteDay.forEach((routeDay) => {
-            const effect = effectSelectedRouteDay.get(routeDay.id_route_day);
-            
-            // Skip if showStores is false
-            if (!effect?.showStores) return;
-            
-            const baseColor = effect.assignedColor;
-            const totalStores = routeDay.stores.length;
-            
-            routeDay.stores.forEach((routeDayStore, storeIndex) => {
-                const store = mapStores.get(routeDayStore.id_store);
-                if (store && store.latitude && store.longitude) {
-                    const storeName = store.store_name ?? 'Sin nombre';
-                    const storeAddress = `${store.street} ${store.ext_number ?? ''}, ${store.colony}`;
-                    
-                    // Calculate gradient color: first store is lightest, last store is darkest
-                    const gradientColor = totalStores > 1 
-                        ? getGradientColor(baseColor, totalStores - 1 - storeIndex, totalStores) 
-                        : baseColor;
-                    
-                    markers.push({
-                        id_marker: `${routeDay.id_route_day}-${store.id_store}`,
-                        id_item: store.id_store,
-                        id_group: routeDay.id_route_day,
-                        color_item: gradientColor,
-                        latitude: store.latitude,
-                        longitude: store.longitude,
-                        hoverComponent: (
-                            <div className="p-2">
-                                <p className="font-semibold">{storeName}</p>
-                                <p className="text-sm text-gray-600">{storeAddress}</p>
-                            </div>
-                        ),
-                        clickComponent: (
-                            <div className="p-3 min-w-[200px]">
-                                <h4 className="font-bold text-lg mb-2">{storeName}</h4>
-                                <p className="text-sm text-gray-600 mb-1">{storeAddress}</p>
-                                <p className="text-sm text-gray-500">CP: {store.postal_code}</p>
-                                {store.address_reference && (
-                                    <p className="text-sm text-gray-500 mt-1">Ref: {store.address_reference}</p>
-                                )}
-                            </div>
-                        ),
-                    });
-                }
-            });
-        });
-        
-        return markers;
-    }, [selectedRouteDay, mapStores, effectSelectedRouteDay]);
 
-    const handleCoordSelected = (coords: coordinates) => {
-        console.log('Coordinates selected:', coords);
-    };
-
-
+    // Use effects
     useEffect(() => { fetchScreenInformation(); }, [])
+
+    useEffect(() => {
+        setMapStoresInRouteDay(createMapStoresInRouteDay(routes));
+    }, [routes])
 
     // Auxiliar functions
     const fetchScreenInformation = async () => {
         // Injecting dependencies
         const listRouteQuery = di_container.resolve<ListRoutesQuery>(ListRoutesQuery);
         const retrieveRouteInformationQuery = di_container.resolve<RetrieveRouteInformationQuery>(RetrieveRouteInformationQuery);
-
-
         // Retrieve routes.
         const routes:RouteDTO[] =  await listRouteQuery.execute();
         const routeIds:string[] = routes.map(route => route.id_route);
@@ -179,15 +131,127 @@ export default function Page() {
         });
     }
 
+    // Memoized components
+    const mapMarkers = useMemo<IMapMarker[]>(() => {
+        const markers: IMapMarker[] = [];
+        
+        // Set of route day IDs currently being modified
+        const modifiedRouteDayIds = new Set(selectedRouteDay.map(rd => rd.id_route_day));
+        
+        selectedRouteDay.forEach((routeDay) => {
+            const effect = effectSelectedRouteDay.get(routeDay.id_route_day);
+            
+            // Skip if showStores is false
+            if (!effect?.showStores) return;
+            
+            const baseColor = effect.assignedColor;
+            const totalStores = routeDay.stores.length;
+            
+            routeDay.stores.forEach((routeDayStore, storeIndex) => {
+                const store = mapStores.get(routeDayStore.id_store);
+                if (store && store.latitude && store.longitude) {
+                    const storeName = store.store_name ?? 'Sin nombre';
+                    const storeAddress = getAddressOfStore(store);
+                    
+                    // Get all route days where this store belongs
+                    const storePositions = mapStoresInRouteDay.get(store.id_store) ?? [];
+
+                    // Calculate gradient color: first store is lightest, last store is darkest
+                    const gradientColor = totalStores > 1 
+                        ? getGradientColor(baseColor, totalStores - 1 - storeIndex, totalStores) 
+                        : baseColor;
+                    
+                    markers.push({
+                        id_marker: `${routeDay.id_route_day}-${store.id_store}`,
+                        id_item: store.id_store,
+                        id_group: routeDay.id_route_day,
+                        color_item: gradientColor,
+                        latitude: store.latitude,
+                        longitude: store.longitude,
+                        hoverComponent: (
+                            <div className="p-2">
+                                <p className="font-semibold">{storeName}</p>
+                                <p className="text-sm text-gray-600">{storeAddress}</p>
+                            </div>
+                        ),
+                        clickComponent: (
+                            <div className="p-3 min-w-[280px]">
+                                <h4 className="font-bold text-lg mb-2">{storeName}</h4>
+                                <p className="text-sm text-gray-600 mb-1">{storeAddress}</p>
+                                {store.address_reference && (
+                                    <p className="text-sm text-gray-500 mt-1">Referencias: {store.address_reference}</p>
+                                )}
+                                
+                                {/* Route days table */}
+                                {storePositions.length > 0 && (
+                                    <div className="mt-3 border-t pt-2">
+                                        <p className="text-xs font-semibold text-gray-700 mb-1">Días de ruta:</p>
+                                        <table className="w-full text-xs">
+                                            <thead>
+                                                <tr className="border-b">
+                                                    <th className="text-left py-1 pr-2">Ruta</th>
+                                                    <th className="text-left py-1 pr-2">Día</th>
+                                                    <th className="text-center py-1">Pos.</th>
+                                                    <th className="w-6"></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {storePositions.map((pos) => {
+                                                    const isBeingModified = modifiedRouteDayIds.has(pos.idRouteDay);
+                                                    return (
+                                                        <tr key={pos.idRouteDay} className="border-b border-gray-100">
+                                                            <td className="py-1 pr-2">{pos.routeName}</td>
+                                                            <td className="py-1 pr-2">{pos.dayName}</td>
+                                                            <td className="py-1 text-center">{pos.position}</td>
+                                                            <td className="py-1 text-center">
+                                                                {isBeingModified && (
+                                                                    <Tooltip title="Día de ruta en modificación" arrow placement="top">
+                                                                        <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-500 rounded-full cursor-help">
+                                                                            <span className="text-white text-xs font-bold">!</span>
+                                                                        </span>
+                                                                    </Tooltip>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
+                        ),
+                    });
+                }
+            });
+        });
+        
+        return markers;
+    }, [
+        selectedRouteDay, // Provides the route days currently being modified
+        mapStores, // Provides store information including coordinates
+        effectSelectedRouteDay, // Provides effects that will be applied to the markers
+        mapStoresInRouteDay // Provides information about which route days each store belongs to for the hover and click components
+    ]);
+
+
     // Handlers
+    const handleCoordSelected = (coords: coordinates) => {
+        console.log('Coordinates selected:', coords);
+    };
+
+    // Handlers - Route menu
     const handleRouteSelect = (route: RouteDTO) => { setSelectedRoute(route); };
 
     const handleCancel = () => { setSelectedRoute(null); };
 
+    // Handlers - Store menu
     const handleStoreCancel = () => { setSelectedStore(null); };
 
+    // Handlers - Administration menu management
     const handleAdministrationView = (option: number) => { setAdministrationView(option); }
 
+    // Handlers - Route day menu selection
     const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
         if(state) { // Add route day because it was selected
             // Check if already selected to avoid duplication
@@ -246,6 +310,7 @@ export default function Page() {
         setPendingUnselectRouteDayId(null);
     }
 
+    // Handlers - Route day modification (route container).
     const handleRetrieveRouteTransactions = async (startDate: Date, endDate: Date, idStores: string[]) => {
         // TODO: Optimize logic to avoid retrieving transactions that are already in the map and are within the date range.
         const listTransactionsQuery = di_container.resolve<ListRouteTransactionsByStoreWithinDateRange>(
@@ -259,18 +324,54 @@ export default function Page() {
     }
 
     const handleSaveRouteModification = (idRouteDayColumn: string, storesInRouteDay: RouteDayStoreDTO[]) => {
-        console.log("Save route modification")
-        storesInRouteDay.forEach(store => {
-            let name = "Unknown store";
-            const storeData = mapStores.get(store.id_store);
-            if (storeData) {
-                const { store_name } = storeData;
-                name = store_name === null ? "Store without name" : store_name;
-            }
+        // Update position_in_route based on array index
+        const updatedStores = storesInRouteDay.map((store, index) => ({
+            ...store,
+            position_in_route: index + 1 // Position is 1-indexed
+        }));
 
-            console.log(`Store in route day: ${name}, position: ${store.position_in_route}`);
-        });
+        // Update selectedRouteDay state with new store order and positions
+        setSelectedRouteDay(prev => 
+            prev.map(routeDay => {
+                if (routeDay.id_route_day === idRouteDayColumn) {
+                    return {
+                        ...routeDay,
+                        stores: updatedStores
+                    };
+                }
+                return routeDay;
+            })
+        );
+
+        // Update routes state with new store order and positions (using callback to get current state)
+        // Routes state is the source of truth for route days.
+        setRoutes(prevRoutes => 
+            prevRoutes.map(route => {
+                const { route_day_by_day } = route;
+                if (!route_day_by_day) return route;
+
+                const routeDayByDay = new Map<string, RouteDayDTO>();
+                
+                for (const [idDay, routeDay] of route_day_by_day) {
+                    if (routeDay.id_route_day === idRouteDayColumn) {
+                        routeDayByDay.set(idDay, { ...routeDay, stores: updatedStores });
+                    } else {
+                        routeDayByDay.set(idDay, routeDay);
+                    }
+                }
+
+                return {
+                    ...route,
+                    route_day_by_day: routeDayByDay
+                };
+            })
+        );
+
+        console.log("Route modification saved");
     }
+
+    
+    const handleApplyChange = (idRouteDayColumn: string, change: Partial<RouteDayDTO>) => { }
 
     const handleCloseRouteDay = (idRouteDay: string) => {
         // Remove route day from selectedRouteDay
