@@ -146,6 +146,9 @@ export default function Page() {
 	const [searchByCoords, setSearchByCoords] = useState<boolean>(false);
 	const [includeDeactiveStores, setIncludeDeactiveStores] = useState<boolean>(false);
 
+	// States related search bar
+	const [searchedStore, setSearchedStore] = useState<StoreDTO|null>(null);
+
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
             id_vendor: "1",
@@ -258,13 +261,29 @@ export default function Page() {
             });   
         }
 
+        if (searchedStore !== null) {
+            const { id_store, latitude, longitude } = searchedStore;
+            const storePositions = mapStoresInRouteDay.get(searchedStore.id_store) ?? [];
+            markers.push({
+                id_marker: generateRandomColor(), // Unique ID for searched store marker
+                id_item: id_store,
+                id_group: "searched-store",
+                color_item: "#bd2cb6", // Default color
+                latitude: latitude,
+                longitude: longitude,
+                hoverComponent: createMapHoverComponent(searchedStore),
+                clickComponent: createMapClickComponent(searchedStore, storePositions),
+            });   
+        }
+
         return markers;
     }, [
         routesInModification, // Provides the route days currently being modified
         mapStores, // Provides store information including coordinates
         effectSelectedRouteDay, // Provides effects that will be applied to the markers
         mapStoresInRouteDay, // Provides information about which route days each store belongs to for the hover and click components
-        hoveredStore
+        hoveredStore,
+		searchedStore
     ]);
 
 
@@ -469,11 +488,15 @@ export default function Page() {
 	}
 
 	const handleSelectStore = (store: StoreDTO | null) => {
-		setSelectedStore(store);
+		setSearchedStore(store);
 	}
 
 	const handleIncludeDeactiveStores = (active: boolean) => {
 		setIncludeDeactiveStores(active);
+	}
+
+	const handleStartSearchByAutocompletion = () => {
+		setSearchedStore(null);
 	}
 
 
@@ -566,14 +589,15 @@ export default function Page() {
                     <Collapse in={topPanelOpen}>
                         <div className="w-full bg-system-primary-background h-fit">
                             <StoreSearchBar 
-                                  	stores={stores}
-                                    onSelectStore={handleSelectStore}
-                                    searchByCoords={searchByCoords}
-                                    onSwitchSearchByCoords={handlerSwitchSearchByCoords}
-                                    onSelectRange={handleSelectedRange}
-                                    includeDesactiveStores={includeDeactiveStores}
-                                    onHandleIncludeDesactiveStores={handleIncludeDeactiveStores}
-									onHoverAutocompleteOption={handleOverStoreAutoComplete}
+								stores={stores}
+								onSelectStore={handleSelectStore}
+								searchByCoords={searchByCoords}
+								onSwitchSearchByCoords={handlerSwitchSearchByCoords}
+								onSelectRange={handleSelectedRange}
+								includeDesactiveStores={includeDeactiveStores}
+								onHandleIncludeDesactiveStores={handleIncludeDeactiveStores}
+								onHoverAutocompleteOption={handleOverStoreAutoComplete}
+								onStartSearchByAutocompletion={handleStartSearchByAutocompletion}
                                 /> 
                         </div>
                     </Collapse>

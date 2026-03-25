@@ -20,6 +20,7 @@ type StoreSearchBarProps = {
   includeDesactiveStores: boolean;
   onHandleIncludeDesactiveStores: (checked: boolean) => void;
 	onHoverAutocompleteOption: (store: StoreDTO|null) => void;
+	onStartSearchByAutocompletion: () => void;
 };
 
 export default function StoreSearchBar({
@@ -31,6 +32,7 @@ export default function StoreSearchBar({
   includeDesactiveStores,
   onHandleIncludeDesactiveStores,
 	onHoverAutocompleteOption,
+	onStartSearchByAutocompletion = () => {}
 }: StoreSearchBarProps) {
 	const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">("address");
 	const [inputValue, setInputValue] = useState<string>('');
@@ -73,7 +75,7 @@ export default function StoreSearchBar({
                 getOptionKey={(option) => option.id_store}
                 getOptionLabel={(option) => searchStoreBy === "name" ? option.store_name ?? "Nombre no disponible" : getAddressOfStore(option)}
                 inputValue={inputValue}
-                onChange={(event, newValue) => { 
+								onChange={(event, newValue) => { 
                     if (newValue) {
                         handleSelectStore(newValue);
                     }
