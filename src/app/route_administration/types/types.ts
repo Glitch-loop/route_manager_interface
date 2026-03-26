@@ -9,3 +9,5 @@ export type RouteDayEffect = {
 export type DraggableRouteDayStore = RouteDayStoreDTO & { id: string };
 
 export type RangeOption = { label: string; value: number };
+
+export type MarkerGroup = "pivot-coord-search" | "store-found-by-coords" | "searchbar-hovered-coord" | "searchbar-searched-store" ;

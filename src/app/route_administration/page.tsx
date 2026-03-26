@@ -40,7 +40,7 @@ import { coordinates } from '@/shared/components/MarkerMap/types/types';
 import MarkerMap from '@/shared/components/MarkerMap/MarkerMap';
 import { generateRandomColor, getGradientColor } from '@/shared/utils/styles/utils';
 
-import { DraggableRouteDayStore, RouteDayEffect } from './types/types';
+import { DraggableRouteDayStore, MarkerGroup, RouteDayEffect } from './types/types';
 import { getAddressOfStore } from '@/shared/utils/stores/utils';
 import { StorePositionInRouteType } from '@/shared/types/types';
 import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord } from '@/shared/utils/strings/utils';
@@ -251,10 +251,11 @@ export default function Page() {
         if (hoveredStore !== null) {
             const { id_store, latitude, longitude } = hoveredStore;
             const storePositions = mapStoresInRouteDay.get(hoveredStore.id_store) ?? [];
+			const markerGroup:MarkerGroup = "searchbar-hovered-coord";
             markers.push({
                 id_marker: generateRandomColor(), // Unique ID for hovered store marker
                 id_item: id_store,
-                id_group: "hovered-store",
+                id_group: markerGroup,
                 color_item: "#FF8C00", // Default color
                 latitude: latitude,
                 longitude: longitude,
@@ -266,10 +267,11 @@ export default function Page() {
         if (searchedStore !== null) {
             const { id_store, latitude, longitude } = searchedStore;
             const storePositions = mapStoresInRouteDay.get(searchedStore.id_store) ?? [];
+			const markerGroup:MarkerGroup = "searchbar-searched-store";
             markers.push({
                 id_marker: generateRandomColor(), // Unique ID for searched store marker
                 id_item: id_store,
-                id_group: "searched-store",
+                id_group: markerGroup,
                 color_item: "#bd2cb6", // Default color
                 latitude: latitude,
                 longitude: longitude,
@@ -282,10 +284,11 @@ export default function Page() {
 		storesFoundByPosition.forEach((store) => {
 			const { id_store, latitude, longitude } = store;
 			const storePositions = mapStoresInRouteDay.get(store.id_store) ?? [];
+			const markerGroup:MarkerGroup = "store-found-by-coords";
 			markers.push({
 				id_marker: generateRandomColor(), // Unique ID for store found by coordinates
 				id_item: id_store,
-				id_group: "store-by-coords",
+				id_group: markerGroup,
 				color_item: "#3713da", // Default color
 				latitude: latitude,
 				longitude: longitude,
@@ -297,15 +300,16 @@ export default function Page() {
 
 		if (selectedCoordinate) {
 			const { Lat, Lng } = selectedCoordinate;
+			const markerGroup:MarkerGroup = "pivot-coord-search";
 			markers.push({
 				id_marker: generateRandomColor(), // Unique ID for store found by coordinates
 				id_item: generateRandomColor(),
-				id_group: "store-by-coords",
+				id_group: markerGroup,
 				color_item: "#dc3d35", // Default color
 				latitude: Lat.toString(),
 				longitude: Lng.toString(),
 				hoverComponent: <span>Click para cancelar busqueda</span>,
-				clickComponent: <span>Click para cancelar busqueda</span>,
+				clickComponent: null,
 			});
 		}
 
@@ -540,23 +544,33 @@ export default function Page() {
 	}
 
 	// Map handlers
-    const handleCoordSelected = (coords: coordinates) => {
+    const handleCoordSelected = (selectedCoords: coordinates | IMapMarker) => {
 		let cancelSearch = false;
-		console.log("coords selected: ", coords);
-		if (searchByCoords) {
+
+
+		if (searchByCoords && "Lat" in selectedCoords && "Lng" in selectedCoords) {
 			if (selectedCoordinate !== null) {
 				const { Lat, Lng } = selectedCoordinate;
-				cancelSearch = coords.Lat === Lat && coords.Lng === Lng; // If the same coordinate is selected again, cancel the search.
+				cancelSearch = selectedCoords.Lat === Lat && selectedCoords.Lng === Lng; // If the same coordinate is selected again, cancel the search.
 			}
 			
 			if (!cancelSearch) { // User selected a new coordinate
 				console.log("Searching")
-				const foundStores = findStoresAround(coords, stores, selectedRange);
+				const foundStores = findStoresAround(selectedCoords, stores, selectedRange);
 				setStoresFoundByPosition(foundStores);
-				setSelectedCoordinate(coords);
+				setSelectedCoordinate(selectedCoords);
 			} else {
 				setStoresFoundByPosition([]);
 				setSelectedCoordinate(null);
+			}
+		} else {
+			const { id_group } = selectedCoords as IMapMarker;
+
+			if (id_group === "pivot-coord-search") {
+				setStoresFoundByPosition([]);
+				setSelectedCoordinate(null);
+			} else {
+				// At the moment, do nothing.
 			}
 		}
 

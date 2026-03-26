@@ -12,7 +12,7 @@ interface MarkerMapProps {
   markers: IMapMarker[];
   idMarkerSelected: string | null;
   setIdMarkerSelected: (id: string | null) => void;
-  onCoordSelected: (clickCoordinates: coordinates) => void;
+  onCoordSelected: (clickCoordinates: coordinates | IMapMarker) => void;
 }
 
 interface MapContentProps {
@@ -164,7 +164,7 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
         )
       }
       {/* Hover InfoWindow */}
-      {hoveredMarker && clickedMarker?.id_marker !== hoveredMarker.id_marker && (
+      {hoveredMarker && clickedMarker?.id_marker !== hoveredMarker.id_marker && hoveredMarker.hoverComponent !== null && (
         <InfoWindow
           position={{ lat: parseFloat(hoveredMarker.latitude), lng: parseFloat(hoveredMarker.longitude) }}
           onCloseClick={() => setHoveredMarker(null)}
@@ -174,7 +174,7 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
       )}
 
       {/* Click InfoWindow (Callout) */}
-      {clickedMarker && showCallout && (
+      {clickedMarker && showCallout && clickedMarker.clickComponent !== null && (
         <InfoWindow
           position={{ lat: parseFloat(clickedMarker.latitude), lng: parseFloat(clickedMarker.longitude) }}
           onCloseClick={handleCloseMarkerInfo}
@@ -199,10 +199,7 @@ export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelect
         setSelectedCoordinate(coords);
       }
     } else if ("id_marker" in clickCoordinates) {
-      // Do nothing
-      const { latitude, longitude } = clickCoordinates;
-      // const coords = { Lat: parseFloat(latitude), Lng: parseFloat(longitude) };
-      // onCoordSelected(coords);
+      onCoordSelected(clickCoordinates);
     }
   }
 
