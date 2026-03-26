@@ -4,7 +4,7 @@ import 'reflect-metadata';
 
 // Libraries
 import { useEffect, useState, useMemo } from "react";
-import { Button, ButtonGroup, Collapse, Dialog, IconButton, Tooltip } from "@mui/material";
+import { Button, ButtonGroup, Collapse, Dialog, IconButton, List, ListItem, Tooltip } from "@mui/material";
 
 // DTOs
 import UserDTO from "@/application/dto/UserDTO";
@@ -33,7 +33,7 @@ import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMe
 import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer";
 
 // Utils
-import { createMapOfRouteDay, createMapStoresInRouteDay, getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
+import { createMapStoresInRouteDay, getRouteDayFromRoutesList } from '@/shared/utils/routes/utils';
 
 import { IMapMarker } from '@/shared/components/MarkerMap/interfaces/interfaces';
 import { coordinates } from '@/shared/components/MarkerMap/types/types';
@@ -47,6 +47,7 @@ import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord } from '@/shared
 import StoreSearchBar from './components/StoreSearchBar';
 import { findStoresAround } from '@/shared/utils/clients/utils';
 import { RANGE_OPTIONS } from './constants/constants';
+import SimpleCard from '@/shared/components/Cards/SimpleCard/SimpleCard';
 
 
 function createMapHoverComponent(store: StoreDTO): any {
@@ -135,7 +136,8 @@ export default function Page() {
     const [mapStores, setMapStores] = useState<Map<string, StoreDTO>>(new Map()); // Map of store ID to StoreDTO for quick access
     const [mapRouteTransactionByStore, setMapRouteTransactionByStore] = useState<Map<string, RouteTransactionDTO[]>>(new Map()); // Map of store ID to list of route transactions
     const [mapStoresInRouteDay, setMapStoresInRouteDay] = useState<Map<string, StorePositionInRouteType[]>>(new Map()); // Map of store ID to StoreDTO for stores in the selected route day
-    
+	const [storeWithinRouteAssigned, setStoreWithinRouteAssigned] = useState<Set<string>>(new Set()); // Set of store IDs that are already assigned within the route being modified, used to avoid showing them in the search results when modifying a route day.
+
     // States related to route day.
     const [routesInModification, setRoutesInModification] = useState<Record<string, DraggableRouteDayStore[]>>({}); // Keep track of routes that are being modified to apply special effects on map markers.
     const [effectSelectedRouteDay, setEffectSelectedRouteDay] = useState<Map<string, RouteDayEffect>>(new Map());
@@ -168,14 +170,26 @@ export default function Page() {
         }
     ]);
 
-    const [administrationView, setAdministrationView] = useState(1); // 1 for Routes, 2 for Stores
+    const [administrationView, setAdministrationView] = useState(2); // 1 for Routes, 2 for Stores
 
 
     // Use effects
     useEffect(() => { fetchScreenInformation(); }, [])
 
     useEffect(() => {
-        setMapStoresInRouteDay(createMapStoresInRouteDay(routes));
+		const mapStoresInRouteDay = createMapStoresInRouteDay(routes);
+        setMapStoresInRouteDay(mapStoresInRouteDay);
+
+		const storeWithinRouteAssigned = new Set<string>();
+
+		stores.forEach(store => {
+			const { id_store } = store;
+			if (!mapStoresInRouteDay.has(id_store)) {
+				storeWithinRouteAssigned.add(id_store);
+			}
+		});
+
+		setStoreWithinRouteAssigned(storeWithinRouteAssigned);
     }, [routes])
 
     // Auxiliar functions
@@ -514,7 +528,6 @@ export default function Page() {
     }
 
     const handleSelectRouteDayStore = (idRouteDayStore: string) => {
-        console.log("Selected route day store ID: ", idRouteDayStore);
         if (selectedRouteDayStore === idRouteDayStore) {
             setSelectedRouteDayStore(null);
         } else {
@@ -609,7 +622,7 @@ export default function Page() {
                 </div>
             </Dialog>
             {/* Route and store section */}
-            <div className="relative flex">
+            <div className="relative flex max-w-[400px]">
                 <Collapse in={sidebarOpen} orientation="horizontal">
                     {/* Route section */}
                     <div className="flex flex-col h-full">
@@ -621,31 +634,50 @@ export default function Page() {
                         </div>
                         {/* Search Route */}
                         {/* <div className="w-64 md:w-72 bg-system-third-background overflow-y-auto"> */}
-                            {administrationView === 1 && (
-                                <SearchRoute
-                                    routeList={routes}
-                                    vendorList={vendors}
-                                    onRouteSelect={handleRouteSelect}
-                                    selectedRouteId={selectedRoute?.id_route}
-                                />
-                            )}
+						{administrationView === 1 && (
+							<SearchRoute
+								routeList={routes}
+								vendorList={vendors}
+								onRouteSelect={handleRouteSelect}
+								selectedRouteId={selectedRoute?.id_route}
+							/>
+						)}
                         {/* </div> */}
                         {/* Route Form */}
                         {/* <div className="w-64 md:w-72 bg-system-secondary-background overflow-y-auto"> */}
-                            {administrationView === 1 && (
-                                <RouteForm
-                                    vendorList={vendors}
-                                    existingRoute={selectedRoute}
-                                    onCancel={handleCancel}
-                                />
-                            )}
+						{administrationView === 1 && (
+							<RouteForm
+								vendorList={vendors}
+								existingRoute={selectedRoute}
+								onCancel={handleCancel}
+							/>
+						)}
                         {/* </div> */}
                         {/* Store section */}
                         {administrationView === 2 && (
-                            <StoreForm
-                                existingStore={selectedStore}
-                                onCancel={handleStoreCancel}
-                            />
+                            <div className='flex flex-col items-center overflow-y-auto'>
+								<h4 className='text-lg font-bold'>Tiendas sin rutas</h4>	
+								<List className="max-h-[40vh] min-h-[30vh] overflow-y-auto">
+									{ storeWithinRouteAssigned.size === 0 && (
+										<p className="text-sm text-gray-500 italic text-center">Todas las tiendas están asignadas a una ruta.</p>
+									)}
+									{ storeWithinRouteAssigned.entries().map(([id_store]) => {
+										const store = mapStores.get(id_store);
+										if (store === undefined) return null;
+										const { store_name } = store;
+										return <ListItem key={id_store}>
+												<SimpleCard 
+													cardName={store_name ?? "Nombre no disponible"}
+													cardDetails={getAddressOfStore(store)}
+												/>
+										</ListItem>
+									})}
+								</List>
+								<StoreForm
+									existingStore={selectedStore}
+									onCancel={handleStoreCancel}
+								/>
+							</div>
                         )}
                     </div>
                 </Collapse>
