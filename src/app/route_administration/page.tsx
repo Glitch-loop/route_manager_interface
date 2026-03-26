@@ -147,7 +147,7 @@ export default function Page() {
     const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<string | null>(null);
 	const [searchByCoords, setSearchByCoords] = useState<boolean>(false);
 	const [includeDeactiveStores, setIncludeDeactiveStores] = useState<boolean>(false);
-	const [selectedRange, setSelectedRange] = useState<number>(RANGE_OPTIONS[0].value);
+	const [selectedRange, setSelectedRange] = useState<number>(RANGE_OPTIONS[3].value);
 	const [storesFoundByPosition, setStoresFoundByPosition] = useState<StoreDTO[]>([]);
 	const [selectedCoordinate, setSelectedCoordinate] = useState<coordinates | null>(null);
 
@@ -718,7 +718,7 @@ export default function Page() {
                         markers={mapMarkers}
                         idMarkerSelected={selectedRouteDayStore}
                         setIdMarkerSelected={setSelectedRouteDayStore}
-                        coordSelected={handleCoordSelected}
+                        onCoordSelected={handleCoordSelected}
                     />
                 </div>
 

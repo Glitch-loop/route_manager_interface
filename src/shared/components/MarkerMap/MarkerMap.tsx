@@ -12,8 +12,14 @@ interface MarkerMapProps {
   markers: IMapMarker[];
   idMarkerSelected: string | null;
   setIdMarkerSelected: (id: string | null) => void;
-  coordSelected: (coords: coordinates) => void;
+  onCoordSelected: (clickCoordinates: coordinates) => void;
+}
 
+interface MapContentProps {
+  markers: IMapMarker[];
+  idMarkerSelected: string | null;
+  setIdMarkerSelected: (id: string | null) => void;
+  onCoordSelected: (clickCoordinates: MapMouseEvent | IMapMarker) => void;
 }
 
 const containerStyle = { width: "100%", height: "100%" };
@@ -21,7 +27,7 @@ const defaultCenter = { lat: 20.648043093256433, lng: -105.21612612535338 }; // 
 const MAP_ID = "marker-map";
 
 // Inner component that has access to the map instance
-function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelected }: MarkerMapProps) {
+function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSelected }: MapContentProps) {
   const map = useMap(MAP_ID);
   const [clickedMarker, setClickedMarker] = useState<IMapMarker | null>(null);
   const [hoveredMarker, setHoveredMarker] = useState<IMapMarker | null>(null);
@@ -54,6 +60,7 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelec
   }, []);
 
   const handleMarkerClick = (marker: IMapMarker) => {
+
     // Close hover info window
     setHoveredMarker(null);
     if (hoverTimerRef.current) {
@@ -73,11 +80,9 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelec
     }
 
     // Notify parent with coordinates
-    console.log("Coords selected")
-    coordSelected({
-      Lat: parseFloat(marker.latitude),
-      Lng: parseFloat(marker.longitude),
-    });
+    console.log("Store selected")
+    
+    onCoordSelected(marker);
   };
 
   const handleMouseOver = (marker: IMapMarker) => {
@@ -181,13 +186,26 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelec
   );
 }
 
-export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelected, coordSelected }: MarkerMapProps) {
-  const handleMapClick = (event: MapMouseEvent) => {
-    if (event.detail.latLng !== null) {
-      const coordinates = event.detail.latLng;
-      coordSelected({ Lat: coordinates.lat, Lng: coordinates.lng });
+export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSelected }: MarkerMapProps) {
+  const [selectedCoordinate, setSelectedCoordinate] = useState<coordinates | null>(null);
+  
+
+  const handleCoordSelected = (clickCoordinates: MapMouseEvent | IMapMarker) => {
+    if ("detail" in clickCoordinates) {
+      if (clickCoordinates.detail.latLng !== null) {
+        const coordinates = clickCoordinates.detail.latLng;
+        const coords = { Lat: coordinates.lat, Lng: coordinates.lng };
+        onCoordSelected(coords);
+        setSelectedCoordinate(coords);
+      }
+    } else if ("id_marker" in clickCoordinates) {
+      // Do nothing
+      const { latitude, longitude } = clickCoordinates;
+      // const coords = { Lat: parseFloat(latitude), Lng: parseFloat(longitude) };
+      // onCoordSelected(coords);
     }
   }
+
   return (
     <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string}>
       <Map 
@@ -195,13 +213,13 @@ export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelect
         style={containerStyle}
         defaultCenter={markers.length ? { lat: parseFloat(markers[0].latitude), lng: parseFloat(markers[0].longitude) } : defaultCenter}
         defaultZoom={13}
-        onClick={handleMapClick}
+        onClick={handleCoordSelected}
       >
         <MapContent 
           markers={markers} 
           idMarkerSelected={idMarkerSelected} 
           setIdMarkerSelected={setIdMarkerSelected}
-          coordSelected={coordSelected} 
+          onCoordSelected={handleCoordSelected} 
         />
       </Map>
     </APIProvider>
