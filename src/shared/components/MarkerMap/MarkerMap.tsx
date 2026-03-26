@@ -1,10 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
-import { APIProvider, Map, Marker, InfoWindow, useMap } from "@vis.gl/react-google-maps";
+import { APIProvider, Map, Marker, InfoWindow, useMap, MapMouseEvent } from "@vis.gl/react-google-maps";
 import { IMapMarker } from "./interfaces/interfaces";
 import { coordinates } from "./types/types";
 import { createCustomMarker } from "@/utils/stylesUtils";
-import { ChairAlt, ChatSharp, SpeakerNotesOff } from "@mui/icons-material";
+import { ChatSharp, SpeakerNotesOff } from "@mui/icons-material";
 import { IconButton, Tooltip } from "@mui/material";
 
 
@@ -73,6 +73,7 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelec
     }
 
     // Notify parent with coordinates
+    console.log("Coords selected")
     coordSelected({
       Lat: parseFloat(marker.latitude),
       Lng: parseFloat(marker.longitude),
@@ -181,6 +182,12 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, coordSelec
 }
 
 export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelected, coordSelected }: MarkerMapProps) {
+  const handleMapClick = (event: MapMouseEvent) => {
+    if (event.detail.latLng !== null) {
+      const coordinates = event.detail.latLng;
+      coordSelected({ Lat: coordinates.lat, Lng: coordinates.lng });
+    }
+  }
   return (
     <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string}>
       <Map 
@@ -188,6 +195,7 @@ export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelect
         style={containerStyle}
         defaultCenter={markers.length ? { lat: parseFloat(markers[0].latitude), lng: parseFloat(markers[0].longitude) } : defaultCenter}
         defaultZoom={13}
+        onClick={handleMapClick}
       >
         <MapContent 
           markers={markers} 

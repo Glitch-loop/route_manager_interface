@@ -3,21 +3,17 @@ import { Switch, TextField, ToggleButton, ToggleButtonGroup, FormControlLabel, C
 import SearchIcon from "@mui/icons-material/Search";
 import StoreDTO from "@/application/dto/StoreDTO";
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
-
-const RANGE_OPTIONS = [
-  { label: "100m", value: 100 },
-  { label: "300m", value: 300 },
-  { label: "400m", value: 400 },
-  { label: "1km", value: 1000 },
-];
+import { RangeOption } from "../types/types";
 
 type StoreSearchBarProps = {
   stores: StoreDTO[];
-  onSelectStore: (store: StoreDTO | null) => void;
   searchByCoords: boolean;
+  includeDesactiveStores: boolean;
+	rangeOptions: RangeOption[];
+	selectedRange: number;
+  onSelectStore: (store: StoreDTO | null) => void;
   onSwitchSearchByCoords: (active: boolean) => void;
   onSelectRange: (range: number) => void;
-  includeDesactiveStores: boolean;
   onHandleIncludeDesactiveStores: (checked: boolean) => void;
 	onHoverAutocompleteOption: (store: StoreDTO|null) => void;
 	onStartSearchByAutocompletion: () => void;
@@ -25,18 +21,20 @@ type StoreSearchBarProps = {
 
 export default function StoreSearchBar({
   stores,
-  onSelectStore,
   searchByCoords,
+  includeDesactiveStores,
+	rangeOptions,
+	selectedRange,
+  onSelectStore,
   onSwitchSearchByCoords,
   onSelectRange,
-  includeDesactiveStores,
   onHandleIncludeDesactiveStores,
 	onHoverAutocompleteOption,
-	onStartSearchByAutocompletion = () => {}
+	onStartSearchByAutocompletion = () => {},
 }: StoreSearchBarProps) {
 	const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">("address");
 	const [inputValue, setInputValue] = useState<string>('');
-	const [selectedRange, setSelectedRange] = useState<number>(RANGE_OPTIONS[0].value);
+	// const [selectedRange, setSelectedRange] = useState<number>(rangeOptions[0] ? rangeOptions[0].value : 100);
 
 
 	const handleSelectStore = (store: StoreDTO) => {
@@ -47,8 +45,7 @@ export default function StoreSearchBar({
 	}
 
 	const handleSelectRange = (range: number) => {
-		console.log("Selected range:", range);
-		setSelectedRange(range);
+		// setSelectedRange(range);
 		onSelectRange(range);
 	}
 
@@ -118,7 +115,7 @@ export default function StoreSearchBar({
           onChange={(_, val) => val && handleSelectRange(val)}
           size="small"
         >
-          {RANGE_OPTIONS.map(opt => (
+          {rangeOptions.map(opt => (
             <ToggleButton key={opt.value} value={opt.value}>{opt.label}</ToggleButton>
           ))}
         </ToggleButtonGroup>

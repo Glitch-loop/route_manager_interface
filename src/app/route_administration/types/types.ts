@@ -7,3 +7,5 @@ export type RouteDayEffect = {
 
 // Extended type that adds 'id' property for dnd-kit compatibility
 export type DraggableRouteDayStore = RouteDayStoreDTO & { id: string };
+
+export type RangeOption = { label: string; value: number };

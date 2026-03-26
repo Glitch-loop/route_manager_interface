@@ -45,6 +45,8 @@ import { getAddressOfStore } from '@/shared/utils/stores/utils';
 import { StorePositionInRouteType } from '@/shared/types/types';
 import { capitalizeFirstLetter, capitalizeFirstLetterOfEachWord } from '@/shared/utils/strings/utils';
 import StoreSearchBar from './components/StoreSearchBar';
+import { findStoresAround } from '@/shared/utils/clients/utils';
+import { RANGE_OPTIONS } from './constants/constants';
 
 
 function createMapHoverComponent(store: StoreDTO): any {
@@ -145,6 +147,9 @@ export default function Page() {
     const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<string | null>(null);
 	const [searchByCoords, setSearchByCoords] = useState<boolean>(false);
 	const [includeDeactiveStores, setIncludeDeactiveStores] = useState<boolean>(false);
+	const [selectedRange, setSelectedRange] = useState<number>(RANGE_OPTIONS[0].value);
+	const [storesFoundByPosition, setStoresFoundByPosition] = useState<StoreDTO[]>([]);
+	const [selectedCoordinate, setSelectedCoordinate] = useState<coordinates | null>(null);
 
 	// States related search bar
 	const [searchedStore, setSearchedStore] = useState<StoreDTO|null>(null);
@@ -206,10 +211,7 @@ export default function Page() {
     // Memoized components
     const mapMarkers = useMemo<IMapMarker[]>(() => {
         const markers: IMapMarker[] = [];
-        
-        // Set of route day IDs currently being modified
-        const modifiedRouteDayIds = new Set(Object.keys(routesInModification));
-        
+                
         Object.entries(routesInModification).forEach(([idRouteDay, stores]) => {
             const effect = effectSelectedRouteDay.get(idRouteDay);
             
@@ -276,6 +278,40 @@ export default function Page() {
             });   
         }
 
+
+		storesFoundByPosition.forEach((store) => {
+			const { id_store, latitude, longitude } = store;
+			const storePositions = mapStoresInRouteDay.get(store.id_store) ?? [];
+			markers.push({
+				id_marker: generateRandomColor(), // Unique ID for store found by coordinates
+				id_item: id_store,
+				id_group: "store-by-coords",
+				color_item: "#3713da", // Default color
+				latitude: latitude,
+				longitude: longitude,
+				hoverComponent: createMapHoverComponent(store),
+				clickComponent: createMapClickComponent(store, storePositions),
+			});
+		});
+
+
+		if (selectedCoordinate) {
+			const { Lat, Lng } = selectedCoordinate;
+			markers.push({
+				id_marker: generateRandomColor(), // Unique ID for store found by coordinates
+				id_item: generateRandomColor(),
+				id_group: "store-by-coords",
+				color_item: "#dc3d35", // Default color
+				latitude: Lat.toString(),
+				longitude: Lng.toString(),
+				hoverComponent: <span>Click para cancelar busqueda</span>,
+				clickComponent: <span>Click para cancelar busqueda</span>,
+			});
+		}
+
+
+	
+
         return markers;
     }, [
         routesInModification, // Provides the route days currently being modified
@@ -283,16 +319,10 @@ export default function Page() {
         effectSelectedRouteDay, // Provides effects that will be applied to the markers
         mapStoresInRouteDay, // Provides information about which route days each store belongs to for the hover and click components
         hoveredStore,
-		searchedStore
+		searchedStore,
+		storesFoundByPosition,
+		selectedCoordinate,
     ]);
-
-
-
-
-    // Handlers
-    const handleCoordSelected = (coords: coordinates) => {
-        console.log('Coordinates selected:', coords);
-    };
 
     // Handlers - Route menu
     const handleRouteSelect = (route: RouteDTO) => { setSelectedRoute(route); };
@@ -482,9 +512,10 @@ export default function Page() {
 	// Handlers for store search bar
 	const handlerSwitchSearchByCoords = (active: boolean) => {
 		setSearchByCoords(active);
-	}
-
-	const handleSelectedRange = (range: number) => {
+		if (!active) {
+			setStoresFoundByPosition([]);
+			setSelectedCoordinate(null);
+		}
 	}
 
 	const handleSelectStore = (store: StoreDTO | null) => {
@@ -499,6 +530,37 @@ export default function Page() {
 		setSearchedStore(null);
 	}
 
+	const handleSelectedRange = (range: number) => {
+		if (searchByCoords && selectedCoordinate) {
+			const foundStores = findStoresAround(selectedCoordinate, stores, range);
+			setStoresFoundByPosition(foundStores);
+		}
+		
+		setSelectedRange(range);
+	}
+
+	// Map handlers
+    const handleCoordSelected = (coords: coordinates) => {
+		let cancelSearch = false;
+		console.log("coords selected: ", coords);
+		if (searchByCoords) {
+			if (selectedCoordinate !== null) {
+				const { Lat, Lng } = selectedCoordinate;
+				cancelSearch = coords.Lat === Lat && coords.Lng === Lng; // If the same coordinate is selected again, cancel the search.
+			}
+			
+			if (!cancelSearch) { // User selected a new coordinate
+				console.log("Searching")
+				const foundStores = findStoresAround(coords, stores, selectedRange);
+				setStoresFoundByPosition(foundStores);
+				setSelectedCoordinate(coords);
+			} else {
+				setStoresFoundByPosition([]);
+				setSelectedCoordinate(null);
+			}
+		}
+
+    };
 
     return (
         <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
@@ -592,12 +654,15 @@ export default function Page() {
 								stores={stores}
 								onSelectStore={handleSelectStore}
 								searchByCoords={searchByCoords}
+								rangeOptions={RANGE_OPTIONS}
+								selectedRange={selectedRange}
 								onSwitchSearchByCoords={handlerSwitchSearchByCoords}
 								onSelectRange={handleSelectedRange}
 								includeDesactiveStores={includeDeactiveStores}
 								onHandleIncludeDesactiveStores={handleIncludeDeactiveStores}
 								onHoverAutocompleteOption={handleOverStoreAutoComplete}
 								onStartSearchByAutocompletion={handleStartSearchByAutocompletion}
+								
                                 /> 
                         </div>
                     </Collapse>
