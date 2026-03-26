@@ -150,6 +150,7 @@ export default function Page() {
 	const [selectedRange, setSelectedRange] = useState<number>(RANGE_OPTIONS[3].value);
 	const [storesFoundByPosition, setStoresFoundByPosition] = useState<StoreDTO[]>([]);
 	const [selectedCoordinate, setSelectedCoordinate] = useState<coordinates | null>(null);
+	const [totalStoresFoundBySearchRange, setTotalStoresFoundBySearchRange] = useState<number | null>(null);
 
 	// States related search bar
 	const [searchedStore, setSearchedStore] = useState<StoreDTO|null>(null);
@@ -516,9 +517,13 @@ export default function Page() {
 	// Handlers for store search bar
 	const handlerSwitchSearchByCoords = (active: boolean) => {
 		setSearchByCoords(active);
+		
 		if (!active) {
 			setStoresFoundByPosition([]);
 			setSelectedCoordinate(null);
+			setTotalStoresFoundBySearchRange(null);
+		} else {
+			setTotalStoresFoundBySearchRange(0);
 		}
 	}
 
@@ -537,6 +542,7 @@ export default function Page() {
 	const handleSelectedRange = (range: number) => {
 		if (searchByCoords && selectedCoordinate) {
 			const foundStores = findStoresAround(selectedCoordinate, stores, range);
+			setTotalStoresFoundBySearchRange(foundStores.length);
 			setStoresFoundByPosition(foundStores);
 		}
 		
@@ -545,24 +551,11 @@ export default function Page() {
 
 	// Map handlers
     const handleCoordSelected = (selectedCoords: coordinates | IMapMarker) => {
-		let cancelSearch = false;
-
-
 		if (searchByCoords && "Lat" in selectedCoords && "Lng" in selectedCoords) {
-			if (selectedCoordinate !== null) {
-				const { Lat, Lng } = selectedCoordinate;
-				cancelSearch = selectedCoords.Lat === Lat && selectedCoords.Lng === Lng; // If the same coordinate is selected again, cancel the search.
-			}
-			
-			if (!cancelSearch) { // User selected a new coordinate
-				console.log("Searching")
-				const foundStores = findStoresAround(selectedCoords, stores, selectedRange);
-				setStoresFoundByPosition(foundStores);
-				setSelectedCoordinate(selectedCoords);
-			} else {
-				setStoresFoundByPosition([]);
-				setSelectedCoordinate(null);
-			}
+			const foundStores = findStoresAround(selectedCoords, stores, selectedRange);
+			setStoresFoundByPosition(foundStores);
+			setSelectedCoordinate(selectedCoords);
+			setTotalStoresFoundBySearchRange(foundStores.length);
 		} else {
 			const { id_group } = selectedCoords as IMapMarker;
 
@@ -669,6 +662,7 @@ export default function Page() {
 								onSelectStore={handleSelectStore}
 								searchByCoords={searchByCoords}
 								rangeOptions={RANGE_OPTIONS}
+								totalStoresFoundBySearchRange={totalStoresFoundBySearchRange}
 								selectedRange={selectedRange}
 								onSwitchSearchByCoords={handlerSwitchSearchByCoords}
 								onSelectRange={handleSelectedRange}

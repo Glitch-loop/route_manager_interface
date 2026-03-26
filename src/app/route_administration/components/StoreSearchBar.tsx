@@ -11,6 +11,7 @@ type StoreSearchBarProps = {
   includeDesactiveStores: boolean;
 	rangeOptions: RangeOption[];
 	selectedRange: number;
+	totalStoresFoundBySearchRange: number|null;
   onSelectStore: (store: StoreDTO | null) => void;
   onSwitchSearchByCoords: (active: boolean) => void;
   onSelectRange: (range: number) => void;
@@ -25,6 +26,7 @@ export default function StoreSearchBar({
   includeDesactiveStores,
 	rangeOptions,
 	selectedRange,
+	totalStoresFoundBySearchRange,
   onSelectStore,
   onSwitchSearchByCoords,
   onSelectRange,
@@ -108,7 +110,8 @@ export default function StoreSearchBar({
             color="primary"
           />
         </div>
-        <span className="text-xs">Search range</span>
+				{totalStoresFoundBySearchRange !== null && <span className="text-base font-semibold">Resultado: {totalStoresFoundBySearchRange}</span>}
+        <span className="text-base italic">Search range</span>
         <ToggleButtonGroup
           value={selectedRange}
           exclusive
