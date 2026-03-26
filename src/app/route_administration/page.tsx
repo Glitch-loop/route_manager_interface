@@ -63,13 +63,15 @@ function createMapHoverComponent(store: StoreDTO): any {
 
 
 function createMapClickComponent(store: StoreDTO, storePositions: StorePositionInRouteType[]): any {
-    const storeName = store.store_name ?? "Nombre no disponible";
+    const { id_store } = store;
+	const storeName = store.store_name ?? "Nombre no disponible";
     const storeAddress = getAddressOfStore(store);
     const modifiedRouteDayIds: Set<string> = new Set(); // Replace with actual logic to get modified route day IDs
 
     return (
         <div className="p-3 min-w-[280px]">
             <h4 className="font-bold text-lg mb-2">{storeName}</h4>
+            <p className="text-sm text-gray-600 mb-1">{id_store}</p>
             <p className="text-sm text-gray-600 mb-1">{storeAddress}</p>
             {store.address_reference && (
                 <p className="text-sm text-gray-500 mt-1">Referencias: {store.address_reference}</p>
@@ -154,6 +156,7 @@ export default function Page() {
 
 	// States related search bar
 	const [searchedStore, setSearchedStore] = useState<StoreDTO|null>(null);
+	const [hideCoordSearchResults, setHideCoordSearchResults] = useState<boolean>(false);
 
     const [vendors, setVendors] = useState<UserDTO[]>([
         {
@@ -282,36 +285,40 @@ export default function Page() {
         }
 
 
-		storesFoundByPosition.forEach((store) => {
-			const { id_store, latitude, longitude } = store;
-			const storePositions = mapStoresInRouteDay.get(store.id_store) ?? [];
-			const markerGroup:MarkerGroup = "store-found-by-coords";
-			markers.push({
-				id_marker: generateRandomColor(), // Unique ID for store found by coordinates
-				id_item: id_store,
-				id_group: markerGroup,
-				color_item: "#3713da", // Default color
-				latitude: latitude,
-				longitude: longitude,
-				hoverComponent: createMapHoverComponent(store),
-				clickComponent: createMapClickComponent(store, storePositions),
+		if (!hideCoordSearchResults) {
+			storesFoundByPosition.forEach((store) => {
+				const { id_store, latitude, longitude } = store;
+				const storePositions = mapStoresInRouteDay.get(store.id_store) ?? [];
+				const markerGroup:MarkerGroup = "store-found-by-coords";
+				markers.push({
+					id_marker: generateRandomColor(), // Unique ID for store found by coordinates
+					id_item: id_store,
+					id_group: markerGroup,
+					color_item: "#3713da", // Default color
+					latitude: latitude,
+					longitude: longitude,
+					hoverComponent: createMapHoverComponent(store),
+					clickComponent: createMapClickComponent(store, storePositions),
+				});
 			});
-		});
+		}
 
 
 		if (selectedCoordinate) {
-			const { Lat, Lng } = selectedCoordinate;
-			const markerGroup:MarkerGroup = "pivot-coord-search";
-			markers.push({
-				id_marker: generateRandomColor(), // Unique ID for store found by coordinates
-				id_item: generateRandomColor(),
-				id_group: markerGroup,
-				color_item: "#dc3d35", // Default color
-				latitude: Lat.toString(),
-				longitude: Lng.toString(),
-				hoverComponent: <span>Click para cancelar busqueda</span>,
-				clickComponent: null,
-			});
+			if (!hideCoordSearchResults) {
+				const { Lat, Lng } = selectedCoordinate;
+				const markerGroup:MarkerGroup = "pivot-coord-search";
+				markers.push({
+					id_marker: generateRandomColor(), // Unique ID for store found by coordinates
+					id_item: generateRandomColor(),
+					id_group: markerGroup,
+					color_item: "#dc3d35", // Default color
+					latitude: Lat.toString(),
+					longitude: Lng.toString(),
+					hoverComponent: <span>Click para cancelar busqueda</span>,
+					clickComponent: null,
+				});
+			}
 		}
 
 
@@ -327,6 +334,7 @@ export default function Page() {
 		searchedStore,
 		storesFoundByPosition,
 		selectedCoordinate,
+		hideCoordSearchResults
     ]);
 
     // Handlers - Route menu
@@ -517,11 +525,12 @@ export default function Page() {
 	// Handlers for store search bar
 	const handlerSwitchSearchByCoords = (active: boolean) => {
 		setSearchByCoords(active);
-		
+
 		if (!active) {
 			setStoresFoundByPosition([]);
 			setSelectedCoordinate(null);
 			setTotalStoresFoundBySearchRange(null);
+			setTotalStoresFoundBySearchRange(0);
 		} else {
 			setTotalStoresFoundBySearchRange(0);
 		}
@@ -549,6 +558,10 @@ export default function Page() {
 		setSelectedRange(range);
 	}
 
+	const handleCoordSearchResult = (hide: boolean) => {
+		setHideCoordSearchResults(hide);
+	}
+
 	// Map handlers
     const handleCoordSelected = (selectedCoords: coordinates | IMapMarker) => {
 		if (searchByCoords && "Lat" in selectedCoords && "Lng" in selectedCoords) {
@@ -562,6 +575,7 @@ export default function Page() {
 			if (id_group === "pivot-coord-search") {
 				setStoresFoundByPosition([]);
 				setSelectedCoordinate(null);
+				setTotalStoresFoundBySearchRange(0);
 			} else {
 				// At the moment, do nothing.
 			}
@@ -670,7 +684,7 @@ export default function Page() {
 								onHandleIncludeDesactiveStores={handleIncludeDeactiveStores}
 								onHoverAutocompleteOption={handleOverStoreAutoComplete}
 								onStartSearchByAutocompletion={handleStartSearchByAutocompletion}
-								
+								onHideSearchCoordResults={handleCoordSearchResult}
                                 /> 
                         </div>
                     </Collapse>

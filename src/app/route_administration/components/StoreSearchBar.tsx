@@ -18,6 +18,7 @@ type StoreSearchBarProps = {
   onHandleIncludeDesactiveStores: (checked: boolean) => void;
 	onHoverAutocompleteOption: (store: StoreDTO|null) => void;
 	onStartSearchByAutocompletion: () => void;
+	onHideSearchCoordResults: (hide: boolean) => void;
 };
 
 export default function StoreSearchBar({
@@ -33,9 +34,11 @@ export default function StoreSearchBar({
   onHandleIncludeDesactiveStores,
 	onHoverAutocompleteOption,
 	onStartSearchByAutocompletion = () => {},
+	onHideSearchCoordResults,
 }: StoreSearchBarProps) {
 	const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">("address");
 	const [inputValue, setInputValue] = useState<string>('');
+	const [hideSearchCoordResults, setHideSearchCoordResults] = useState<boolean>(false);
 	// const [selectedRange, setSelectedRange] = useState<number>(rangeOptions[0] ? rangeOptions[0].value : 100);
 
 
@@ -51,6 +54,11 @@ export default function StoreSearchBar({
 		onSelectRange(range);
 	}
 
+	const handleHideSearchCoordResults = (hide: boolean) => {
+		setHideSearchCoordResults(hide);
+		onHideSearchCoordResults(hide);
+	}
+
   return (
     <div className="flex flex-row items-center w-full bg-[#f5f5f5] border-2 rounded-md p-2 gap-4">
       {/* Search type toggle */}
@@ -62,8 +70,8 @@ export default function StoreSearchBar({
 						onChange={(_, val) => val && setSearchStoreBy(val)}
 						size="small"
 					>
-						<ToggleButton value="name">By name</ToggleButton>
-						<ToggleButton value="address">By address</ToggleButton>
+						<ToggleButton value="name">Nombre</ToggleButton>
+						<ToggleButton value="address">Dirección</ToggleButton>
 					</ToggleButtonGroup>
 				</div>
         <div className="flex flex-row items-center gap-1 w-full">
@@ -101,17 +109,25 @@ export default function StoreSearchBar({
       </div>
       <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
       {/* Search by coords */}
-      <div className="flex flex-col items-center gap-2 min-w-[180px]">
+      <div className="flex flex-col items-center min-w-[180px]">
         <div className="flex flex-row items-center gap-2">
-          <span>Search by coords</span>
+          <span>Buscar por coordenadas</span>
           <Switch
             checked={searchByCoords}
             onChange={e => onSwitchSearchByCoords(e.target.checked)}
             color="primary"
           />
         </div>
+        <div className="flex flex-row items-center gap-2">
+          <span>Ocultar busqueda: </span>
+          <Switch
+            checked={hideSearchCoordResults}
+            onChange={e => handleHideSearchCoordResults(e.target.checked)}
+            color="primary"
+          />
+        </div>
 				{totalStoresFoundBySearchRange !== null && <span className="text-base font-semibold">Resultado: {totalStoresFoundBySearchRange}</span>}
-        <span className="text-base italic">Search range</span>
+        <span className="text-base italic">Rango de búsqueda</span>
         <ToggleButtonGroup
           value={selectedRange}
           exclusive
@@ -133,7 +149,7 @@ export default function StoreSearchBar({
               onChange={e => onHandleIncludeDesactiveStores(e.target.checked)}
             />
           }
-          label={<span>Include desactive stores<br />in search</span>}
+          label={<span>Incluir tiendas desactivadas<br />en la búsqueda</span>}
         />
       </div>
     </div>

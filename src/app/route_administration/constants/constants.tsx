@@ -5,6 +5,8 @@ export const RANGE_OPTIONS: RangeOption[] = [
     { label: "300m", value: 300 },
     { label: "500m", value: 500 },
     { label: "1km", value: 1000 },
+    { label: "2km", value: 2000 },
     { label: "3km", value: 3000 },
+    { label: "4km", value: 4000 },
     { label: "5km", value: 5000 },
 ];
