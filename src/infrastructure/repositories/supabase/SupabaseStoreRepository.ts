@@ -165,7 +165,7 @@ export class SupabaseStoreRepository implements StoreRepository {
 
             const { error } = await this.supabase
                 .from(SERVER_DATABASE_ENUM.STORES)
-                .delete()
+                .update({ status_store: 0 }) // Assuming a soft delete by setting status_store to 0
                 .in('id_store', storeIds);
 
             if (error) throw new Error(`Error deleting stores: ${error.message}`);

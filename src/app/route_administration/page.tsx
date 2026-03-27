@@ -71,6 +71,7 @@ function createMapClickComponent(store: StoreDTO, storePositions: StorePositionI
 
     return (
         <div className="p-3 min-w-[280px]">
+			
             <h4 className="font-bold text-lg mb-2">{storeName}</h4>
             <p className="text-sm text-gray-600 mb-1">{id_store}</p>
             <p className="text-sm text-gray-600 mb-1">{storeAddress}</p>
