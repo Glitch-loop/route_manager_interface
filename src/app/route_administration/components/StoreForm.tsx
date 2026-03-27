@@ -23,80 +23,67 @@ export default function StoreForm({
 }: StoreFormProps) {
     const isEditMode = existingStore !== undefined && existingStore !== null;
 
-    // Necessary fields
-    const [storeName, setStoreName] = useState("");
-    const [street, setStreet] = useState("");
-    const [extNumber, setExtNumber] = useState("");
-    const [colony, setColony] = useState("");
-    const [postalCode, setPostalCode] = useState("");
-    const [addressReference, setAddressReference] = useState("");
-    const [latitude, setLatitude] = useState("");
-    const [longitude, setLongitude] = useState("");
 
-    // Optional fields
-    const [ownerName, setOwnerName] = useState("");
-    const [cellphone, setCellphone] = useState("");
+    const [store, setStore] = useState<StoreDTO>(
+        existingStore ?? {
+            id_store: "",
+            store_name: null,
+            street: "",
+            ext_number: null,
+            colony: "",
+            postal_code: "",
+            address_reference: null,
+            latitude: "",
+            longitude: "",
+            status_store: 1,
+            creation_date: new Date().toISOString(),
+            is_new: 1,
+        }
+    );
 
     useEffect(() => {
         if (existingStore) {
-            setStoreName(existingStore.store_name || "");
-            setStreet(existingStore.street);
-            setExtNumber(existingStore.ext_number || "");
-            setColony(existingStore.colony);
-            setPostalCode(existingStore.postal_code);
-            setAddressReference(existingStore.address_reference || "");
-            setLatitude(existingStore.latitude);
-            setLongitude(existingStore.longitude);
+            setStore(existingStore);
         }
     }, [existingStore]);
 
+
     const handleCreate = () => {
         if (!onCreate) return;
-        onCreate({
-            store_name: storeName || null,
-            street,
-            ext_number: extNumber || null,
-            colony,
-            postal_code: postalCode,
-            address_reference: addressReference || null,
-            latitude,
-            longitude,
-            status_store: 1,
-        });
+        const { id_store, creation_date, is_new, ...rest } = store;
+        onCreate(rest as Omit<StoreDTO, "id_store" | "creation_date" | "is_new">);
     };
 
     const handleUpdate = () => {
-        if (!onUpdate || !existingStore) return;
-        onUpdate({
-            ...existingStore,
-            store_name: storeName || null,
-            street,
-            ext_number: extNumber || null,
-            colony,
-            postal_code: postalCode,
-            address_reference: addressReference || null,
-            latitude,
-            longitude,
-        });
+        if (!onUpdate) return;
+        onUpdate(store);
     };
 
-    const handleStatusChange = () => {
-        if (!onStatusChange || !existingStore) return;
-        const newStatus = existingStore.status_store === 1 ? 0 : 1;
-        onStatusChange(existingStore.id_store, newStatus);
+    const handleActivate = () => {
+        if (!onActivate || !store.id_store) return;
+        onActivate(store.id_store);
+    };
+
+    const handleDesactivate = () => {
+        if (!onDesactivate || !store.id_store) return;
+        onDesactivate(store.id_store);
     };
 
     const clearForm = () => {
-        setStoreName("");
-        setStreet("");
-        setExtNumber("");
-        setColony("");
-        setPostalCode("");
-        setAddressReference("");
-        setLatitude("");
-        setLongitude("");
-        setOwnerName("");
-        setCellphone("");
+        setStore({
+            id_store: "",
+            store_name: null,
+            street: "",
+            ext_number: null,
+            colony: "",
+            postal_code: "",
+            address_reference: null,
+            latitude: "",
+            longitude: "",
+            status_store: 1,
+            creation_date: new Date().toISOString(),
+            is_new: 1,
+        });
     };
 
     return (
@@ -108,8 +95,8 @@ export default function StoreForm({
                 fullWidth
                 size="small"
                 placeholder="Nombre de la tienda..."
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
+                value={store.store_name || ""}
+                onChange={(e) => setStore({ ...store, store_name: e.target.value || null })}
                 sx={{ backgroundColor: "white", borderRadius: 1 }}
             />
 
@@ -117,8 +104,8 @@ export default function StoreForm({
                 fullWidth
                 size="small"
                 placeholder="Calle..."
-                value={street}
-                onChange={(e) => setStreet(e.target.value)}
+                value={store.street}
+                onChange={(e) => setStore({ ...store, street: e.target.value })}
                 sx={{ backgroundColor: "white", borderRadius: 1 }}
             />
 
@@ -126,8 +113,8 @@ export default function StoreForm({
                 fullWidth
                 size="small"
                 placeholder="Número..."
-                value={extNumber}
-                onChange={(e) => setExtNumber(e.target.value)}
+                value={store.ext_number || ""}
+                onChange={(e) => setStore({ ...store, ext_number: e.target.value || null })}
                 sx={{ backgroundColor: "white", borderRadius: 1 }}
             />
 
@@ -135,8 +122,8 @@ export default function StoreForm({
                 fullWidth
                 size="small"
                 placeholder="Colonia..."
-                value={colony}
-                onChange={(e) => setColony(e.target.value)}
+                value={store.colony}
+                onChange={(e) => setStore({ ...store, colony: e.target.value })}
                 sx={{ backgroundColor: "white", borderRadius: 1 }}
             />
 
@@ -144,8 +131,8 @@ export default function StoreForm({
                 fullWidth
                 size="small"
                 placeholder="Código postal..."
-                value={postalCode}
-                onChange={(e) => setPostalCode(e.target.value)}
+                value={store.postal_code}
+                onChange={(e) => setStore({ ...store, postal_code: e.target.value })}
                 sx={{ backgroundColor: "white", borderRadius: 1 }}
             />
 
@@ -154,8 +141,8 @@ export default function StoreForm({
                 multiline
                 rows={3}
                 placeholder="Referencia de dirección..."
-                value={addressReference}
-                onChange={(e) => setAddressReference(e.target.value)}
+                value={store.address_reference || ""}
+                onChange={(e) => setStore({ ...store, address_reference: e.target.value || null })}
                 sx={{ backgroundColor: "white", borderRadius: 1 }}
             />
 
@@ -165,16 +152,16 @@ export default function StoreForm({
                     fullWidth
                     size="small"
                     placeholder="Latitud..."
-                    value={latitude}
-                    onChange={(e) => setLatitude(e.target.value)}
+                    value={store.latitude}
+                    onChange={(e) => setStore({ ...store, latitude: e.target.value })}
                     sx={{ backgroundColor: "white", borderRadius: 1 }}
                 />
                 <TextField
                     fullWidth
                     size="small"
                     placeholder="Longitud..."
-                    value={longitude}
-                    onChange={(e) => setLongitude(e.target.value)}
+                    value={store.longitude}
+                    onChange={(e) => setStore({ ...store, longitude: e.target.value })}
                     sx={{ backgroundColor: "white", borderRadius: 1 }}
                 />
             </div>
@@ -189,8 +176,8 @@ export default function StoreForm({
                 fullWidth
                 size="small"
                 placeholder="Nombre del dueño"
-                value={ownerName}
-                onChange={(e) => setOwnerName(e.target.value)}
+                value={store.owner_name || ""}
+                onChange={(e) => setStore({ ...store, owner_name: e.target.value || null })}
                 sx={{ backgroundColor: "white", borderRadius: 1 }}
             />
 
@@ -198,8 +185,8 @@ export default function StoreForm({
                 fullWidth
                 size="small"
                 placeholder="Teléfono"
-                value={cellphone}
-                onChange={(e) => setCellphone(e.target.value)}
+                value={store.cellphone || ""}
+                onChange={(e) => setStore({ ...store, cellphone: e.target.value || null })}
                 sx={{ backgroundColor: "white", borderRadius: 1 }}
             />
 
@@ -246,20 +233,33 @@ export default function StoreForm({
                                 Cancelar
                             </Button>
                         </div>
-                        <Button
-                            variant="contained"
-                            fullWidth
-                            onClick={handleStatusChange}
-                            sx={{
-                                backgroundColor: existingStore.status_store === 1 ? "#E74C3C" : "#2ECC71",
-                                "&:hover": {
-                                    backgroundColor: existingStore.status_store === 1 ? "#c0392b" : "#27ae60",
-                                },
-                                textTransform: "none",
-                            }}
-                        >
-                            {existingStore.status_store === 1 ? "Desactivar" : "Activar"}
-                        </Button>
+                        {store.status_store === 1 ? (
+                            <Button
+                                variant="contained"
+                                fullWidth
+                                onClick={handleDesactivate}
+                                sx={{
+                                    backgroundColor: "#E74C3C",
+                                    "&:hover": { backgroundColor: "#c0392b" },
+                                    textTransform: "none",
+                                }}
+                            >
+                                Desactivar
+                            </Button>
+                        ) : (
+                            <Button
+                                variant="contained"
+                                fullWidth
+                                onClick={handleActivate}
+                                sx={{
+                                    backgroundColor: "#2ECC71",
+                                    "&:hover": { backgroundColor: "#27ae60" },
+                                    textTransform: "none",
+                                }}
+                            >
+                                Activar
+                            </Button>
+                        )}
                     </>
                 )}
             </div>

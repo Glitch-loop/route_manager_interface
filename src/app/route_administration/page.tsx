@@ -25,7 +25,7 @@ import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/L
 import { di_container } from "@/infrastructure/di/container";
 
 // UI components
-import { ChevronLeft, ChevronRight, KeyboardArrowUp, KeyboardArrowDown, Menu as MenuIcon } from "@mui/icons-material";
+import { ChevronLeft, ChevronRight, KeyboardArrowUp, KeyboardArrowDown, Menu as MenuIcon, CreateSharp } from "@mui/icons-material";
 import RouteForm from "./components/RouteForm";
 import SearchRoute from "./components/SearchRoute";
 import StoreForm from "./components/StoreForm";
@@ -60,13 +60,13 @@ function createMapHoverComponent(store: StoreDTO): any {
     return (
         <div className="p-2">
             <p className="text-lg font-semibold">{capitalizeFirstLetterOfEachWord(storeName)}</p>
-            <p className="text-base text-gray-600">{storeAddress}</p>
+            <p className="text-base text-gray-600">{capitalizeFirstLetterOfEachWord(storeAddress)}</p>
         </div>
     )
 }
 
 
-function createMapClickComponent(store: StoreDTO, storePositions: StorePositionInRouteType[]): any {
+function createMapClickComponent(store: StoreDTO, storePositions: StorePositionInRouteType[], onSelectStoreToUpdate?: (idStore: string) => void): any {
     const { id_store } = store;
 	const storeName = store.store_name ?? "Nombre no disponible";
     const storeAddress = getAddressOfStore(store);
@@ -74,12 +74,35 @@ function createMapClickComponent(store: StoreDTO, storePositions: StorePositionI
 
     return (
         <div className="p-3 min-w-[280px]">
-			
-            <h4 className="font-bold text-lg mb-2">{storeName}</h4>
-            <p className="text-sm text-gray-600 mb-1">{id_store}</p>
-            <p className="text-sm text-gray-600 mb-1">{storeAddress}</p>
+            { onSelectStoreToUpdate && (
+                <div className='flex items-center justify-between mb-2'>
+                    <h4 className="font-bold text-lg">{capitalizeFirstLetterOfEachWord(storeName)}</h4>
+                    <Tooltip 
+                        title={"Actualizar información de la tienda"}
+                        placement="right"
+                        enterDelay={300}
+                        arrow>
+                        <IconButton
+                            onClick={() => onSelectStoreToUpdate(id_store)}
+                            sx={{
+                                backgroundColor: '#1976d2',
+                                color: 'white',
+                                '&:hover': {
+                                    backgroundColor: '#1565c0',
+                                },
+                                width: 32,
+                                height: 32,
+                            }}
+                            size="small">
+                            <CreateSharp className="text-white" fontSize="small" />
+                        </IconButton>
+                    </Tooltip>
+                </div>
+            )}
+            {/* <p className="text-sm text-gray-600 mb-1">{id_store}</p> */}
+            <p className="text-sm text-gray-600 mb-1">{capitalizeFirstLetterOfEachWord(storeAddress)}</p>
             {store.address_reference && (
-                <p className="text-sm text-gray-500 mt-1">Referencias: {store.address_reference}</p>
+                <p className="text-sm text-gray-500 mt-1">Referencias: {capitalizeFirstLetter(store.address_reference)}</p>
             )}
             
             {/* Route days table */}
@@ -264,7 +287,7 @@ export default function Page() {
                         latitude: latitude,
                         longitude: longitude,
                         hoverComponent: createMapHoverComponent(store),
-                        clickComponent: createMapClickComponent(store, storePositions),
+                        clickComponent: createMapClickComponent(store, storePositions, () => handleSelectStoreToUpdate(id_store)),
                     });
                 }
             });
@@ -282,7 +305,7 @@ export default function Page() {
                 latitude: latitude,
                 longitude: longitude,
                 hoverComponent: createMapHoverComponent(hoveredStore),
-                clickComponent: createMapClickComponent(hoveredStore, storePositions),
+                clickComponent: createMapClickComponent(hoveredStore, storePositions, () => handleSelectStoreToUpdate(id_store)),
             });   
         }
 
@@ -298,7 +321,7 @@ export default function Page() {
                 latitude: latitude,
                 longitude: longitude,
                 hoverComponent: createMapHoverComponent(searchedStore),
-                clickComponent: createMapClickComponent(searchedStore, storePositions),
+                clickComponent: createMapClickComponent(searchedStore, storePositions, () => handleSelectStoreToUpdate(id_store)),
             });   
         }
 
@@ -316,7 +339,7 @@ export default function Page() {
 					latitude: latitude,
 					longitude: longitude,
 					hoverComponent: createMapHoverComponent(store),
-					clickComponent: createMapClickComponent(store, storePositions),
+					clickComponent: createMapClickComponent(store, storePositions, () => handleSelectStoreToUpdate(id_store)),
 				});
 			});
 		}
@@ -352,7 +375,7 @@ export default function Page() {
 		searchedStore,
 		storesFoundByPosition,
 		selectedCoordinate,
-		hideCoordSearchResults
+		hideCoordSearchResults,
     ]);
 
     // Handlers - Route menu
@@ -361,6 +384,53 @@ export default function Page() {
     const handleCancel = () => { setSelectedRoute(null); };
 
     // Handlers - Store menu
+    const handleSelectStoreToUpdate = (idStore: string): void => { 
+        const store = mapStores.get(idStore);
+
+        if (store) {
+            setSelectedStore(store);
+            setSidebarOpen(true);
+        } else {
+            console.error(`Store with id ${idStore} not found in mapStores.`);
+        }
+    }
+
+    const handleUpdateStore = async (updatedStore: StoreDTO) => {
+        const updateStoreCommand = di_container.resolve<UpdateStoreCommand>(UpdateStoreCommand);
+
+        try {
+            await updateStoreCommand.execute(updatedStore);
+            // Update local state after successful update
+            setStores(prevStores => prevStores.map(store => store.id_store === updatedStore.id_store ? updatedStore : { ...store }));
+        } catch (error) {
+            console.error("Error updating store: ", error);
+        }
+        
+    }
+
+    const handleActivateStore = async (idStore: string) => {
+        const activateStoreCommand = di_container.resolve<ActivateStoreCommand>(ActivateStoreCommand);
+        try {
+            await activateStoreCommand.execute(idStore);
+            // Update local state after successful activation
+            setStores(prevStores => prevStores.map(store => store.id_store === idStore ? { ...store, status_store: 1 } : store));
+        } catch (error) {
+            console.error("Error updating store: ", error);
+        }
+        
+    }
+    
+    const handleDesactivateStore = async (idStore: string) => {
+        const desactivateStoreCommand = di_container.resolve<DesactivateStoreCommand>(DesactivateStoreCommand);
+        try {
+            await desactivateStoreCommand.execute(idStore);
+            // Update local state after successful deactivation
+            setStores(prevStores => prevStores.map(store => store.id_store === idStore ? { ...store, status_store: 0 } : store));
+        } catch (error) {
+            console.error("Error updating store: ", error);
+        }
+    }
+
     const handleStoreCancel = () => { setSelectedStore(null); };
 
     // Handlers - Administration menu management
@@ -600,43 +670,6 @@ export default function Page() {
 
     };
 
-    // Store forms format
-    const handleUpdateStore = async (updatedStore: StoreDTO) => {
-        const updateStoreCommand = di_container.resolve<UpdateStoreCommand>(UpdateStoreCommand);
-
-        try {
-            await updateStoreCommand.execute(updatedStore);
-            // Update local state after successful update
-            setStores(prevStores => prevStores.map(store => store.id_store === updatedStore.id_store ? updatedStore : { ...store }));
-        } catch (error) {
-            console.error("Error updating store: ", error);
-        }
-        
-    }
-
-    const handleActivateStore = async (idStore: string) => {
-        const activateStoreCommand = di_container.resolve<ActivateStoreCommand>(ActivateStoreCommand);
-        try {
-            await activateStoreCommand.execute(idStore);
-            // Update local state after successful activation
-            setStores(prevStores => prevStores.map(store => store.id_store === idStore ? { ...store, status_store: 1 } : store));
-        } catch (error) {
-            console.error("Error updating store: ", error);
-        }
-        
-    }
-    
-    const handleDesactivateStore = async (idStore: string) => {
-        const desactivateStoreCommand = di_container.resolve<DesactivateStoreCommand>(DesactivateStoreCommand);
-        try {
-            await desactivateStoreCommand.execute(idStore);
-            // Update local state after successful deactivation
-            setStores(prevStores => prevStores.map(store => store.id_store === idStore ? { ...store, status_store: 0 } : store));
-        } catch (error) {
-            console.error("Error updating store: ", error);
-        }
-    }
-
     return (
         <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
             {/* Confirmation dialog for unselecting route day */}
@@ -695,21 +728,21 @@ export default function Page() {
 						)}
                         {/* </div> */}
                         {/* Store section */}
-                        {administrationView === 2 && (
+                        {administrationView === 2&& (
                             <div className='flex flex-col items-center overflow-y-auto'>
 								<h4 className='text-lg font-bold'>Tiendas sin rutas</h4>	
 								<List className="max-h-[40vh] min-h-[30vh] overflow-y-auto">
 									{ storeWithinRouteAssigned.size === 0 && (
 										<p className="text-sm text-gray-500 italic text-center">Todas las tiendas están asignadas a una ruta.</p>
 									)}
-									{ storeWithinRouteAssigned.entries().map(([id_store]) => {
+									{ Array.from(storeWithinRouteAssigned.entries()).map(([id_store]) => {
 										const store = mapStores.get(id_store);
 										if (store === undefined) return null;
 										const { store_name } = store;
 										return <ListItem key={id_store}>
 												<SimpleCard 
-													cardName={store_name ?? "Nombre no disponible"}
-													cardDetails={getAddressOfStore(store)}
+													cardName={capitalizeFirstLetterOfEachWord(store_name) ?? "Nombre no disponible"}
+													cardDetails={capitalizeFirstLetterOfEachWord(getAddressOfStore(store))}
 												/>
 										</ListItem>
 									})}
