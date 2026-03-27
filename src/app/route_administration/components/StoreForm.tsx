@@ -54,19 +54,22 @@ export default function StoreForm({
         onCreate(rest as Omit<StoreDTO, "id_store" | "creation_date" | "is_new">);
     };
 
-    const handleUpdate = () => {
-        if (!onUpdate) return;
-        onUpdate(store);
+    const handleUpdate = async () => {
+        if (onUpdate === undefined || existingStore === null) return;
+        await onUpdate(store);
+        clearForm();
     };
 
-    const handleActivate = () => {
-        if (!onActivate || !store.id_store) return;
-        onActivate(store.id_store);
+    const handleActivate = async () => {
+        if (onActivate === undefined || existingStore === null) return;
+        await onActivate(store.id_store);
+        clearForm();
     };
 
-    const handleDesactivate = () => {
-        if (!onDesactivate || !store.id_store) return;
-        onDesactivate(store.id_store);
+    const handleDesactivate = async () => {        
+        if (onDesactivate === undefined || existingStore === null) return;
+        await onDesactivate(store.id_store);
+        clearForm();
     };
 
     const clearForm = () => {

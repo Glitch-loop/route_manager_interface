@@ -11,7 +11,7 @@ import { SupabaseDataSource } from '@/infrastructure/datasources/SupabaseDataSou
 
 // Utils
 import { TOKENS } from '@/infrastructure/di/tokens';
-import { SERVER_DATABASE_ENUM } from '@/infrastructure/persitence/enums/serverTablesEnum';
+import { SERVER_DATABASE_ENUM } from '@/infrastructure/persistence/enums/serverTablesEnum';
 
 @injectable()
 export class SupabaseProductRepository extends ProductRepository {
@@ -65,12 +65,12 @@ export class SupabaseProductRepository extends ProductRepository {
     }
   }
 
-  async retrieveAllProducts(): Promise<Product[]> {
+  async retrieveAllProducts(status_product: boolean): Promise<Product[]> {
     const { data, error } = await this.supabaseDataSource
       .getClient()
       .from(SERVER_DATABASE_ENUM.PRODUCTS)
       .select('*')
-      .eq('product_status', 1);
+      .eq('product_status', status_product ? 1 : 0);
 
     if (error) {
       throw new Error(`Failed to retrieve products: ${error.message}`);

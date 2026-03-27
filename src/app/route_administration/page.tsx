@@ -533,6 +533,10 @@ export default function Page() {
             position_in_route: index + 1 // Position is 1-indexed
         }));
 
+        const organizeRouteDay = di_container.resolve<OrganizeRouteDayCommand>(OrganizeRouteDayCommand);
+
+        organizeRouteDay.execute(idRouteDayColumn, updatedStores)
+
         // Update routes state with new store order and positions (using callback to get current state)
         // Routes state is the source of truth for route days.
         setRoutes(prevRoutes => 

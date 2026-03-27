@@ -160,11 +160,13 @@ export class SupabaseRouteTransactionRepository implements RouteTransactionRepos
         }
     }
 
-    async listRouteTransactions(): Promise<RouteTransaction[]> {
+    async listRouteTransactions(startDate: Date, endDate: Date): Promise<RouteTransaction[]> {
         try {
             const { data, error } = await this.supabase
                 .from(SERVER_DATABASE_ENUM.ROUTE_TRANSACTIONS)
-                .select('*');
+                .select('*')
+                .gte('date', startDate.toISOString())
+                .lte('date', endDate.toISOString());
 
             if (error) throw new Error(`Error listing route transactions: ${error.message}`);
 

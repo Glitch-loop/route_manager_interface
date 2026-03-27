@@ -4,9 +4,11 @@ import { inject, injectable } from 'tsyringe';
 import { RouteRepository } from '@/core/interfaces/RouteRepository';
 import { MapperDTO } from '@/application/mappers/MapperDTO';
 
+// DTOs
+import RouteDTO from '@/application/dto/RouteDTO';
+
 // Utils
 import { TOKENS } from '@/infrastructure/di/tokens';
-import RouteDTO from '@/application/dto/RouteDTO';
 
 
 @injectable()

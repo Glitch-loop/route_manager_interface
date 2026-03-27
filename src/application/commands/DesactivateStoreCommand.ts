@@ -71,7 +71,6 @@ export default class DesactivateStoreCommand {
             const updatedRouteDay: RouteDay = routeDayAggregate.getRouteDay();
 
             const { id_route_day, stores } = updatedRouteDay;
-
             await this.routeRepository.deleteRouteDayStores(id_route_day);
             await this.routeRepository.insertRouteDayStores(stores);
         }      
@@ -81,7 +80,6 @@ export default class DesactivateStoreCommand {
         storeAggregate.desactivateStore(); // Deacivating the store.
 
         const storeToUpdate: Store = storeAggregate.getStore();
-
         await this.storeRepository.updateStore(storeToUpdate);
 	}
 }

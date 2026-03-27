@@ -14,10 +14,9 @@ export default class OrganizeRouteDayCommand {
         @inject(TOKENS.SupabaseRouteRepository) private readonly routeRepository: RouteRepository,
         private readonly MapperDTO: MapperDTO
     ) {}
-    private async executeUseCase(routeDayDTO: RouteDay, routeDayStoresDTO: RouteDayStore[]): Promise<void> {
+    private async executeUseCase(id_route_day: string, routeDayStoresDTO: RouteDayStore[]): Promise<void> {
         // TODO: Verify route day only contains active stores.
         // TODO: Verify the order of the stores is ascendent and there is not missing positions.
-        const { id_route_day } = routeDayDTO;
         
         const routeDayStore = [...routeDayStoresDTO]
 
@@ -32,10 +31,10 @@ export default class OrganizeRouteDayCommand {
         await this.routeRepository.insertRouteDayStores(routeDayStoreToUpdate);
     } 
 
-    async execute(routeDayDTO: RouteDayDTO, routeDayStoresDTO: RouteDayStoreDTO[]): Promise<void> {
+    async execute(id_route_day: string, routeDayStoresDTO: RouteDayStoreDTO[]): Promise<void> {
         
         await this.executeUseCase(
-            this.MapperDTO.toEntity(routeDayDTO),
+            id_route_day,
             routeDayStoresDTO.map(storeDTO => this.MapperDTO.toEntity(storeDTO))
         );
     }

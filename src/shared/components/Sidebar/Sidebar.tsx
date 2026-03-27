@@ -50,6 +50,11 @@ const Sidebar = () => {
                         label={"Administración de vendedores"}
                         href={"/vendors"}/>
                 </div>
+                <div className="my-2 w-11/12">
+                    <ButtonWithNotification 
+                        label={"Analiticas"}
+                        href={"/analytics"}/>
+                </div>
         </aside>
     )
 }
