@@ -9,7 +9,8 @@ interface StoreFormProps {
     onCreate?: (storeData: Omit<StoreDTO, "id_store" | "creation_date" | "is_new">) => void;
     onUpdate?: (storeData: StoreDTO) => void;
     onCancel?: () => void;
-    onStatusChange?: (storeId: string, newStatus: number) => void;
+    onActivate?: (idStore: string) => void;
+    onDesactivate?: (idStore: string) => void;
 }
 
 export default function StoreForm({
@@ -17,7 +18,8 @@ export default function StoreForm({
     onCreate,
     onUpdate,
     onCancel,
-    onStatusChange,
+    onActivate,
+    onDesactivate,
 }: StoreFormProps) {
     const isEditMode = existingStore !== undefined && existingStore !== null;
 

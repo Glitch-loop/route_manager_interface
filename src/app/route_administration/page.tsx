@@ -48,6 +48,9 @@ import StoreSearchBar from './components/StoreSearchBar';
 import { findStoresAround } from '@/shared/utils/clients/utils';
 import { RANGE_OPTIONS } from './constants/constants';
 import SimpleCard from '@/shared/components/Cards/SimpleCard/SimpleCard';
+import UpdateStoreCommand from '@/application/commands/UpdateStoreCommand';
+import ActivateStoreCommand from '@/application/commands/ActivateStoreCommand';
+import DesactivateStoreCommand from '@/application/commands/DesactivateStoreCommand';
 
 
 function createMapHoverComponent(store: StoreDTO): any {
@@ -597,6 +600,43 @@ export default function Page() {
 
     };
 
+    // Store forms format
+    const handleUpdateStore = async (updatedStore: StoreDTO) => {
+        const updateStoreCommand = di_container.resolve<UpdateStoreCommand>(UpdateStoreCommand);
+
+        try {
+            await updateStoreCommand.execute(updatedStore);
+            // Update local state after successful update
+            setStores(prevStores => prevStores.map(store => store.id_store === updatedStore.id_store ? updatedStore : { ...store }));
+        } catch (error) {
+            console.error("Error updating store: ", error);
+        }
+        
+    }
+
+    const handleActivateStore = async (idStore: string) => {
+        const activateStoreCommand = di_container.resolve<ActivateStoreCommand>(ActivateStoreCommand);
+        try {
+            await activateStoreCommand.execute(idStore);
+            // Update local state after successful activation
+            setStores(prevStores => prevStores.map(store => store.id_store === idStore ? { ...store, status_store: 1 } : store));
+        } catch (error) {
+            console.error("Error updating store: ", error);
+        }
+        
+    }
+    
+    const handleDesactivateStore = async (idStore: string) => {
+        const desactivateStoreCommand = di_container.resolve<DesactivateStoreCommand>(DesactivateStoreCommand);
+        try {
+            await desactivateStoreCommand.execute(idStore);
+            // Update local state after successful deactivation
+            setStores(prevStores => prevStores.map(store => store.id_store === idStore ? { ...store, status_store: 0 } : store));
+        } catch (error) {
+            console.error("Error updating store: ", error);
+        }
+    }
+
     return (
         <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
             {/* Confirmation dialog for unselecting route day */}
@@ -676,6 +716,9 @@ export default function Page() {
 								</List>
 								<StoreForm
 									existingStore={selectedStore}
+                                    onActivate={handleActivateStore}
+                                    onDesactivate={handleDesactivateStore}
+                                    onUpdate={handleUpdateStore}
 									onCancel={handleStoreCancel}
 								/>
 							</div>
