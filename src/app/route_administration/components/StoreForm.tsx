@@ -3,10 +3,12 @@
 import { useState, useEffect } from "react";
 import { TextField, Button, Divider } from "@mui/material";
 import StoreDTO from "@/application/dto/StoreDTO";
+import { coordinates } from "@/shared/components/MarkerMap/types/types";
 
 interface StoreFormProps {
     existingStore?: StoreDTO | null;
-    onCreate?: (storeData: Omit<StoreDTO, "id_store" | "creation_date" | "is_new">) => void;
+    selectedCoordinates?: coordinates | null;
+    onCreate?: (storeData: StoreDTO) => void;
     onUpdate?: (storeData: StoreDTO) => void;
     onCancel?: () => void;
     onActivate?: (idStore: string) => void;
@@ -15,6 +17,7 @@ interface StoreFormProps {
 
 export default function StoreForm({
     existingStore,
+    selectedCoordinates,
     onCreate,
     onUpdate,
     onCancel,
@@ -23,71 +26,120 @@ export default function StoreForm({
 }: StoreFormProps) {
     const isEditMode = existingStore !== undefined && existingStore !== null;
 
+    const [selectCoordinates, setSelectCoordinates] = useState<boolean>(false);
 
     const [store, setStore] = useState<StoreDTO>(
         existingStore ?? {
             id_store: "",
-            store_name: null,
             street: "",
             ext_number: null,
             colony: "",
             postal_code: "",
             address_reference: null,
+            store_name: null,
+            owner_name: null,
+            cellphone: null,
             latitude: "",
             longitude: "",
-            status_store: 1,
+            id_creator: "", // TODO: When implementing log in system, replace with actual user ID
             creation_date: new Date().toISOString(),
-            is_new: 1,
+            status_store: 1,
+            creation_context: "On site"
         }
     );
 
+    const [originalCoordinates, setOriginalCoordinates] = useState<{latitude: string, longitude: string}> ({
+        latitude: "",
+        longitude: ""
+    });
+
     useEffect(() => {
         if (existingStore) {
-            setStore(existingStore);
-        }
+            setStore(existingStore)
+            setOriginalCoordinates({
+                latitude: existingStore.latitude,
+                longitude: existingStore.longitude
+            });
+        };
     }, [existingStore]);
+    
+    
+    useEffect(() => {
+        if (selectCoordinates && selectedCoordinates != null && selectedCoordinates != undefined) {
+            setStore({ ...store, 
+                latitude: selectedCoordinates.Lat.toString(), 
+                longitude: selectedCoordinates.Lng.toString()
+            });
+        }
+    }, [selectCoordinates, selectedCoordinates]);
 
 
-    const handleCreate = () => {
+    const handleCreate = async () => {
         if (!onCreate) return;
-        const { id_store, creation_date, is_new, ...rest } = store;
-        onCreate(rest as Omit<StoreDTO, "id_store" | "creation_date" | "is_new">);
+        await onCreate(store);
+        setSelectCoordinates(false);
+        clearForm();
     };
 
     const handleUpdate = async () => {
         if (onUpdate === undefined || existingStore === null) return;
         await onUpdate(store);
+        setSelectCoordinates(false);
         clearForm();
     };
 
     const handleActivate = async () => {
         if (onActivate === undefined || existingStore === null) return;
         await onActivate(store.id_store);
+        setSelectCoordinates(false);
         clearForm();
     };
 
     const handleDesactivate = async () => {        
         if (onDesactivate === undefined || existingStore === null) return;
         await onDesactivate(store.id_store);
+        setSelectCoordinates(false);
         clearForm();
     };
+
+    const handleCancel = () => {
+        if (onCancel) onCancel();
+        setSelectCoordinates(false);
+        clearForm();
+    }
 
     const clearForm = () => {
         setStore({
             id_store: "",
-            store_name: null,
             street: "",
             ext_number: null,
             colony: "",
             postal_code: "",
             address_reference: null,
+            store_name: null,
+            owner_name: null,
+            cellphone: null,
             latitude: "",
             longitude: "",
-            status_store: 1,
+            id_creator: "", // TODO: When implementing log in system, replace with actual user ID
             creation_date: new Date().toISOString(),
-            is_new: 1,
+            status_store: 1,
+            creation_context: "On site"
         });
     };
+
+    const handleClickSelectCoordinates = (selectCoordinates: boolean) => {
+        const newState = !selectCoordinates;
+
+
+        if (newState) {
+            setOriginalCoordinates({
+                latitude: store.latitude,
+                longitude: store.longitude
+            });
+        }
+        setSelectCoordinates(newState);
+    }
 
     return (
         <div className="bg-system-primary-background p-4 rounded-lg w-full max-w-xs flex flex-col gap-2">
@@ -168,6 +220,14 @@ export default function StoreForm({
                     sx={{ backgroundColor: "white", borderRadius: 1 }}
                 />
             </div>
+            <Button 
+                variant="contained" 
+                onClick={() => handleClickSelectCoordinates(selectCoordinates)}>
+                    {selectCoordinates ? "Cancelar selección" : "Seleccionar coordenadas"}
+            </Button>
+            {selectCoordinates && (
+                <span className="text-sm italic text-center">Haz click en el mapa para seleccionar las coordenadas de la tienda.</span>
+            )}
 
             {/* Divider */}
             <Divider className="my-2" />
@@ -226,7 +286,7 @@ export default function StoreForm({
                             <Button
                                 variant="contained"
                                 fullWidth
-                                onClick={onCancel}
+                                onClick={handleCancel}
                                 sx={{
                                     backgroundColor: "#FF851B",
                                     "&:hover": { backgroundColor: "#e67600" },

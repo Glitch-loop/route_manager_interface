@@ -161,7 +161,6 @@ export function isStoreDTO(dto: any): dto is StoreDTO {
         'latitude' in dto &&
         'longitude' in dto &&
         'creation_date' in dto &&
-        'status_store' in dto &&
-        'is_new' in dto
+        'status_store' in dto
     );
 }

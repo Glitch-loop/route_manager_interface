@@ -153,7 +153,7 @@ export class SupabaseRouteTransactionRepository implements RouteTransactionRepos
 
             if (error) throw new Error(`Error listing route transactions by store: ${error.message}`);
 
-            return await this.mapTransactionsWithDescriptions(data || []);
+            return await this.mapTransactionsWithDescriptions(data || []);;
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : 'Unknown error';
             throw new Error(`Failed to list route transactions by store: ${message}`);
@@ -169,7 +169,6 @@ export class SupabaseRouteTransactionRepository implements RouteTransactionRepos
                 .lte('date', endDate.toISOString());
 
             if (error) throw new Error(`Error listing route transactions: ${error.message}`);
-
             return await this.mapTransactionsWithDescriptions(data || []);
         } catch (error: unknown) {
             const message = error instanceof Error ? error.message : 'Unknown error';
@@ -229,53 +228,67 @@ export class SupabaseRouteTransactionRepository implements RouteTransactionRepos
     private async mapTransactionsWithDescriptions(transactionsData: RouteTransactionRecord[]): Promise<RouteTransaction[]> {
         if (transactionsData.length === 0) return [];
 
-        const transactionIds = transactionsData.map(t => t.id_route_transaction);
+        const transactionIds: string[] = transactionsData.map(t => t.id_route_transaction);
 
-        // Fetch all descriptions for these transactions
-        const { data: descriptionsData, error: descError } = await this.supabase
-            .from(SERVER_DATABASE_ENUM.ROUTE_TRANSACTION_DESCRIPTIONS)
-            .select('*')
-            .in('id_route_transaction', transactionIds);
+        // 1. Create Batches
+        const BATCH_SIZE = 100;
+        const idBatches: string[][] = [];
+        for (let i = 0; i < transactionIds.length; i += BATCH_SIZE) {
+            idBatches.push(transactionIds.slice(i, i + BATCH_SIZE));
+        }
 
-        if (descError) throw new Error(`Error fetching transaction descriptions: ${descError.message}`);
+        // 2. Fetch all descriptions in parallel batches
+        // We use Promise.all to trigger all requests concurrently for better performance
+        const batchPromises = idBatches.map(batch => 
+            this.supabase
+                .from(SERVER_DATABASE_ENUM.ROUTE_TRANSACTION_DESCRIPTIONS)
+                .select('*')
+                .in('id_route_transaction', batch)
+        );
 
-        // Group descriptions by transaction ID
+        const results = await Promise.all(batchPromises);
+        console.log("Batch results: ", results);
+        // 3. Handle errors and flatten the data
+        const allDescriptionsData: RouteTransactionDescriptionRecord[] = [];
+        for (const { data, error } of results) {
+            if (error) throw new Error(`Error fetching transaction descriptions batch: ${error.message}`);
+            if (data) allDescriptionsData.push(...(data as RouteTransactionDescriptionRecord[]));
+        }
+
+        // 4. Group descriptions by transaction ID using a Map
         const descriptionsByTransaction = new Map<string, RouteTransactionDescription[]>();
-        for (const desc of (descriptionsData || []) as RouteTransactionDescriptionRecord[]) {
+        console.log("allDescriptionsData: ", allDescriptionsData.length)
+        for (const desc of allDescriptionsData) {
             const description = new RouteTransactionDescription(
                 desc.id_route_transaction_description,
                 desc.price_at_moment,
                 desc.amount,
                 new Date(desc.created_at),
-                '', // id_product_inventory - not in DB schema
+                '', // id_product_inventory - not in DB schema as you noted
                 desc.id_route_transaction_operation_type as DAY_OPERATIONS,
                 desc.id_product,
                 desc.id_route_transaction
             );
 
-            const existing = descriptionsByTransaction.get(desc.id_route_transaction) || [];
+            const existing = descriptionsByTransaction.get(desc.id_route_transaction) ?? [];
             existing.push(description);
             descriptionsByTransaction.set(desc.id_route_transaction, existing);
         }
 
-        // Map transactions to entities
-        const transactions: RouteTransaction[] = [];
-        for (const t of transactionsData) {
-            const descriptions = descriptionsByTransaction.get(t.id_route_transaction) || [];
-            transactions.push(
-                new RouteTransaction(
-                    t.id_route_transaction,
-                    new Date(t.date),
-                    t.state as unknown as ROUTE_TRANSACTION_STATE,
-                    t.cash_received,
-                    t.id_work_day,
-                    t.id_store,
-                    t.id_payment_method as PAYMENT_METHODS,
-                    descriptions
-                )
+        // 5. Final Mapping: Reconstruct the RouteTransaction Entities
+        return transactionsData.map(t => {
+            const descriptions = descriptionsByTransaction.get(t.id_route_transaction) ?? [];
+            
+            return new RouteTransaction(
+                t.id_route_transaction,
+                new Date(t.date),
+                t.state as unknown as ROUTE_TRANSACTION_STATE,
+                t.cash_received,
+                t.id_work_day,
+                t.id_store,
+                t.id_payment_method as PAYMENT_METHODS,
+                descriptions
             );
-        }
-
-        return transactions;
+        });
     }
 }

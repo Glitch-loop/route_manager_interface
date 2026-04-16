@@ -37,6 +37,8 @@ import { SupabaseRouteTransactionRepository } from '@/infrastructure/repositorie
 // Utils
 import { TOKENS } from '@/infrastructure/di/tokens'
 import { MapperDTO } from '@/application/mappers/MapperDTO';
+import { SupabaseProductRepository } from '../repositories/supabase/SupabaseProductRepository';
+import { ProductRepository } from '@/core/interfaces/ProductRepository';
 
 
 
@@ -69,9 +71,9 @@ container.register<RouteTransactionRepository>(TOKENS.SupabaseRouteTransactionRe
     useClass: SupabaseRouteTransactionRepository
 });
 
-// container.register<ProductRepository>(TOKENS.SupabaseProductRepository, {
-//     useClass: SupabaseProductRepository
-// });
+container.register<ProductRepository>(TOKENS.SupabaseProductRepository, {
+    useClass: SupabaseProductRepository
+});
 
 // =================== Implementation of repositories - SyncServer (Supabase) ====================
 // container.register(TOKENS.SyncServerStoreRepository, {

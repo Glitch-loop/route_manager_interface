@@ -74,6 +74,7 @@ export class SupabaseStoreRepository implements StoreRepository {
                 id_creator: store.id_creator
             };
 
+            console.log("Updating: ", storeRecord)
             const { error } = await this.supabase
                 .from(SERVER_DATABASE_ENUM.STORES)
                 .update(storeRecord)
@@ -149,7 +150,6 @@ export class SupabaseStoreRepository implements StoreRepository {
                         store.creation_date,
                         store.creation_context ?? '',
                         store.status_store,
-                        store.is_new ?? 0
                     )
                 );
             }

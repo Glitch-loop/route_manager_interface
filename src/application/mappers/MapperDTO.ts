@@ -222,9 +222,12 @@ export class MapperDTO {
             store_name: entity.store_name,
             latitude: entity.latitude,
             longitude: entity.longitude,
-            creation_date: entity.creation_date,
+            creation_date: new Date(entity.creation_date).toISOString(),
             status_store: entity.status_store,
-            is_new: entity.is_new
+            owner_name: entity.owner_name,
+            cellphone: entity.cellphone,
+            id_creator: entity.id_creator,
+            creation_context: entity.creation_context
         };
     }
 
@@ -350,15 +353,14 @@ export class MapperDTO {
             dto.postal_code,
             dto.address_reference ?? null,
             dto.store_name ?? null,
-            null,
-            null,
+            dto.owner_name,
+            dto.cellphone,
             dto.latitude,
             dto.longitude,
-            '',
-            dto.creation_date,
-            '',
+            dto.id_creator,
+            new Date(dto.creation_date),
+            dto.creation_context,
             dto.status_store,
-            dto.is_new ?? 0
         );
     }
 

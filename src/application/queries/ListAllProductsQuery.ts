@@ -12,7 +12,7 @@ import { Product } from "@/core/entities/Product";
 import { MapperDTO } from "../mappers/MapperDTO";
 
 @injectable()
-export default class ListAllProducts {
+export default class ListAllProductsQuery {
     constructor(
         @inject(TOKENS.SupabaseProductRepository) private readonly productRepository: ProductRepository,
         private readonly mapperDTO: MapperDTO

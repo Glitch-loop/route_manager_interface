@@ -69,6 +69,7 @@ export default function RouteDayContainer({
     // Handle drag over event - moves items between columns
     const handleDragOver = (event: Parameters<NonNullable<React.ComponentProps<typeof DragDropProvider>['onDragOver']>>[0]) => {
         const result = move(routeDaysInModification, event);
+        console.log(result);
         onModifyRouteDays(result as Record<string, DraggableRouteDayStore[]>);
     };
 
@@ -145,7 +146,7 @@ export default function RouteDayContainer({
      */
     const handleSaveRouteModification = async (idRouteDay: string) => {
         const storesInRouteDay = routeDaysInModification[idRouteDay];
-        
+        // return
         if (!storesInRouteDay) return;
         
         const updatedStoresInRouteDay = storesInRouteDay.map((store, index) => ({

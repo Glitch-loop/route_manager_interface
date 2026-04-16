@@ -71,14 +71,14 @@ export default class StoreAggregate {
             updated.cellphone !== undefined ? updated.cellphone : this.store.cellphone,
             updated.latitude !== undefined ? updated.latitude : this.store.latitude,
             updated.longitude !== undefined ? updated.longitude : this.store.longitude,
-            updated.id_creator !== undefined ? updated.id_creator : this.store.id_creator,
-            updated.creation_date !== undefined ? updated.creation_date : this.store.creation_date,
-            updated.creation_context !== undefined ? updated.creation_context : this.store.creation_context,
+            this.store.id_creator,
+            this.store.creation_date,
+            this.store.creation_context,
             this.store.status_store,
         );
     }
 
-    createStore(storeData: {
+    createStore(
         id_store: string,
         street: string,
         ext_number: string | null,
@@ -90,27 +90,23 @@ export default class StoreAggregate {
         cellphone: string | null,
         latitude: string,
         longitude: string,
-        id_creator: string,
-        creation_date: Date,
-        creation_context: string,
-        status_store: number,
-    }) {
+    ) {
         this.store = new Store(
-            storeData.id_store,
-            storeData.street,
-            storeData.ext_number,
-            storeData.colony,
-            storeData.postal_code,
-            storeData.address_reference,
-            storeData.store_name,
-            storeData.owner_name,
-            storeData.cellphone,
-            storeData.latitude,
-            storeData.longitude,
-            storeData.id_creator,
-            storeData.creation_date,
-            storeData.creation_context,
-            storeData.status_store,
+            id_store,
+            street,
+            ext_number,
+            colony,
+            postal_code,
+            address_reference,
+            store_name,
+            owner_name,
+            cellphone,
+            latitude,
+            longitude,
+            "58eb6f1c-29fc-46dd-bf19-caece0950257", // TODO: When implementing log in system, replace with actual user ID
+            new Date(),
+            "On site",
+            1,
         );
     }
 

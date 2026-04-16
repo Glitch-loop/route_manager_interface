@@ -46,7 +46,7 @@ export default class UpdateStoreCommand {
 			creation_context: store.creation_context,
 			status_store: store.status_store,
 		});
-
+        console.log("Updated store aggregate: ", aggregate.getStore());
 		await this.storeRepository.updateStore(aggregate.getStore());
 	}
 
