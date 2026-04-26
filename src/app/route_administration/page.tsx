@@ -52,6 +52,7 @@ import UpdateStoreCommand from '@/application/commands/UpdateStoreCommand';
 import ActivateStoreCommand from '@/application/commands/ActivateStoreCommand';
 import DesactivateStoreCommand from '@/application/commands/DesactivateStoreCommand';
 import CreateStoreCommand from '@/application/commands/CreateStoreCommand';
+import { toast } from 'react-toastify';
 
 
 function createMapHoverComponent(store: StoreDTO): any {
@@ -546,7 +547,7 @@ export default function Page() {
         setRoutesInModification(modifiedRouteDays);
     }
 
-    const handleSaveRouteModification = (idRouteDayColumn: string, storesInRouteDay: RouteDayStoreDTO[]) => {
+    const handleSaveRouteModification = async (idRouteDayColumn: string, storesInRouteDay: RouteDayStoreDTO[]) => {
         // Update position_in_route based on array index
         const updatedStores = storesInRouteDay.map((store, index) => ({
             ...store,
@@ -555,33 +556,38 @@ export default function Page() {
 
         const organizeRouteDay = di_container.resolve<OrganizeRouteDayCommand>(OrganizeRouteDayCommand);
 
-        organizeRouteDay.execute(idRouteDayColumn, updatedStores)
+        try {
+            // await organizeRouteDay.execute(idRouteDayColumn, updatedStores);
 
-        // Update routes state with new store order and positions (using callback to get current state)
-        // Routes state is the source of truth for route days.
-        setRoutes(prevRoutes => 
-            prevRoutes.map(route => {
-                const { route_day_by_day } = route;
-                if (!route_day_by_day) return route;
+            // Update routes state with new store order and positions (using callback to get current state)
+            // Routes state is the source of truth for route days.
+            setRoutes(prevRoutes => 
+                prevRoutes.map(route => {
+                    const { route_day_by_day } = route;
+                    if (!route_day_by_day) return route;
 
-                const routeDayByDay = new Map<string, RouteDayDTO>();
-                
-                for (const [idDay, routeDay] of route_day_by_day) {
-                    if (routeDay.id_route_day === idRouteDayColumn) {
-                        routeDayByDay.set(idDay, { ...routeDay, stores: updatedStores });
-                    } else {
-                        routeDayByDay.set(idDay, routeDay);
+                    const routeDayByDay = new Map<string, RouteDayDTO>();
+                    
+                    for (const [idDay, routeDay] of route_day_by_day) {
+                        if (routeDay.id_route_day === idRouteDayColumn) {
+                            routeDayByDay.set(idDay, { ...routeDay, stores: updatedStores });
+                        } else {
+                            routeDayByDay.set(idDay, routeDay);
+                        }
                     }
-                }
 
-                return {
-                    ...route,
-                    route_day_by_day: routeDayByDay
-                };
-            })
-        );
+                    return {
+                        ...route,
+                        route_day_by_day: routeDayByDay
+                    };
+                })
+            );
 
-        console.log("Route modification saved");
+            toast.success("Organización de ruta guardada correctamente.");
+        } catch (error) {
+            console.error("Error saving route modification: ", error);
+            toast.error("Ocurrió un error al guardar la organización de la ruta.");
+        }
     }
 
     const handleCloseRouteDay = (idRouteDay: string) => {
