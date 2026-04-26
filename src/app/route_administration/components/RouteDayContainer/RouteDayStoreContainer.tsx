@@ -485,7 +485,7 @@ export default function RouteDayStoreContainer({
                         const storeDetails = storesMap.get(id_store);
                         if (storeDetails) {
                             const { store_name } = storeDetails;
-                            storeName = store_name === null ? "No disponible" : store_name;
+                            storeName = store_name === null ? "No disponible" : `${index + 1} - ` + store_name;
                             storeAddress = getAddressOfStore(storeDetails);
                         }
 

@@ -580,7 +580,7 @@ export default function Page() {
         const organizeRouteDay = di_container.resolve<OrganizeRouteDayCommand>(OrganizeRouteDayCommand);
 
         try {
-            // await organizeRouteDay.execute(idRouteDayColumn, updatedStores);
+            await organizeRouteDay.execute(idRouteDayColumn, updatedStores);
 
             // Update routes state with new store order and positions (using callback to get current state)
             // Routes state is the source of truth for route days.
