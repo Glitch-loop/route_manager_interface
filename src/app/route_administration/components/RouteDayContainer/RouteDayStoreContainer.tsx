@@ -297,7 +297,7 @@ export default function RouteDayStoreContainer({
 
                 </div>
             </Dialog>
-            <div className="p-2  flex flex-col">
+            <div className="p-2 flex flex-col">
                 {/* Title and main actions */}
                 <div className="flex flex-row justify-start items-center my-2">
                     <div className="flex basis-1/2 gap-2 items-center">
@@ -474,7 +474,7 @@ export default function RouteDayStoreContainer({
                 </span>
             </div>
             {/* Droppable container */}
-            <div className="flex-1 overflow-y-auto bg-system-secondary-background min-h-[200px]"
+            <div className="flex min-h-[500px] overflow-y-auto bg-system-secondary-background"
                 style={{scrollBehavior: 'smooth'}}>
                 <DroppableColumn id={idRouteDayColumn}>
                     {storesToAttend.map((store, index) => {

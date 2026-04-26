@@ -151,6 +151,7 @@ export default function Page() {
     // Collapse menu states
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
+    const [bottomPanelExpanded, setBottomPanelExpanded] = useState(false);
     const [topPanelOpen, setTopPanelOpen] = useState(false);
     const [selectedRoute, setSelectedRoute] = useState<RouteDTO | null>(null);
     const [selectedStore, setSelectedStore] = useState<StoreDTO | null>(null);
@@ -632,6 +633,21 @@ export default function Page() {
         }
     }
 
+    const handleToggleBottomPanel = () => {
+        if (bottomPanelOpen) {
+            setBottomPanelOpen(false);
+            setBottomPanelExpanded(false);
+            return;
+        }
+
+        setBottomPanelOpen(true);
+    }
+
+    const handleToggleBottomPanelExpansion = () => {
+        if (!bottomPanelOpen) return;
+        setBottomPanelExpanded(prev => !prev);
+    }
+
 	// Handlers for store search bar
 	const handlerSwitchSearchByCoords = (active: boolean) => {
 		setSearchByCoords(active);
@@ -886,22 +902,40 @@ export default function Page() {
                 {/* Route organization - collapses to bottom */}
                 <div className="relative w-full flex-shrink-0">
                     {/* Toggle button */}
-                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
+                    <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex flex-row items-center gap-2 z-10">
+                        {bottomPanelOpen && (
+                            <div className="bg-white rounded-full">
+                                <Tooltip 
+                                    title={bottomPanelExpanded ? "Reducir panel" : "Expandir panel"}
+                                    placement="top"
+                                    enterDelay={300}
+                                    arrow>
+                                    <IconButton
+                                        onClick={handleToggleBottomPanelExpansion}
+                                        size="small"
+                                    >
+                                        {bottomPanelExpanded ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
+                                    </IconButton>
+                                </Tooltip>
+                            </div>
+                        )}
+                        <div className="bg-white rounded-full">
                         <Tooltip 
                             title={"Organizar ruta"}
                             placement="top"
                             enterDelay={300}
                             arrow>
                             <IconButton
-                                onClick={() => setBottomPanelOpen(!bottomPanelOpen)}
+                                onClick={handleToggleBottomPanel}
                                 size="small"
                             >
                                 {bottomPanelOpen ? <KeyboardArrowDown /> : <KeyboardArrowUp />}
                             </IconButton>
                         </Tooltip>
+                        </div>
                     </div>
                     <Collapse in={bottomPanelOpen}>
-                        <div className='flex flex-row w-full h-[50vh] overflow-auto'>
+                        <div className={`flex flex-row w-full overflow-auto transition-all duration-300 ${bottomPanelExpanded ? "h-[75vh]" : "h-[50vh]"}`}>
                             <RouteDayContainer 
                                 storeMap={mapStores}
                                 routeDaysInModification={routesInModification}
