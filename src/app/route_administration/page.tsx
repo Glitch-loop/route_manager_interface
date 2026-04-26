@@ -169,7 +169,7 @@ export default function Page() {
 	const [storeWithinRouteAssigned, setStoreWithinRouteAssigned] = useState<Set<string>>(new Set()); // Set of store IDs that are already assigned within the route being modified, used to avoid showing them in the search results when modifying a route day.
 
     // States related to route day.
-    const [routesInModification, setRoutesInModification] = useState<Record<string, DraggableRouteDayStore[]>>({}); // Keep track of routes that are being modified to apply special effects on map markers.
+    const [routesInModification, setRoutesInModification] = useState<Record<string, DraggableRouteDayStore[]>>({}); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
     const [effectSelectedRouteDay, setEffectSelectedRouteDay] = useState<Map<string, RouteDayEffect>>(new Map());
     
     // States related to expand menu.
@@ -489,32 +489,32 @@ export default function Page() {
                 });
             }
         } else { // Show confirmation dialog before unselecting
-            setPendingUnselectRouteDayId(routeDayId);
+            let askValidation = false;
+            const routeDayFound:RouteDayDTO|null = getRouteDayFromRoutesList(routes, routeDayId);
+            const routeDayBeingModified:DraggableRouteDayStore[]|undefined = routesInModification[routeDayId];
+
+            if (routeDayFound === null || routeDayBeingModified == undefined) return;
+            
+            const { stores } = routeDayFound;
+            
+            if(stores.length === routeDayBeingModified.length) {
+                for (let i = 0; i < stores.length; i++) {
+                    const store = stores[i];
+                    const storeBeingModified = routeDayBeingModified[i];
+
+                    if (store.id_route_day_store !== storeBeingModified.id_route_day_store) askValidation = true;
+                }
+            } else { // It means there are changes in the store of the route day.
+                askValidation = true;
+            }
+            if (askValidation) setPendingUnselectRouteDayId(routeDayId);
+            else removeRouteDayByCancelModification(routeDayId);
         }
     }
 
     const handleConfirmUnselectRouteDay = () => {
         if (pendingUnselectRouteDayId) {
-            // Remove route day from routesInModification
-            setRoutesInModification(prev => {
-                const updated = { ...prev };
-                delete updated[pendingUnselectRouteDayId];
-                return updated;
-            });
-            
-            // Remove from checkedRouteDays
-            setCheckedRouteDays(prev => {
-                const newCheckedDays = { ...prev };
-                delete newCheckedDays[pendingUnselectRouteDayId];
-                return newCheckedDays;
-            });
-
-            // Remove effects
-            setEffectSelectedRouteDay(prev => {
-                const newMap = new Map(prev);
-                newMap.delete(pendingUnselectRouteDayId);
-                return newMap;
-            });
+            removeRouteDayByCancelModification(pendingUnselectRouteDayId);
         }
         setPendingUnselectRouteDayId(null);
     }
@@ -528,6 +528,29 @@ export default function Page() {
             }));
         }
         setPendingUnselectRouteDayId(null);
+    }
+
+    const removeRouteDayByCancelModification = (idRouteDayToRemove: string) => {
+            // Remove route day from routesInModification
+            setRoutesInModification(prev => {
+                const updated = { ...prev };
+                delete updated[idRouteDayToRemove];
+                return updated;
+            });
+            
+            // Remove from checkedRouteDays
+            setCheckedRouteDays(prev => {
+                const newCheckedDays = { ...prev };
+                delete newCheckedDays[idRouteDayToRemove];
+                return newCheckedDays;
+            });
+
+            // Remove effects
+            setEffectSelectedRouteDay(prev => {
+                const newMap = new Map(prev);
+                newMap.delete(idRouteDayToRemove);
+                return newMap;
+            });
     }
 
     // Handlers - Route day modification (route container).
