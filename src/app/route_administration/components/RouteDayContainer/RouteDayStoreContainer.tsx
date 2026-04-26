@@ -250,7 +250,7 @@ export default function RouteDayStoreContainer({
     }
 
     return (
-        <div className="min-w-[400px] max-w-[550px] h-full flex flex-col bg-system-primary-background rounded-lg">
+        <div className="w-96 h-full flex flex-col shrink-0 overflow-auto bg-system-primary-background rounded-lg">
             <Dialog open={dialogAction !== null} onClose={() => handleCloseDeleteDialog()}>
                 <div className="p-3 flex flex-col gap-2 justify-center items-center">
                     <h3 className="text-center font-bold text-lg">¿Estas seguro de hacer la acción?</h3>

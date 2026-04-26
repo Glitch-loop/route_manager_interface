@@ -179,7 +179,7 @@ export default function RouteDayContainer({
 
     return (
         <div className="w-full h-full bg-system-secondary-background flex flex-row p-2">
-            <div className="flex flex-col bg-system-third-background p-1 rounded-lg gap-2">
+            <div className="flex basis-1/5 items-center flex-col shrink-0  bg-system-third-background p-1 rounded-lg gap-2">
                 <h2 className="text-lg md:text-xl font-bold mb-4">Administración de días en ruta</h2>
                 <RangeDateSelection 
                     initialDirection="before"
@@ -203,7 +203,7 @@ export default function RouteDayContainer({
                 </div>
             </div>
             <DragDropProvider onDragOver={handleDragOver}>
-                <div className="ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2 overflow-x-auto">
+                <div className="overflow-auto ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2">
                     {Object.entries(routeDaysInModification).map(([idRouteDay, stores]) => (
                         <RouteDayStoreContainer 
                             key={idRouteDay} 

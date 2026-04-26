@@ -122,6 +122,17 @@ export default function Home() {
           {/* <DragAndDropContainer /> */}
         </div>
 
+        <div className='flex flex-row w-full h-1/2 overflow-auto bg-blue-600 gap-40'>
+          <h1 className='shrink-0'>Hello</h1>
+          <div className='w-20 h-20 shrink-0 bg-red-400'></div>
+          <div className='w-20 h-20 shrink-0 bg-red-400'></div>
+          <div className='w-20 h-20 shrink-0 bg-red-400'></div>
+          <div className='w-20 h-20 shrink-0 bg-green-400'></div>
+          <div className='w-20 h-20 shrink-0 bg-red-400'></div>
+          <div className='w-20 h-20 shrink-0 bg-red-400'></div>
+          <div className='w-20 h-20 shrink-0 bg-purple-400'></div>            
+        </div>
+
         {/* </div> */}
         {/* <h1 className="text-2xl font-bold mb-4">Route Manager Interface</h1>
         <div className={`w-full h-5/6 flex flex-row justify-start items-start ml-3 overflow-x-auto`}>

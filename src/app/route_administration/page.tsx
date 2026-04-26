@@ -276,9 +276,11 @@ export default function Page() {
                     const storePositions = mapStoresInRouteDay.get(id_store) ?? [];
 
                     // Calculate gradient color: first store is lightest, last store is darkest
-                    const gradientColor = totalStores > 1 
-                        ? getGradientColor(baseColor, totalStores - 1 - storeIndex, totalStores) 
-                        : baseColor;
+                    const gradientColor = baseColor;
+                    // TODO: Optimize gradient color calculation, user hardly understands what is happening.
+                    // const gradientColor = totalStores > 1 
+                    //     ? getGradientColor(baseColor, totalStores - 1 - storeIndex, totalStores) 
+                    //     : baseColor;
                     
                     markers.push({
                         id_marker: id_route_day_store,
@@ -697,7 +699,7 @@ export default function Page() {
     };
 
     return (
-        <div className="h-full w-full flex flex-row bg-system-primary-background rounded-lg">
+        <div className="h-full w-full overflow-hidden flex flex-row bg-system-primary-background rounded-lg">
             {/* Confirmation dialog for unselecting route day */}
             <Dialog open={pendingUnselectRouteDayId !== null} onClose={handleCancelUnselectRouteDay}>
                 <div className="p-5 flex flex-col gap-2 justify-center items-center">
@@ -803,7 +805,7 @@ export default function Page() {
                 </div>
             </div>
             {/* Main content */}
-            <div className="flex flex-col flex-1 h-full">
+            <div className="flex flex-col w-full h-full">
                 {/* Search content - collapses to top */}
                 <div className="relative w-full flex-shrink-0">
                     <Collapse in={topPanelOpen}>
@@ -899,7 +901,7 @@ export default function Page() {
                         </Tooltip>
                     </div>
                     <Collapse in={bottomPanelOpen}>
-                        <div className="w-full h-[50vh]">
+                        <div className='flex flex-row w-full h-[50vh] overflow-auto'>
                             <RouteDayContainer 
                                 storeMap={mapStores}
                                 routeDaysInModification={routesInModification}
