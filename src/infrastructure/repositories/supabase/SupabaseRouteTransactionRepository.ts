@@ -144,12 +144,16 @@ export class SupabaseRouteTransactionRepository implements RouteTransactionRepos
 
     async listRouteTransactionByIdStore(id_store: string[], startDate: Date, endDate: Date): Promise<RouteTransaction[]> {
         try {
+            console.log("Fetching transactions for stores: ", id_store, " from ", startDate.toString(), " to ", endDate.toISOString());
+            const startIso = new Date(startDate.setHours(0, 0, 0, 0)).toISOString();
+            const endIso = new Date(endDate.setHours(23, 59, 59, 999)).toISOString();
+            
             const { data, error } = await this.supabase
                 .from(SERVER_DATABASE_ENUM.ROUTE_TRANSACTIONS)
                 .select('*')
                 .in('id_store', id_store)
-                .gte('date', startDate.toISOString())
-                .lte('date', endDate.toISOString());
+                .gte('date', startIso)
+                .lte('date', endIso);
 
             if (error) throw new Error(`Error listing route transactions by store: ${error.message}`);
 

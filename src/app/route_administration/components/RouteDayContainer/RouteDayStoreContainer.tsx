@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+
 // DTOs
 import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
 import StoreDTO from "@/application/dto/StoreDTO";
@@ -19,6 +20,7 @@ import { Autocomplete, Button, Collapse, Dialog, IconButton, Switch, TextField, 
 import { DAYS } from "@/core/constants/Days";
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
 import { RouteDayEffect } from "../../types/types";
+import { ROUTE_TRANSACTION_STATE } from "@/core/enums/RouteTransactionState";
 
 // Utils
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
@@ -77,12 +79,15 @@ export default function RouteDayStoreContainer({
 
         let total = 0;
         for (const transaction of transactions) {
-            for (const description of transaction.transaction_description) {
-                // Only count sales operations
-                if (description.id_transaction_operation_type === DAY_OPERATIONS.sales) {
-                    total += description.price_at_moment * description.amount;
+
+            if (transaction.state === 1) {
+                for (const description of transaction.transaction_description) {
+                    // Only count sales operations
+                    if (description.id_transaction_operation_type === DAY_OPERATIONS.sales) {
+                        total += description.price_at_moment * description.amount;
+                    }
                 }
-            }
+           }
         }
         return total;
     };
