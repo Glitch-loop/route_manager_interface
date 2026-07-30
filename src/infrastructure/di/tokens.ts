@@ -48,6 +48,8 @@ export const TOKENS = {
     SyncServerInventoryOperationRepository: Symbol('SyncServerInventoryOperationRepository'),
     SyncServerWorkdayInformationRepository: Symbol('SyncServerWorkdayInformationRepository'),
 
+    // Server
+    ServerRouteRepository: Symbol('ServerRouteRepository'),
 
     // Services
     IDService: Symbol('IDService'),

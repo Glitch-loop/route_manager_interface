@@ -21,8 +21,15 @@ import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdS
 import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
 import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/ListRouteTransactionsByStoreWithinDateRange";
 
+// Commands
+import UpdateStoreCommand from '@/application/commands/UpdateStoreCommand';
+import ActivateStoreCommand from '@/application/commands/ActivateStoreCommand';
+import DesactivateStoreCommand from '@/application/commands/DesactivateStoreCommand';
+import CreateStoreCommand from '@/application/commands/CreateStoreCommand';
+
 // DI container
 import { di_container } from "@/infrastructure/di/container";
+
 
 // UI components
 import { ChevronLeft, ChevronRight, KeyboardArrowUp, KeyboardArrowDown, Menu as MenuIcon, CreateSharp } from "@mui/icons-material";
@@ -48,10 +55,6 @@ import StoreSearchBar from './components/StoreSearchBar';
 import { findStoresAround } from '@/shared/utils/clients/utils';
 import { RANGE_OPTIONS } from './constants/constants';
 import SimpleCard from '@/shared/components/Cards/SimpleCard/SimpleCard';
-import UpdateStoreCommand from '@/application/commands/UpdateStoreCommand';
-import ActivateStoreCommand from '@/application/commands/ActivateStoreCommand';
-import DesactivateStoreCommand from '@/application/commands/DesactivateStoreCommand';
-import CreateStoreCommand from '@/application/commands/CreateStoreCommand';
 import { toast } from 'react-toastify';
 
 

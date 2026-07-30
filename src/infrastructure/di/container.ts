@@ -76,6 +76,10 @@ container.register<ProductRepository>(TOKENS.SupabaseProductRepository, {
 });
 
 // =================== Implementation of repositories - SyncServer (Supabase) ====================
+// container.register<RouteRepository>(TOKENS.ServerRouteRepository, {
+//     useClass: 
+// });
+
 // container.register(TOKENS.SyncServerStoreRepository, {
 //     useClass: SupabaseStoreRepository
 // });
