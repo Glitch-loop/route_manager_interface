@@ -1,4 +1,4 @@
-import { RawInventoryOperationDescriptionApiResponse } from "@/shared/raw-api-response/rawInventoryOperationDescriptionApiResponse";
+import { RawInventoryOperationDescriptionApiResponse } from "@/shared/raw-api-responses/rawInventoryOperationDescriptionApiResponse";
 
 export interface RawInventoryOperationApiResponse {
   id_inventory_operation: string;

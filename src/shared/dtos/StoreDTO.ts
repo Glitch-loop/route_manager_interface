@@ -1,6 +1,6 @@
-import { RawLocationNoteApiResponse } from "@/shared/raw-api-response/rawLocationNoteApiResponse";
+import { LocationNoteDTO } from "@/shared/dtos/LocationNoteDTO";
 
-export interface RawLocationApiResponse {
+export default interface StoreDTO {
   id_location: string;
   street: string;
   ext_number: string;
@@ -15,6 +15,6 @@ export interface RawLocationApiResponse {
   id_location_type: string;
   created_at: Date;
   updated_at: Date;
-  notes: RawLocationNoteApiResponse[];
+  notes: LocationNoteDTO[];
   address_reference?: string | null;
 }

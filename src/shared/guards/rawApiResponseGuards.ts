@@ -1,18 +1,20 @@
-import { RawClientApiResponse } from '@/shared/raw-api-response/rawClientApiResponse';
-import { RawInventoryOperationApiResponse } from '@/shared/raw-api-response/rawInventoryOperationApiResponse';
-import { RawInventoryOperationDescriptionApiResponse } from '@/shared/raw-api-response/rawInventoryOperationDescriptionApiResponse';
-import { RawLocationApiResponse } from '@/shared/raw-api-response/rawLocationApiResponse';
-import { RawLocationNoteApiResponse } from '@/shared/raw-api-response/rawLocationNoteApiResponse';
-import { RawPaymentMethodApiResponse } from '@/shared/raw-api-response/rawPaymentMethodApiResponse';
-import { RawPaymentSchemaApiResponse } from '@/shared/raw-api-response/rawPaymentSchemaApiResponse';
-import { RawRouteApiResponse } from '@/shared/raw-api-response/rawRouteApiResponse';
-import { RawRouteDayApiResponse } from '@/shared/raw-api-response/rawRouteDayApiResponse';
-import { RawRouteDayLocationApiResponse } from '@/shared/raw-api-response/rawRouteDayLocationApiResponse';
-import { RawTransactionApiResponse } from '@/shared/raw-api-response/rawTransactionApiResponse';
-import { RawTransactionDescriptionApiResponse } from '@/shared/raw-api-response/rawTransactionDescriptionApiResponse';
-import { RawWorkDayApiResponse } from '@/shared/raw-api-response/rawWorkDayApiResponse';
-import { RawWorkDayNoteApiResponse } from '@/shared/raw-api-response/rawWorkDayNoteApiResponse';
-import { RawWorkDayOperationHistoricApiResponse } from '@/shared/raw-api-response/rawWorkDayOperationHistoricApiResponse';
+import { RawClientApiResponse } from '@/shared/raw-api-responses/rawClientApiResponse';
+import { RawInventoryOperationApiResponse } from '@/shared/raw-api-responses/rawInventoryOperationApiResponse';
+import { RawInventoryOperationDescriptionApiResponse } from '@/shared/raw-api-responses/rawInventoryOperationDescriptionApiResponse';
+import { RawLocationApiResponse } from '@/shared/raw-api-responses/rawLocationApiResponse';
+import { RawLocationNoteApiResponse } from '@/shared/raw-api-responses/rawLocationNoteApiResponse';
+import { RawPaymentMethodApiResponse } from '@/shared/raw-api-responses/rawPaymentMethodApiResponse';
+import { RawPaymentSchemaApiResponse } from '@/shared/raw-api-responses/rawPaymentSchemaApiResponse';
+import { RawProductApiResponse } from '@/shared/raw-api-responses/rawProductApiResponse';
+import { RawProductPriceApiResponse } from '@/shared/raw-api-responses/rawProductPriceApiResponse';
+import { RawRouteApiResponse } from '@/shared/raw-api-responses/rawRouteApiResponse';
+import { RawRouteDayApiResponse } from '@/shared/raw-api-responses/rawRouteDayApiResponse';
+import { RawRouteDayLocationApiResponse } from '@/shared/raw-api-responses/rawRouteDayLocationApiResponse';
+import { RawTransactionApiResponse } from '@/shared/raw-api-responses/rawTransactionApiResponse';
+import { RawTransactionDescriptionApiResponse } from '@/shared/raw-api-responses/rawTransactionDescriptionApiResponse';
+import { RawWorkDayApiResponse } from '@/shared/raw-api-responses/rawWorkDayApiResponse';
+import { RawWorkDayNoteApiResponse } from '@/shared/raw-api-responses/rawWorkDayNoteApiResponse';
+import { RawWorkDayOperationHistoricApiResponse } from '@/shared/raw-api-responses/rawWorkDayOperationHistoricApiResponse';
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
 	return value !== null && value !== undefined && typeof value === 'object';
@@ -58,10 +60,10 @@ export function isRawInventoryOperationApiResponse(dto: unknown): dto is RawInve
 		'inventory_operation_descriptions' in dto &&
 		Array.isArray(dto.inventory_operation_descriptions) &&
 		dto.inventory_operation_descriptions.every((item) => isRawInventoryOperationDescriptionApiResponse(item)) &&
-		(!('latitude' in dto) || dto.latitude === null || typeof dto.latitude === 'string') &&
-		(!('longitude' in dto) || dto.longitude === null || typeof dto.longitude === 'string') &&
-		(!('inventory_operation_reference' in dto) || dto.inventory_operation_reference === null || typeof dto.inventory_operation_reference === 'string') &&
-		(!('document_reference' in dto) || dto.document_reference === null || typeof dto.document_reference === 'string')
+		(!('latitude' in dto) || dto.latitude === undefined || dto.latitude === null || typeof dto.latitude === 'string') &&
+		(!('longitude' in dto) || dto.longitude === undefined || dto.longitude === null || typeof dto.longitude === 'string') &&
+		(!('inventory_operation_reference' in dto) || dto.inventory_operation_reference === undefined || dto.inventory_operation_reference === null || typeof dto.inventory_operation_reference === 'string') &&
+		(!('document_reference' in dto) || dto.document_reference === undefined || dto.document_reference === null || typeof dto.document_reference === 'string')
 	);
 }
 
@@ -95,7 +97,7 @@ export function isRawLocationApiResponse(dto: unknown): dto is RawLocationApiRes
 		'notes' in dto &&
 		Array.isArray(dto.notes) &&
 		dto.notes.every((item) => isRawLocationNoteApiResponse(item)) &&
-		(!('address_reference' in dto) || dto.address_reference === null || typeof dto.address_reference === 'string')
+		(!('address_reference' in dto) || dto.address_reference === undefined || dto.address_reference === null || typeof dto.address_reference === 'string')
 	);
 }
 
@@ -115,12 +117,41 @@ export function isRawPaymentSchemaApiResponse(dto: unknown): dto is RawPaymentSc
 	);
 }
 
+export function isRawProductApiResponse(dto: unknown): dto is RawProductApiResponse {
+	return (
+		isObjectRecord(dto) &&
+		'id_product' in dto &&
+		'product_name' in dto &&
+		'cost' in dto &&
+		'product_status' in dto &&
+		'quantity_presentation' in dto &&
+		'order_to_show' in dto &&
+		'id_measurement_unit' in dto &&
+		'product_price' in dto &&
+		Array.isArray(dto.product_price) &&
+		dto.product_price.every((item) => isRawProductPriceApiResponse(item)) &&
+		(!('barcode' in dto) || dto.barcode === undefined || typeof dto.barcode === 'string')
+	);
+}
+
+export function isRawProductPriceApiResponse(dto: unknown): dto is RawProductPriceApiResponse {
+	return (
+		isObjectRecord(dto) &&
+		'id_product_price' in dto &&
+		'price' in dto &&
+		'created_at' in dto &&
+		(!('id_client' in dto) || dto.id_client === undefined || typeof dto.id_client === 'string') &&
+		(!('id_location' in dto) || dto.id_location === undefined || typeof dto.id_location === 'string') &&
+		(!('id_route_day' in dto) || dto.id_route_day === undefined || typeof dto.id_route_day === 'string')
+	);
+}
+
 export function isRawRouteApiResponse(dto: unknown): dto is RawRouteApiResponse {
 	return (
 		isObjectRecord(dto) &&
 		'id_route' in dto &&
 		'route_name' in dto &&
-		(!('description' in dto) || typeof dto.description === 'string')
+		(!('description' in dto) || dto.description === undefined || typeof dto.description === 'string')
 	);
 }
 

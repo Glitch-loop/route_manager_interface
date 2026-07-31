@@ -1,6 +1,6 @@
-import { RawPaymentMethodApiResponse } from "@/shared/raw-api-response/rawPaymentMethodApiResponse";
-import { RawPaymentSchemaApiResponse } from "@/shared/raw-api-response/rawPaymentSchemaApiResponse";
-import { RawTransactionDescriptionApiResponse } from "@/shared/raw-api-response/rawTransactionDescriptionApiResponse";
+import { RawPaymentMethodApiResponse } from "@/shared/raw-api-responses/rawPaymentMethodApiResponse";
+import { RawPaymentSchemaApiResponse } from "@/shared/raw-api-responses/rawPaymentSchemaApiResponse";
+import { RawTransactionDescriptionApiResponse } from "@/shared/raw-api-responses/rawTransactionDescriptionApiResponse";
 
 export interface RawTransactionApiResponse {
   id_transaction: string;

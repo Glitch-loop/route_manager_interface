@@ -1,5 +1,4 @@
-
-export default interface RouteDayStoreDTO {
+export interface RouteDayStoreDTO {
     id_route_day_store: string;
     position_in_route: number;
     id_route_day: string;

@@ -1,4 +1,4 @@
-import { RawRouteDayLocationApiResponse } from "@/shared/raw-api-response/rawRouteDayLocationApiResponse";
+import { RawRouteDayLocationApiResponse } from "@/shared/raw-api-responses/rawRouteDayLocationApiResponse";
 
 export interface RawRouteDayApiResponse {
   id_route_day: string;

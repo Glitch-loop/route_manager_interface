@@ -1,4 +1,4 @@
-import { RawWorkDayNoteApiResponse } from "@/shared/raw-api-response/rawWorkDayNoteApiResponse";
+import { RawWorkDayNoteApiResponse } from "@/shared/raw-api-responses/rawWorkDayNoteApiResponse";
 
 export interface RawWorkDayApiResponse {
   id_work_day: string;

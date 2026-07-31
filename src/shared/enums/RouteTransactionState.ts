@@ -1,0 +1,4 @@
+export enum ROUTE_TRANSACTION_STATE {
+  ACTIVE = 1,
+  CANCELLED = 0
+}

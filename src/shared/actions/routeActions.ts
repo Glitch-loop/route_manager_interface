@@ -1,12 +1,12 @@
 // Raw api response 
-import { RawRouteApiResponse } from '@/shared/raw-api-response/rawRouteApiResponse';
-import { RawRouteDayApiResponse } from '@/shared/raw-api-response/rawRouteDayApiResponse';
-import { RawRouteDayLocationApiResponse } from '@/shared/raw-api-response/rawRouteDayLocationApiResponse';
+import { RawRouteApiResponse } from '@/shared/raw-api-responses/rawRouteApiResponse';
+import { RawRouteDayApiResponse } from '@/shared/raw-api-responses/rawRouteDayApiResponse';
+import { RawRouteDayLocationApiResponse } from '@/shared/raw-api-responses/rawRouteDayLocationApiResponse';
 
 
 // DTOs
-import RouteDTO from '@/shared/dto/RouteDTO';
-import RouteDayDTO from '@/shared/dto/RouteDayDTO';
+import RouteDTO from '@/shared/dtos/RouteDTO';
+import RouteDayDTO from '@/shared/dtos/RouteDayDTO';
 
 // Object values
 import { Day } from '@/src/core/object-values/Day';
