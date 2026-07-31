@@ -1,4 +1,4 @@
-export default interface UserDTO {
+export interface UserDTO {
     id_vendor: string;
     cellphone: string|null;
     name: string;
