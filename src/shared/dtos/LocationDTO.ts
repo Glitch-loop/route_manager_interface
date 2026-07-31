@@ -1,6 +1,6 @@
 import { LocationNoteDTO } from "@/shared/dtos/LocationNoteDTO";
 
-export interface StoreDTO {
+export interface LocationDTO {
   id_location: string;
   street: string;
   ext_number: string;

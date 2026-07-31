@@ -1,9 +1,9 @@
 import { RouteDTO } from '@/shared/dtos/RouteDTO';
 import { RouteDayDTO } from '@/shared/dtos/RouteDayDTO';
-import { RouteDayStoreDTO } from '@/shared/dtos/RouteDayStoreDTO';
+import { RouteDayLocationDTO } from '@/shared/dtos/RouteDayLocationDTO';
 import { ProductDTO } from '@/shared/dtos/ProductDTO';
 import { ProductPriceDTO } from '@/shared/dtos/ProductPriceDTO';
-import { StoreDTO } from '@/shared/dtos/StoreDTO';
+import { LocationDTO } from '@/shared/dtos/LocationDTO';
 import { LocationNoteDTO } from '@/shared/dtos/LocationNoteDTO';
 import { InventoryOperationDTO } from '@/shared/dtos/InventoryOperationDTO';
 import { InventoryOperationDescriptionDTO } from '@/shared/dtos/InventoryOperationDescriptionDTO';
@@ -106,17 +106,17 @@ export function isRouteDayDTO(dto: unknown): dto is RouteDayDTO {
     'id_route_day' in dto &&
     'id_route' in dto &&
     'id_day' in dto &&
-    'stores' in dto
+    'locations' in dto
   )
 }
 
-export function isRouteDayStoreDTO(dto: unknown): dto is RouteDayStoreDTO {
+export function isRouteDayStoreDTO(dto: unknown): dto is RouteDayLocationDTO {
   return (
     isObjectRecord(dto) &&
     'id_route_day_store' in dto &&
     'position_in_route' in dto &&
     'id_route_day' in dto &&
-    'id_store' in dto
+    'id_location' in dto
   );
 }
 
@@ -147,7 +147,7 @@ export function isRouteTransactionDTO(dto: unknown): dto is RouteTransactionDTO 
     'latitude' in dto &&
     'longitude' in dto &&
     'id_work_day' in dto &&
-    'id_store' in dto &&
+    'id_location' in dto &&
     'id_client' in dto &&
     'payment_method' in dto &&
     isPaymentMethodDTO(dto.payment_method) &&
@@ -200,7 +200,7 @@ export function isDayOperationDTO(dto: unknown): dto is DayOperationDTO {
   );
 }
 
-export function isStoreDTO(dto: unknown): dto is StoreDTO {
+export function isStoreDTO(dto: unknown): dto is LocationDTO {
   return (
     isObjectRecord(dto) &&
     'id_location' in dto &&

@@ -14,7 +14,7 @@ export interface RouteTransactionDTO {
   latitude: string | null;
   longitude: string | null;
   id_work_day: string;
-  id_store: string;
+  id_location: string;
   id_client: string | null;
   payment_method: PaymentMethodDTO;
   payment_schema: PaymentSchemaDTO;
