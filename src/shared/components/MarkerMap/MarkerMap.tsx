@@ -1,11 +1,20 @@
 "use client";
+// Libraries
 import { useState, useEffect, useRef } from "react";
 import { APIProvider, Map, Marker, InfoWindow, useMap, MapMouseEvent } from "@vis.gl/react-google-maps";
-import { IMapMarker } from "./interfaces/interfaces";
-import { coordinates } from "./types/types";
-import { createCustomMarker } from "@/utils/stylesUtils";
-import { ChatSharp, SpeakerNotesOff } from "@mui/icons-material";
+
+// Components
 import { IconButton, Tooltip } from "@mui/material";
+import { ChatSharp, SpeakerNotesOff } from "@mui/icons-material";
+
+// Types
+import { coordinates } from "./types/types";
+
+// Interfaces
+import { IMapMarker } from "./interfaces/interfaces";
+
+// Utils
+import { createCustomMarker } from "@/utils/stylesUtils";
 
 
 interface MarkerMapProps {

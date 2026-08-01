@@ -1,22 +1,41 @@
+// Libraries
 import React, { useState } from "react";
-import { Switch, TextField, ToggleButton, ToggleButtonGroup, FormControlLabel, Checkbox, Divider, Autocomplete } from "@mui/material";
+
+// Components
+import { 
+  Switch, 
+  TextField, 
+  ToggleButton, 
+  ToggleButtonGroup, 
+  FormControlLabel, 
+  Checkbox, 
+  Divider, 
+  Autocomplete 
+} from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import StoreDTO from "@/application/dto/StoreDTO";
+
+// Types
+import { RangeOption } from "@/app/route_administration/types/types";
+
+// Dtos
+import { LocationDTO } from "@/shared/dtos/LocationDTO";
+
+// Utils
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
-import { RangeOption } from "../types/types";
+
 
 type StoreSearchBarProps = {
-  stores: StoreDTO[];
+  stores: LocationDTO[];
   searchByCoords: boolean;
   includeDesactiveStores: boolean;
 	rangeOptions: RangeOption[];
 	selectedRange: number;
 	totalStoresFoundBySearchRange: number|null;
-  onSelectStore: (store: StoreDTO | null) => void;
+  onSelectStore: (store: LocationDTO | null) => void;
   onSwitchSearchByCoords: (active: boolean) => void;
   onSelectRange: (range: number) => void;
   onHandleIncludeDesactiveStores: (checked: boolean) => void;
-	onHoverAutocompleteOption: (store: StoreDTO|null) => void;
+	onHoverAutocompleteOption: (store: LocationDTO|null) => void;
 	onStartSearchByAutocompletion: () => void;
 	onHideSearchCoordResults: (hide: boolean) => void;
 };
@@ -42,7 +61,7 @@ export default function StoreSearchBar({
 	// const [selectedRange, setSelectedRange] = useState<number>(rangeOptions[0] ? rangeOptions[0].value : 100);
 
 
-	const handleSelectStore = (store: StoreDTO) => {
+	const handleSelectStore = (store: LocationDTO) => {
 			// onAddStore(idRouteDay, idStore);
 			onSelectStore(store);
 			setInputValue("");
@@ -77,10 +96,10 @@ export default function StoreSearchBar({
         <div className="flex flex-row items-center gap-1 w-full">
           <SearchIcon />
             <Autocomplete
-                options={stores.map((item) => { return { id: item.id_store, ...item }})}
+                options={stores.map((item) => { return { id: item.id_location, ...item }})}
                 className="w-full"
-                getOptionKey={(option) => option.id_store}
-                getOptionLabel={(option) => searchStoreBy === "name" ? option.store_name ?? "Nombre no disponible" : getAddressOfStore(option)}
+                getOptionKey={(option) => option.id_location}
+                getOptionLabel={(option) => searchStoreBy === "name" ? option.location_name ?? "Nombre no disponible" : getAddressOfStore(option)}
                 inputValue={inputValue}
 								onChange={(event, newValue) => { 
                     if (newValue) {
@@ -90,12 +109,12 @@ export default function StoreSearchBar({
             renderOption={(props, option) => (
                 <li
                 {...props}
-                key={option.id_store}
+                key={option.id_location}
                 onMouseEnter={() => onHoverAutocompleteOption(option)} // Detect hover
                 onMouseLeave={() => onHoverAutocompleteOption(null)} // Detect hover
                 >
 									<div className="flex flex-col">
-											<span>{option.store_name ?? "Nombre no disponible"}</span>
+											<span>{option.location_name ?? "Nombre no disponible"}</span>
 											<span className="text-sm">{getAddressOfStore(option)}</span>
 									</div>
                 </li>

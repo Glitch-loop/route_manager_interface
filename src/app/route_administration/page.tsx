@@ -4,6 +4,7 @@ import "reflect-metadata";
 
 // Libraries
 import React, { useEffect, useState, useMemo } from "react";
+import { toast } from "react-toastify";
 import {
   Button,
   ButtonGroup,
@@ -15,15 +16,9 @@ import {
   Tooltip,
 } from "@mui/material";
 
-// DTOs
-// import UserDTO from "@/application/dto/UserDTO";
-// import RouteDTO from "@/application/dto/RouteDTO";
-// import StoreDTO from "@/application/dto/StoreDTO";
-// import RouteDayDTO from "@/application/dto/RouteDayDTO";
-// import RouteDayStoreDTO from "@/application/dto/RouteDayStoreDTO";
-// import RouteTransactionDTO from "@/application/dto/RouteTransactionDTO";
-
+// Dtos
 import { UserDTO } from "@/shared/dtos/UserDTO";
+import { RouteDTO } from "@/shared/dtos/RouteDTO";
 import { LocationDTO } from "@/shared/dtos/LocationDTO";
 import { RouteDayDTO } from "@/shared/dtos/RouteDayDTO";
 import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
@@ -40,11 +35,11 @@ import { listStores } from "@/shared/actions/locationActions";
 import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/ListRouteTransactionsByStoreWithinDateRange";
 
 // Commands
-import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
 import UpdateStoreCommand from "@/application/commands/UpdateStoreCommand";
 import ActivateStoreCommand from "@/application/commands/ActivateStoreCommand";
-import DesactivateStoreCommand from "@/application/commands/DesactivateStoreCommand";
 import CreateStoreCommand from "@/application/commands/CreateStoreCommand";
+import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
+import DesactivateStoreCommand from "@/application/commands/DesactivateStoreCommand";
 
 // DI container
 import { di_container } from "@/infrastructure/di/container";
@@ -58,40 +53,43 @@ import {
   Menu as MenuIcon,
   CreateSharp,
 } from "@mui/icons-material";
-import RouteForm from "./components/RouteForm";
-import SearchRoute from "./components/SearchRoute";
-import StoreForm from "./components/StoreForm";
+import MarkerMap from "@/shared/components/MarkerMap/MarkerMap";
+import StoreForm from "@/app/route_administration/components/StoreForm";
+import RouteForm from "@/app/route_administration/components/RouteForm";
+import SimpleCard from "@/shared/components/Cards/SimpleCard/SimpleCard";
+import SearchRoute from "@/app/route_administration/components/SearchRoute";
+import StoreSearchBar from "@/app/route_administration/components/StoreSearchBar";
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
-import RouteDayContainer from "./components/RouteDayContainer/RouteDayContainer";
+import RouteDayContainer from "@/app/route_administration/components/RouteDayContainer/RouteDayContainer";
+
+
+// Types
+import { StorePositionInRouteType } from "@/shared/types/types";
+import { coordinates } from "@/shared/components/MarkerMap/types/types";
+import {
+  MarkerGroup,
+  RouteDayEffect,
+  DraggableRouteDayStore,
+} from "@/app/route_administration/types/types";
+
+// Constants
+import { RANGE_OPTIONS } from "@/app/route_administration/constants/constants";
+
+// Interfaces 
+import { IMapMarker } from "@/shared/components/MarkerMap/interfaces/interfaces";
 
 // Utils
 import {
   createMapStoresInRouteDay,
   getRouteDayFromRoutesList,
 } from "@/shared/utils/routes/utils";
-
-import { IMapMarker } from "@/shared/components/MarkerMap/interfaces/interfaces";
-import { coordinates } from "@/shared/components/MarkerMap/types/types";
-import MarkerMap from "@/shared/components/MarkerMap/MarkerMap";
-import { generateRandomColor } from "@/shared/utils/styles/utils";
-
-import {
-  DraggableRouteDayStore,
-  MarkerGroup,
-  RouteDayEffect,
-} from "./types/types";
-import { getAddressOfStore } from "@/shared/utils/stores/utils";
-import { StorePositionInRouteType } from "@/shared/types/types";
 import {
   capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
 } from "@/shared/utils/strings/utils";
-import StoreSearchBar from "./components/StoreSearchBar";
 import { findStoresAround } from "@/shared/utils/clients/utils";
-import { RANGE_OPTIONS } from "./constants/constants";
-import SimpleCard from "@/shared/components/Cards/SimpleCard/SimpleCard";
-import { toast } from "react-toastify";
-import { RouteDTO } from "@/shared/dtos/RouteDTO";
+import { getAddressOfStore } from "@/shared/utils/stores/utils";
+import { generateRandomColor } from "@/shared/utils/styles/utils";
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
   const storeName = store.location_name ?? "Nombre no disponible";
@@ -728,7 +726,7 @@ export default function Page() {
         prevRoutes.map((route) => {
           const { route_day } = route;
           if (!route_day) return route;
-          
+
           return {
             ...route,
             route_day_by_day: route_day.map((routeDay) => {
