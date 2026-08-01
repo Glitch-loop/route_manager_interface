@@ -1,3 +1,5 @@
+'use server'
+
 import { LocationDTO } from "@/shared/dtos/LocationDTO";
 
 import { RawLocationApiResponse } from "@/shared/raw-api-responses/rawLocationApiResponse";

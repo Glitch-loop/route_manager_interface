@@ -1,3 +1,5 @@
+'use server'
+
 // Raw api response
 import { RawTransactionApiResponse } from '@/shared/raw-api-responses/rawTransactionApiResponse';
 

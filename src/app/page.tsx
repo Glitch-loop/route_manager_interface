@@ -33,7 +33,6 @@ import DragAndDropContainer from '@/shared/components/DragAndDropContainer/DragA
 
 // Actions
 import { login } from '@/shared/actions/userActions';
-import { apiClient } from '@/infrastructure/datasources/BackendDatasource';
 
 // Initializing database repository.
 const repository = RepositoryFactory.createRepository('supabase');
@@ -113,7 +112,6 @@ export default function Home() {
       throw new Error("Something went wrong while session starting.")
     }
 
-    apiClient.setAuthTokenCookie(token);
   }
 
   const handlerChangeColor = (selectedOption:IColorOption) => {

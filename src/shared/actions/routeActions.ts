@@ -1,12 +1,17 @@
+'use server'
+
+// Dtos
 import { RouteDTO } from '@/shared/dtos/RouteDTO';
 import { RouteDayDTO } from '@/shared/dtos/RouteDayDTO';
 import { RouteDayLocationDTO } from '@/shared/dtos/RouteDayLocationDTO';
 import { RawRouteApiResponse } from '@/shared/raw-api-responses/rawRouteApiResponse';
 import { RawRouteDayApiResponse } from '@/shared/raw-api-responses/rawRouteDayApiResponse';
 
+// Raw api response
+import { rawApiResponseToDTOMapper, RawApiResponseToDTOMapper } from '@/shared/mappers/rawApiResponseToDTOMapper';
+
 // Infrastructure
 import { apiClient } from '@/infrastructure/datasources/BackendDatasource';
-import { rawApiResponseToDTOMapper, RawApiResponseToDTOMapper } from '@/shared/mappers/rawApiResponseToDTOMapper';
 
 
 interface RouteDayByUserRequest {
@@ -19,6 +24,16 @@ interface RouteDaysByRouteRequest {
 
 interface RouteDaysByRouteDayRequest {
   id_route_days: string[];
+}
+
+interface OrganizeRouteDayLocationRequest {
+  position_in_route: number;
+  id_location: string;
+  id_route_day_location: string;
+}
+
+interface OrganizeRouteDayRequest {
+  locations: OrganizeRouteDayLocationRequest[];
 }
 
 const mapper = new RawApiResponseToDTOMapper();
@@ -97,7 +112,6 @@ export async function listRoutes(): Promise<RouteDTO[]> {
   }
 }
 
-
 export async function listRouteDaysByRoute(id_route: string): Promise<RouteDayDTO[]> {
   try {
     const routeDayByRouteRequest: RouteDaysByRouteRequest = { id_routes: [id_route] };
@@ -129,5 +143,34 @@ export async function listRouteDayStoresByRoute(id_route_day: string): Promise<R
     return routeDayDTO.locations;
   } catch (error) {
     throw new Error('Error fetching route day stores by route day' + error);
+  }
+}
+
+export async function organizeRouteDayCommand(
+  id_route_day: string,
+  routeDayStoresDTO: RouteDayLocationDTO[]
+): Promise<void> {
+  const routeDayStore = [...routeDayStoresDTO];
+
+  routeDayStore.sort((a, b) => a.position_in_route - b.position_in_route);
+
+  const routeDayStoreToUpdate: OrganizeRouteDayLocationRequest[] = routeDayStore.map((store, index) => ({
+    id_location: store.id_location,
+    id_route_day_location: store.id_route_day_store,
+    position_in_route: index + 1,
+  }));
+
+  const requestBody: OrganizeRouteDayRequest = {
+    locations: routeDayStoreToUpdate,
+  };
+
+  try {
+    await apiClient.patch<null, OrganizeRouteDayRequest>(
+      `/route-organization/routes/days/${id_route_day}/organize`,
+      requestBody
+    );
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Error organizing route day ${id_route_day}: ${message}`);
   }
 }

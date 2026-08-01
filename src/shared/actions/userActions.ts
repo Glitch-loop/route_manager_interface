@@ -1,3 +1,4 @@
+'use server'
 
 // Infrastructure
 import { apiClient } from '@/infrastructure/datasources/BackendDatasource';
@@ -16,11 +17,15 @@ export async function login(cellphone: string, password: string): Promise<string
   try {
     const access_token = await apiClient.post<string|undefined>(
       '/security/login',
-      body
+      body,
+      { sendAuth: false }
     );
+
+    apiClient.setAuthTokenCookie(token);
 
     return access_token ? access_token : null;
   } catch (error) {
+    console.log("This the error why I can't send: ", error)
     return null;
   }
 }

@@ -1,3 +1,5 @@
+'use server'
+
 // DTOs
 import { ProductDTO } from '@/shared/dtos/ProductDTO';
 
