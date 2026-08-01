@@ -77,7 +77,7 @@ export async function retrieveRouteTransactionById(id_route_transactions: string
       { id_transactions: id_route_transactions }
     );
 
-    return resultRouteTransaction.map((transaction) => rawApiResponseToDTOMapper.toDTO(transaction));
+    return resultRouteTransaction.data.map((transaction) => rawApiResponseToDTOMapper.toDTO(transaction));
   } catch (error: any) {
     throw new Error(`Failed to upsert route transactions: ${error.message}`);
   }

@@ -82,7 +82,6 @@ export default function RouteDayContainer({
     >[0],
   ) => {
     const result = move(routeDaysInModification, event);
-    console.log(result);
     onModifyRouteDays(result as Record<string, DraggableRouteDayStore[]>);
   };
 

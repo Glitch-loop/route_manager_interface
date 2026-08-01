@@ -17,15 +17,13 @@ export async function login(cellphone: string, password: string): Promise<string
   try {
     const access_token = await apiClient.post<string|undefined>(
       '/security/login',
-      body,
-      { sendAuth: false }
+      body
     );
 
-    apiClient.setAuthTokenCookie(token);
+    if (typeof access_token === "string") apiClient.setAuthTokenCookie(access_token);
 
     return access_token ? access_token : null;
-  } catch (error) {
-    console.log("This the error why I can't send: ", error)
+  } catch {
     return null;
   }
 }

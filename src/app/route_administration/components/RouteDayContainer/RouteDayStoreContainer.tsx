@@ -577,7 +577,7 @@ export default function RouteDayStoreContainer({
       </div>
       <div className="flex flex-row justify-end items-center px-4 py-2 ">
         <span className="font-bold text-lg mr-2">
-          Total clientes en day de ruta:{" "}
+          Total clientes en día de ruta:{" "}
         </span>
         <span className="font-bold text-lg text-black">
           {storesToAttend.length}
@@ -590,10 +590,9 @@ export default function RouteDayStoreContainer({
       >
         <DroppableColumn id={idRouteDayColumn}>
           {storesToAttend.map((store, index) => {
+            const { id_route_day_store, id_location } = store;
             let storeName: string = "Not found";
             let storeAddress: string = "Not found";
-
-            const { id_route_day_store, id_location } = store;
             const storeDetails = storesMap.get(id_location);
             if (storeDetails) {
               const { location_name } = storeDetails;

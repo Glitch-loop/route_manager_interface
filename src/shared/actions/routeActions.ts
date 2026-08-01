@@ -89,11 +89,11 @@ export async function listRoutes(): Promise<RouteDTO[]> {
     const routesArr: RouteDTO[] = [];
     
 
-    const responseRoutes: RawRouteApiResponse[] = await apiClient.post<RawRouteApiResponse[]>(
+    const responseRoutes: RawRouteApiResponse[] = await apiClient.get<RawRouteApiResponse[]>(
       '/route-organization/routes'
     );
 
-    for (const rawRoute of responseRoutes) {
+    for (const rawRoute of responseRoutes.data) {
       const { id_route } = rawRoute;
 
       const routeDays:RouteDayDTO[] = await listRouteDaysByRoute(id_route);

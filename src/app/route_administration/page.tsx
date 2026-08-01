@@ -322,7 +322,7 @@ export default function Page() {
   const fetchScreenInformation = async () => {
     const routes: RouteDTO[] = await listRoutes();
     setRoutes(routes);
-    fetchStores();
+    await fetchStores();
   };
 
   const fetchStores = async () => {
@@ -330,7 +330,7 @@ export default function Page() {
     const allStores = await listStores();
     setStores(allStores);
 
-    stores.forEach((store) => {
+    allStores.forEach((store) => {
       const { id_location } = store;
       storeMap.set(id_location, store);
     });
@@ -576,6 +576,8 @@ export default function Page() {
         routes,
         routeDayId,
       );
+
+      console.log("Modification: ", routeDayFound)
       if (routeDayFound !== null) {
         // Transform RouteDayStoreDTO[] to DraggableRouteDayStore[] for dnd-kit compatibility
         const draggableStores: DraggableRouteDayStore[] = (
