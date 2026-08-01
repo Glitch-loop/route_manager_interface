@@ -23,7 +23,7 @@ export class BackendDataSource {
   private authToken: string | null = null;
 
   constructor() {
-    this.url = process.env.EXPO_PUBLIC_BACKEND_URL;
+    this.url = process.env.NEXT_PUBLIC_BACKEND_URL;
     if (!this.url) {
       throw new Error('Backend URL not found in environment variables');
     }

@@ -31,6 +31,10 @@ import SortableList from '@/shared/components/SortableList';
 import SimpleCard from '@/shared/components/Cards/SimpleCard/SimpleCard';
 import DragAndDropContainer from '@/shared/components/DragAndDropContainer/DragAndDropContainer';
 
+// Actions
+import { login } from '@/shared/actions/userActions';
+import { apiClient } from '@/infrastructure/datasources/BackendDatasource';
+
 // Initializing database repository.
 const repository = RepositoryFactory.createRepository('supabase');
 
@@ -72,7 +76,6 @@ const arrConceptOptions:IConceptOption[] = [
 export default function Home() {
   console.log("Rendering Home page");
   useEffect(() => {
-        
     // getOpenWorkDays()
     // .then((data) => setOpenWorkDays(data));
 
@@ -87,7 +90,9 @@ export default function Home() {
         //   .channel('sellings')
         //   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'route_paths'}, handleInsert)
         //   .subscribe()
-    
+
+    // Dev purposes
+    devLoginProcess();
   }, [])
 
   const [palleteColors, setPalleteColors] = useState<IColorOption[]>(colors)
@@ -97,6 +102,19 @@ export default function Home() {
 
   const [stores, setStores] = useState<IStore[]|undefined>(undefined);
 
+  const devLoginProcess = async () => {
+    if (process.env.NEXT_PUBLIC_DEV_SESSION_USER === undefined || process.env.NEXT_PUBLIC_DEV_SESSION_PASSWORD === undefined) {
+      throw new Error("User credentials are not set.")
+    }
+
+    const token:string|null = await login(process.env.NEXT_PUBLIC_DEV_SESSION_USER, process.env.NEXT_PUBLIC_DEV_SESSION_PASSWORD);
+    
+    if (token === null) {
+      throw new Error("Something went wrong while session starting.")
+    }
+
+    apiClient.setAuthTokenCookie(token);
+  }
 
   const handlerChangeColor = (selectedOption:IColorOption) => {
       setPalleteColors(palleteColors.map((item:IColorOption) => {

@@ -681,3 +681,5 @@ export class RawApiResponseToDTOMapper {
 		};
 	}
 }
+
+export const rawApiResponseToDTOMapper:RawApiResponseToDTOMapper = new RawApiResponseToDTOMapper();

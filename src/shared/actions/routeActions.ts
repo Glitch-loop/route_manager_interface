@@ -1,26 +1,12 @@
-// Raw api response 
+import { RouteDTO } from '@/shared/dtos/RouteDTO';
+import { RouteDayDTO } from '@/shared/dtos/RouteDayDTO';
+import { RouteDayLocationDTO } from '@/shared/dtos/RouteDayLocationDTO';
 import { RawRouteApiResponse } from '@/shared/raw-api-responses/rawRouteApiResponse';
 import { RawRouteDayApiResponse } from '@/shared/raw-api-responses/rawRouteDayApiResponse';
-import { RawRouteDayLocationApiResponse } from '@/shared/raw-api-responses/rawRouteDayLocationApiResponse';
-
-
-// DTOs
-import RouteDTO from '@/shared/dtos/RouteDTO';
-import RouteDayDTO from '@/shared/dtos/RouteDayDTO';
-
-// Object values
-import { Day } from '@/src/core/object-values/Day';
-import { RouteDay } from '@/src/core/object-values/RouteDay';
-import { RouteDayStore } from '@/src/core/object-values/RouteDayStore';
-
-// Entities
-import { Route } from '@/src/core/entities/Route';
 
 // Infrastructure
 import { apiClient } from '@/infrastructure/datasources/BackendDatasource';
-
-// Utils
-import { DAYS } from '@/src/core/constants/days';
+import { rawApiResponseToDTOMapper, RawApiResponseToDTOMapper } from '@/shared/mappers/rawApiResponseToDTOMapper';
 
 
 interface RouteDayByUserRequest {
@@ -35,146 +21,113 @@ interface RouteDaysByRouteDayRequest {
   id_route_days: string[];
 }
 
+const mapper = new RawApiResponseToDTOMapper();
+
 export async function listRoutesByUser(user: string): Promise<RouteDTO[]> {
   try {
-    const routeDayByUserRequest: RouteDayByUserRequest = { id_users: []} 
-    const routesId: Set<string> = new Set<string>()
-    const routes: Map<string, RouteDTO> = new Map<string, RouteDTO>()
+    const routeDayByUserRequest: RouteDayByUserRequest = { id_users: [] };
+    const routesId = new Set<string>();
+    const routes = new Map<string, RouteDTO>();
     const routesArr: RouteDTO[] = [];
 
-    // Retrieve assigned route days.
     routeDayByUserRequest.id_users.push(user);
     const responseRouteDays: RawRouteDayApiResponse[] = await apiClient.post<RawRouteDayApiResponse[], RouteDayByUserRequest>(
       '/route-organization/routes/days/users/ids',
       routeDayByUserRequest
     );
 
-    // Retrieve routes of the route days that are assiend to the user.
     responseRouteDays.forEach((assignedRoute) => {
       const { id_route } = assignedRoute;
-      routesId.add(id_route)
+      routesId.add(id_route);
     });
 
-    /*
-      Note (06-25-26)
-      Endpoint doesn't provide a way to retrieve all the routes.
-      There is not an "next_item" field for knowing if there is more information
-      for retrieving.
-    */
     const responseRoutes = await apiClient.get<RawRouteApiResponse[]>(
       '/route-organization/routes'
     );
-    
-    // Organizing the information
-    responseRoutes.data.forEach((route: RawRouteApiResponse) => {
-      const { id_route, route_name, description } = route;
-      if (routesId.has(id_route)) {
-        const newRoute: RouteDTO = 
 
-        routes.set(id_route, newRoute) 
+    responseRoutes.data.forEach((route: RawRouteApiResponse) => {
+      const { id_route } = route;
+      if (routesId.has(id_route)) {
+        routes.set(id_route, mapper.toDTO(route));
       }
     });
 
     responseRouteDays.forEach((assignedRoute) => {
-      const {id_route} = assignedRoute;
+      const { id_route } = assignedRoute;
       if (routes.has(id_route)) {
-        routes.get(id_route)?.route_day.push(convertFromRouteDayInterfaceToRouteDayEntity(assignedRoute));
+        routes.get(id_route)?.route_day.push(mapper.toDTO(assignedRoute));
       }
     });
 
-    for(const id_route of routesId) {
+    for (const id_route of routesId) {
       routesArr.push(routes.get(id_route)!);
     }
 
-    return routesArr        
+    return routesArr;
   } catch (error) {
     throw new Error('Error fetching routes: ' + error);
   }
 }
 
-export async function listDays(): Promise<Day[]> {
-  const days: Day[] = [];
-  for (const id_day in DAYS) {
-    days.push(
-      new Day(
-        DAYS[id_day].id_day,
-        DAYS[id_day].day_name,
-        DAYS[id_day].order_to_show,
-      )
-    );
-  }
+export async function listRoutes(): Promise<RouteDTO[]> {
+  try {
+    const routesArr: RouteDTO[] = [];
+    
 
-  return days;
+    const responseRoutes: RawRouteApiResponse[] = await apiClient.post<RawRouteApiResponse[]>(
+      '/route-organization/routes'
+    );
+
+    for (const rawRoute of responseRoutes) {
+      const { id_route } = rawRoute;
+
+      const routeDays:RouteDayDTO[] = await listRouteDaysByRoute(id_route);
+      const route:RouteDTO = rawApiResponseToDTOMapper.toDTO(rawRoute);
+
+      for (const routeDay of routeDays) {
+        route.route_day.push(routeDay);
+      }
+
+      routesArr.push(route);
+    }
+
+    return routesArr;
+  } catch (error) {
+    throw new Error('Error fetching routes: ' + error);
+  }
 }
 
-export async function listRouteDaysByRoute(id_route: string): Promise<RouteDay[]> {
+
+export async function listRouteDaysByRoute(id_route: string): Promise<RouteDayDTO[]> {
   try {
-    const routeDayByRouteRequest: RouteDaysByRouteRequest = { id_routes: [id_route] }
-    const routeDaysEntities: RouteDay[] = [];
-    const responseRouteDays: RouteDayInterface[] = await apiClient.post<RouteDayInterface[], RouteDaysByRouteRequest>(
+    const routeDayByRouteRequest: RouteDaysByRouteRequest = { id_routes: [id_route] };
+    const responseRouteDays: RawRouteDayApiResponse[] = await apiClient.post<RawRouteDayApiResponse[], RouteDaysByRouteRequest>(
       '/route-organization/routes/days/routes/ids',
       routeDayByRouteRequest
     );
 
-    responseRouteDays.forEach((assignedRoute) => {
-      routeDaysEntities.push(convertFromRouteDayInterfaceToRouteDayEntity(assignedRoute));
-    });
-
-    return routeDaysEntities;
+    return responseRouteDays.map((assignedRoute) => mapper.toDTO(assignedRoute));
   } catch (error) {
     throw new Error('Error fetching route days by route' + error);
   }
 }
 
-export async function listRouteDayStoresByRoute(id_route_day: string): Promise<RouteDayStore[]> {
+export async function listRouteDayStoresByRoute(id_route_day: string): Promise<RouteDayLocationDTO[]> {
   try {
     const routeDayByRouteDayID: RouteDaysByRouteDayRequest = { id_route_days: [id_route_day] };
-    const routeDayStores: RouteDayStore[] = [];
-    const responseRouteDays: RouteDayInterface[] = await apiClient.post<RouteDayInterface[], RouteDaysByRouteDayRequest>(
+    const responseRouteDays: RawRouteDayApiResponse[] = await apiClient.post<RawRouteDayApiResponse[], RouteDaysByRouteDayRequest>(
       '/route-organization/routes/days/ids',
       routeDayByRouteDayID
     );
 
-    if(responseRouteDays.at(0)) {
-      const { locations } = responseRouteDays.at(0)!
-      for(const location of locations) {
-        routeDayStores.push(convertRouteDayStoreInterfaceToRouteDayStoreObjectValue(location))
-      }
+    const routeDay = responseRouteDays.at(0);
+    if (!routeDay) {
+      return [];
     }
-    return routeDayStores;
+
+    const routeDayDTO = mapper.toDTO(routeDay);
+    return routeDayDTO.locations;
   } catch (error) {
     throw new Error('Error fetching route day stores by route day' + error);
   }
-}
-
-function convertFromRouteDayInterfaceToRouteDayEntity(routeDay: RouteDayInterface): RouteDay {
-  const { id_route, id_day, id_route_day, locations } = routeDay;
-  const routeDayStores: RouteDayStore[] = [];
-  locations.forEach((location) => {
-    routeDayStores.push(convertRouteDayStoreInterfaceToRouteDayStoreObjectValue(location));
-  });
-
-  return new RouteDay(
-    id_route_day,
-    id_route,
-    id_day,
-    routeDayStores
-  );
-}
-
-function convertRouteDayStoreInterfaceToRouteDayStoreObjectValue(routeDayLocation: RawRouteDayLocationApiResponse): RouteDayStore {
-  const {  
-      position_in_route,
-      id_location,
-      id_route_day,
-      id_route_day_location, 
-  } = routeDayLocation;
-
-  return new RouteDayStore(
-      id_route_day_location,
-      position_in_route,
-      id_route_day,
-      id_location
-    )
-
 }
