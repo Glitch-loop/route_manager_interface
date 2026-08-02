@@ -12,6 +12,7 @@ import { apiClient } from '@/infrastructure/datasources/BackendDatasource';
 
 // Mapper
 import { rawApiResponseToDTOMapper } from '@/shared/mappers/rawApiResponseToDTOMapper';
+import { BackendResponseInterface } from '@/infrastructure/interfaces/BackendResponseInterface';
 
 interface RetrieveTransactionsRequest {
 	id_transactions: string[]
@@ -22,6 +23,8 @@ export async function insertRouteTransaction(route_transaction: RouteTransaction
     Note (06-25-26)
     Vendor's app must not implement this method.
   */
+  void route_transaction;
+  void is_synced;
   return; 
 };
 
@@ -30,6 +33,7 @@ export async function updateRouteTransaction(route_transaction: RouteTransaction
     Note (06-25-26)
     Vendor's app must not implement this method.
   */
+  void route_transaction;
   return; 
 };
 
@@ -38,37 +42,120 @@ export async function deleteRouteTransactions(route_transactions: RouteTransacti
     Note (06-25-26)
     Vendor's app must not implement this method.
   */
+  void route_transactions;
   return; 
 };
 
-export async function listRouteTransactionByStore(id_store: string): Promise<RouteTransactionDTO[]> { 
-  /*
-    Note (06-25-26)
-
-    The intention of this implementation is to retrieve historical data to avoid 
-    heavy requests, this call is limited to the 'last' 4 active transactions.
-  */
+export async function listRouteTransactions(
+  transaction_status?: number,
+  storesId?: string[],
+  fromDate?: Date, 
+  toDate?: Date,
+  limit?: number,
+  nextItem?: string,
+): Promise<BackendResponseInterface<RouteTransactionDTO[]>> { 
   try {
-    const response = await apiClient.get<RawTransactionApiResponse[]>(
-      `/sellings/transactions?limit=4&transaction_status=1&id_location=${id_store}`
-    );
+    const searchParams = new URLSearchParams();
+
+    if (transaction_status !== undefined) {
+      searchParams.set('transaction_status', String(transaction_status));
+    }
+
+    if (fromDate && toDate) {
+      searchParams.set('fromDate', fromDate.toISOString());
+      searchParams.set('toDate', toDate.toISOString());
+    }
+
+    if (storesId && storesId.length > 0) {
+      searchParams.set('id_location', storesId.join(','));
+    }
+
+    searchParams.set('limit', String(limit ?? 100));
+
+    if (nextItem) {
+      searchParams.set('next_item', nextItem);
+    }
+
+    const url = `/sellings/transactions?${searchParams.toString()}`;
+
+    const response: BackendResponseInterface<RawTransactionApiResponse[]> = await apiClient.get<RawTransactionApiResponse[]>(url);
 
     const routeTransactionServerModel: RawTransactionApiResponse[] = response.data;
 
-    return routeTransactionServerModel.map((transaction) => rawApiResponseToDTOMapper.toDTO(transaction));
-  } catch(error) {
+    return {
+      message: response.message,
+      data: routeTransactionServerModel.map((transaction) => rawApiResponseToDTOMapper.toDTO(transaction)),
+      meta: response.meta
+    } as BackendResponseInterface<RouteTransactionDTO[]>;
+
+  } catch(error: unknown) {
     console.error('Something went wrong during route transaction retrieving by store: ' + error)
-    return [];
+    return {
+      message: 'Error during retrieving transactions',
+      data: [],
+    };
   }
 };
 
-export async function listRouteTransactions(): Promise<RouteTransactionDTO[]> { 
-  /*
-    Note (06-25-26)
-    Vendor's app must not implement this method.
-  */
-  return []; 
-};
+async function listAllRouteTransactionsByStore(
+  storeId: string,
+  startDate: Date,
+  endDate: Date,
+  transactionStatus = 1,
+  limit = 100,
+  nextItem?: string,
+): Promise<RouteTransactionDTO[]> {
+  const response = await listRouteTransactions(
+    transactionStatus,
+    [storeId],
+    startDate,
+    endDate,
+    limit,
+    nextItem,
+  );
+
+  const currentItems = response.data.filter(
+    (transaction) => transaction.id_location === storeId,
+  );
+
+  if (!response.meta?.has_next_page || !response.meta.next_item) {
+    return currentItems;
+  }
+
+  const nextItems = await listAllRouteTransactionsByStore(
+    storeId,
+    startDate,
+    endDate,
+    transactionStatus,
+    limit,
+    response.meta.next_item,
+  );
+
+  return [...currentItems, ...nextItems];
+}
+
+export async function listRouteTransactionsByStoreWithinDateRange(
+  storesId: string[],
+  startDate: Date,
+  endDate: Date,
+): Promise<Map<string, RouteTransactionDTO[]>> {
+  const uniqueStoreIds = [...new Set(storesId)].filter(Boolean);
+
+  const transactionsByStore = await Promise.all(
+    uniqueStoreIds.map(async (storeId) => {
+      const transactions = await listAllRouteTransactionsByStore(
+        storeId,
+        startDate,
+        endDate,
+      );
+
+      return [storeId, transactions] as const;
+    }),
+  );
+
+  return new Map<string, RouteTransactionDTO[]>(transactionsByStore);
+}
+
 
 export async function retrieveRouteTransactionById(id_route_transactions: string[]): Promise<RouteTransactionDTO[]> { 
   try {
@@ -77,9 +164,10 @@ export async function retrieveRouteTransactionById(id_route_transactions: string
       { id_transactions: id_route_transactions }
     );
 
-    return resultRouteTransaction.data.map((transaction) => rawApiResponseToDTOMapper.toDTO(transaction));
-  } catch (error: any) {
-    throw new Error(`Failed to upsert route transactions: ${error.message}`);
+    return resultRouteTransaction.map((transaction: RawTransactionApiResponse) => rawApiResponseToDTOMapper.toDTO(transaction));
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Failed to upsert route transactions: ${message}`);
   }
 };
 

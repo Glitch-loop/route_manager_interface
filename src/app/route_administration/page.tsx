@@ -3,7 +3,7 @@
 import "reflect-metadata";
 
 // Libraries
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import {
   Button,
@@ -25,20 +25,21 @@ import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 // Actions
-import { listRoutes } from "@/shared/actions/routeActions";
 import { listStores } from "@/shared/actions/locationActions";
+import { listRoutes, organizeRouteDay } from "@/shared/actions/routeActions";
+import { listRouteTransactionsByStoreWithinDateRange } from "@/shared/actions/transactionActions";
 
 // Queries
 // import ListRoutesQuery from "@/application/queries/ListRoutesQuery";
 // import RetrieveRouteInformationQuery  from "@/application/queries/RetrieveRouteInformationQuery";
 // import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdStoresQuery";
-import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/ListRouteTransactionsByStoreWithinDateRange";
+// import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/ListRouteTransactionsByStoreWithinDateRange";
 
 // Commands
 import UpdateStoreCommand from "@/application/commands/UpdateStoreCommand";
 import ActivateStoreCommand from "@/application/commands/ActivateStoreCommand";
 import CreateStoreCommand from "@/application/commands/CreateStoreCommand";
-import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
+// import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
 import DesactivateStoreCommand from "@/application/commands/DesactivateStoreCommand";
 
 // DI container
@@ -285,7 +286,7 @@ export default function Page() {
   const [hideCoordSearchResults, setHideCoordSearchResults] =
     useState<boolean>(false);
 
-  const [vendors, setVendors] = useState<UserDTO[]>([
+  const [vendors] = useState<UserDTO[]>([
     {
       id_vendor: "1",
       cellphone: "1234567890",
@@ -299,7 +300,13 @@ export default function Page() {
 
   // Use effects
   useEffect(() => {
-    fetchScreenInformation();
+    const loadScreenInformation = async () => {
+      const routes: RouteDTO[] = await listRoutes();
+      setRoutes(routes);
+      await fetchStores();
+    };
+
+    void loadScreenInformation();
   }, []);
 
   useEffect(() => {
@@ -316,14 +323,7 @@ export default function Page() {
     });
 
     setStoreWithinRouteAssigned(storeWithinRouteAssigned);
-  }, [routes]);
-
-  // Auxiliar functions
-  const fetchScreenInformation = async () => {
-    const routes: RouteDTO[] = await listRoutes();
-    setRoutes(routes);
-    await fetchStores();
-  };
+  }, [routes, stores]);
 
   const fetchStores = async () => {
     const storeMap = new Map<string, LocationDTO>();
@@ -337,6 +337,16 @@ export default function Page() {
     setMapStores(storeMap);
   };
 
+  const handleSelectStoreToUpdate = useCallback((idStore: string): void => {
+    const store = mapStores.get(idStore);
+    if (store) {
+      setSelectedStore(store);
+      setSidebarOpen(true);
+    } else {
+      console.error(`Store with id ${idStore} not found in mapStores.`);
+    }
+  }, [mapStores]);
+
   // Memoized components
   const mapMarkers = useMemo<IMapMarker[]>(() => {
     const markers: IMapMarker[] = [];
@@ -348,9 +358,9 @@ export default function Page() {
       if (!effect?.showStores) return;
 
       const baseColor = effect.assignedColor;
-      const totalStores = stores.length;
+      // const totalStores = stores.length;
 
-      stores.forEach((routeDayStore, storeIndex) => {
+      stores.forEach((routeDayStore) => {
         const store = mapStores.get(routeDayStore.id_location);
         if (store !== undefined) {
           const { latitude, longitude, id_location } = store;
@@ -469,6 +479,7 @@ export default function Page() {
     storesFoundByPosition,
     selectedCoordinate,
     hideCoordSearchResults,
+    handleSelectStoreToUpdate,
   ]);
 
   // Handlers - Route menu
@@ -481,16 +492,6 @@ export default function Page() {
   };
 
   // Handlers - Store menu
-  const handleSelectStoreToUpdate = (idStore: string): void => {
-    const store = mapStores.get(idStore);
-    if (store) {
-      setSelectedStore(store);
-      setSidebarOpen(true);
-    } else {
-      console.error(`Store with id ${idStore} not found in mapStores.`);
-    }
-  };
-
   const handleCreateStore = async (storeToCreate: LocationDTO) => {
     const createStoreCommand =
       di_container.resolve<CreateStoreCommand>(CreateStoreCommand);
@@ -683,20 +684,31 @@ export default function Page() {
     endDate: Date,
     idStores: string[],
   ) => {
-    // TODO: Optimize logic to avoid retrieving transactions that are already in the map and are within the date range.
-    const listTransactionsQuery =
-      di_container.resolve<ListRouteTransactionsByStoreWithinDateRange>(
-        ListRouteTransactionsByStoreWithinDateRange,
+    const uniqueStoreIds = [...new Set(idStores)].filter(Boolean);
+
+    if (uniqueStoreIds.length === 0) {
+      return;
+    }
+
+    try {
+      const transactionsMap = await listRouteTransactionsByStoreWithinDateRange(
+        uniqueStoreIds,
+        startDate,
+        endDate,
       );
 
-    await listTransactionsQuery
-      .execute(idStores, startDate, endDate)
-      .then((transactionsMap: Map<string, RouteTransactionDTO[]>) => {
-        setMapRouteTransactionByStore(transactionsMap);
-      })
-      .catch((error) => {
-        console.error("Error retrieving route transactions: ", error);
+      setMapRouteTransactionByStore((previousMap) => {
+        const nextMap = new Map(previousMap);
+
+        transactionsMap.forEach((transactions, storeId) => {
+          nextMap.set(storeId, transactions);
+        });
+
+        return nextMap;
       });
+    } catch (error: unknown) {
+      console.error("Error retrieving route transactions: ", error);
+    }
   };
 
   const handleModifyRouteDays = (
@@ -715,12 +727,8 @@ export default function Page() {
       position_in_route: index + 1, // Position is 1-indexed
     }));
 
-    const organizeRouteDay = di_container.resolve<OrganizeRouteDayCommand>(
-      OrganizeRouteDayCommand,
-    );
-
     try {
-      await organizeRouteDay.execute(idRouteDayColumn, updatedStores);
+      await organizeRouteDay(idRouteDayColumn, updatedStores);
 
       // Update routes state with new store order and positions (using callback to get current state)
       // Routes state is the source of truth for route days.
@@ -731,13 +739,12 @@ export default function Page() {
 
           return {
             ...route,
-            route_day_by_day: route_day.map((routeDay) => {
+            route_day: route_day.map((routeDay) => {
               const { id_route_day } = routeDay;
               if (id_route_day === idRouteDayColumn) {
-                return { ...routeDay, stores: [...updatedStores] }
+                return { ...routeDay, locations: [...updatedStores] };
               } else {
-                return { ...routeDay }
-                
+                return { ...routeDay };
               }
             }),
           };

@@ -146,7 +146,7 @@ export async function listRouteDayStoresByRoute(id_route_day: string): Promise<R
   }
 }
 
-export async function organizeRouteDayCommand(
+export async function organizeRouteDay(
   id_route_day: string,
   routeDayStoresDTO: RouteDayLocationDTO[]
 ): Promise<void> {

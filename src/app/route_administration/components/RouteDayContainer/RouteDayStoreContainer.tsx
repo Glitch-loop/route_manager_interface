@@ -39,7 +39,6 @@ import {
 import { DAYS } from "@/core/constants/Days";
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
 import { RouteDayEffect } from "../../types/types";
-import { ROUTE_TRANSACTION_STATE } from "@/core/enums/RouteTransactionState";
 
 // Utils
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
