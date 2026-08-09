@@ -40,7 +40,8 @@ export async function retrieveAllProducts(status_product = true): Promise<Produc
 
       Active product: product_status = 1
     */
-    const products = extractProductsCollection(allProducts)
+    
+    const products: ProductDTO[] = allProducts
       .filter((product) => (status_product ? product.product_status === 1 : product.product_status === 0));
 
     return products.map((product) => rawApiResponseToDTOMapper.toDTO(product));
@@ -85,11 +86,4 @@ export async function recursiveListProducts(next_item: string | undefined): Prom
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`Failed to list products: ${message}`);
   }
-}
-
-export function extractProductsCollection(
-  response: RawProductApiResponse[] | PaginatedProductsResponseInterface
-): RawProductApiResponse[] {
-  if (Array.isArray(response)) return response;
-  return [];
 }

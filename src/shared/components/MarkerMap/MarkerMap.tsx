@@ -130,12 +130,12 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
 
   return (
     <>
-      <div className="absolute z-30 bottom-7 left-3">
+      <div className="absolute z-30 bottom-7 left-3 flex flex-col">
         <Tooltip 
             title={showCallout ? "Ocultar panel de información" : "Mostrar panel de información"}
             placement="right"
             enterDelay={300}
-            arrow>                      
+            arrow>          
           <IconButton
               onClick={() => setShowCallout(!showCallout)}
               sx={{

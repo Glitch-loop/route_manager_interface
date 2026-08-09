@@ -37,7 +37,6 @@ import {
 
 // Core - constants
 import { DAYS } from "@/core/constants/Days";
-import DAY_OPERATIONS from "@/core/enums/DayOperations";
 import { RouteDayEffect } from "../../types/types";
 
 // Utils
@@ -50,6 +49,7 @@ import {
   getRouteDayFromRoutesList,
   getRouteWhereRouteDayBelongs,
 } from "@/shared/utils/routes/utils";
+import { calculateStoresGreatTotalSales, calculateStoreTotalSales } from "@/shared/utils/transactions/utils";
 
 type RouteDayStoreContainerProps = {
   idRouteDayColumn: string;
@@ -88,59 +88,6 @@ export default function RouteDayStoreContainer({
   onHoverAutocompleteOption,
   onSelectRouteDayStore,
 }: RouteDayStoreContainerProps) {
-  /**
-   * Calculate total sales amount for a store from its transactions.
-   * Only counts transactions with operation type "sales".
-   * @param storeId - The ID of the store
-   * @returns Total sales amount or 0 if no transactions
-   */
-  const calculateStoreTotalSales = (storeId: string): number => {
-    const transactions = routeTransactionsMap.get(storeId);
-    if (!transactions || transactions.length === 0) {
-      return 0;
-    }
-
-    let total = 0;
-    for (const transaction of transactions) {
-      if (transaction.state === 1) {
-        for (const description of transaction.transaction_description) {
-          // Only count sales operations
-          if (
-            description.id_transaction_operation_type === DAY_OPERATIONS.sales
-          ) {
-            total += description.price_at_moment * description.quantity;
-          }
-        }
-      }
-    }
-    return total;
-  };
-
-  /**
-   * Calculate total estimated sales for all stores in this column.
-   */
-  const calculateColumnEstimatedTotal = (
-    deleteModeActive: boolean,
-    selectedStores: Set<string>,
-  ): number => {
-    let totalAmount: number = 0;
-    if (deleteModeActive) {
-      totalAmount = storesToAttend.reduce((total, store) => {
-        if (selectedStores.has(store.id_route_day_store)) {
-          return total; // Skip stores selected for deletion
-        } else {
-          return total + calculateStoreTotalSales(store.id_location);
-        }
-      }, 0);
-    } else {
-      totalAmount = storesToAttend.reduce((total, store) => {
-        return total + calculateStoreTotalSales(store.id_location);
-      }, 0);
-    }
-
-    return totalAmount;
-  };
-
   // State
   const [inputValue, setInputValue] = useState<string>("");
   const [onlyViewMode, setOnlyViewMode] = useState<boolean>(true);
@@ -570,7 +517,10 @@ export default function RouteDayStoreContainer({
         </span>
         <span className="font-bold text-lg text-black">
           {formatNumberAsAccountingCurrency(
-            calculateColumnEstimatedTotal(deleteMode, selectedStores),
+            calculateStoresGreatTotalSales(
+              deleteMode ? storesToAttend.filter((storeToAttend) => !selectedStores.has(storeToAttend.id_location)) : storesToAttend,
+              routeTransactionsMap
+            )
           )}
         </span>
       </div>
@@ -624,7 +574,7 @@ export default function RouteDayStoreContainer({
                     cardName={capitalizeFirstLetterOfEachWord(storeName)}
                     cardDetails={capitalizeFirstLetterOfEachWord(storeAddress)}
                     numericValue={formatNumberAsAccountingCurrency(
-                      calculateStoreTotalSales(id_location),
+                      calculateStoreTotalSales(id_location, routeTransactionsMap),
                     )}
                   />
                 </div>
@@ -654,7 +604,7 @@ export default function RouteDayStoreContainer({
                         storeAddress,
                       )}
                       numericValue={formatNumberAsAccountingCurrency(
-                        calculateStoreTotalSales(id_location),
+                        calculateStoreTotalSales(id_location, routeTransactionsMap),
                       )}
                     />
                   </div>

@@ -28,9 +28,11 @@ export function cast_string_to_timestamp_standard_format(date:string) {
   return dayjs(date).format('dddd, DD-MMM-YY HH:mm').replace(/^./, (char) => char.toUpperCase());
 }
 
-export function cast_string_to_date_hour_format(date:string) {
+export function cast_string_to_date_hour_format(date:string|Date) {
   return dayjs(date).format('DD-MMM-YY HH:mm');
 }
+
+
 
 export function cast_string_to_hour_format(date:string) {
   return dayjs(date).format('HH:mm');
