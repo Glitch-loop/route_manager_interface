@@ -11,8 +11,8 @@ export type DateRangeGroup = {
 export type RouteDayEffect = {
   showStores: boolean;
   assignedColor: string;
+  selectedLocation?: string;
 };
-
 
 export type ApplyEffect = "showStore" | "assignColor";
 

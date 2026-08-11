@@ -11,11 +11,20 @@ import DAYS from "@/utils/days";
 import { capitalizeFirstLetterOfEachWord } from "@/utils/generalUtils";
 import { ContentCopy, Visibility, VisibilityOff, PictureAsPdf, Close } from "@mui/icons-material";
 import { IconButton, Tooltip } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 // Types
-import { RouteDayEffect } from "@/app/route_administration/types/types";
+import { RouteDayEffect } from "@/app/analytics/types/types";
 
+
+  // Auxiliar function
+const getRouteDayEffect = (idRouteDay: string, routeDayEffectsMap: Map<string, RouteDayEffect>): RouteDayEffect => {
+  const effects = routeDayEffectsMap.get(idRouteDay)
+  if (effects === undefined) {
+    throw new Error("Change of the color is not possible. The effect for the route day doesn't exist.")
+  } 
+  return effects;
+}
 
 type RouteDayContainerProps = {
   routeDayToDisplay: RouteDayDTO;
@@ -53,25 +62,46 @@ export default function RouteDayContainer({
   const [colorSelected, setColorSelected] = useState<string>(
     routeDayEffectsMap.get(id_route_day)?.assignedColor ?? "#000000",
   );
+  const [locationSelected, setLocationSelected] = useState<string|null>(null);
 
+  // Use effects
+  useEffect(() => {
+    if (routeDayEffectsMap.has(id_route_day)) {
+      const routeDayEffects  = routeDayEffectsMap.get(id_route_day)!;
+      const { selectedLocation } = routeDayEffects;
+      if (selectedLocation === undefined) {
+        setLocationSelected(null);
+      } else {
+        setLocationSelected(selectedLocation);
+      }
+    }
+  }, [routeDayEffectsMap, id_route_day]);
 
   // Handlers
   const handleShowInformation = (idRouteDay: string, state: boolean) => {
     // onShowInformation(idRouteDay, state);
+    const effects = getRouteDayEffect(idRouteDay, routeDayEffectsMap);
     setShowInformation(state);
+    onApplyRouteEffects(idRouteDay, {...effects, showStores: state});
   };
 
   const handleSelectRouteDayColor = (idRouteDay: string, color: string) => {
-    const effects = routeDayEffectsMap.get(idRouteDay)
-
-    if (effects === undefined) {
-      console.log("Change of the color is not possible. The effect for the route day doesn't exist.");
-      return;
-    }
-
+    const effects = getRouteDayEffect(idRouteDay, routeDayEffectsMap);
     onApplyRouteEffects(idRouteDay, {...effects, assignedColor: color});
     setColorSelected(color);
   };
+
+  const handleSelectRouteDayLocation = (idRouteDay: string, idRouteDayLocation: string) => {
+    const effects = getRouteDayEffect(idRouteDay, routeDayEffectsMap);
+    
+    if (idRouteDayLocation === locationSelected) { 
+      setLocationSelected(null)
+      onApplyRouteEffects(idRouteDay, {...effects, selectedLocation: undefined });
+    } else { 
+      setLocationSelected(idRouteDayLocation);
+      onApplyRouteEffects(idRouteDay, {...effects, selectedLocation: idRouteDayLocation });
+    }
+  }
 
   return (
     <div className="w-96 h-full flex flex-col shrink-0 overflow-auto bg-system-primary-background rounded-lg">
@@ -155,10 +185,10 @@ export default function RouteDayContainer({
             >
               <IconButton
                 sx={{
-                  backgroundColor: "#EC1C24",
+                  backgroundColor: "#E53935",
                   color: "white",
                   "&:hover": {
-                    backgroundColor: "#EC1C24",
+                    backgroundColor: "#E53935",
                   },
                   width: 40,
                   height: 40,
@@ -180,10 +210,10 @@ export default function RouteDayContainer({
             >
               <IconButton
                 sx={{
-                  backgroundColor: "#EC1C24",
+                  backgroundColor: "#B71C1C",
                   color: "white",
                   "&:hover": {
-                    backgroundColor: "#EC1C24",
+                    backgroundColor: "#B71C1C",
                   },
                   width: 40,
                   height: 40,
@@ -243,14 +273,13 @@ export default function RouteDayContainer({
               return (
                 <div
                   key={id_route_day_store}
-                  onClick={() => { }}
+                  onClick={() => handleSelectRouteDayLocation(id_route_day, id_route_day_store)}
                   className={"relative p-2 cursor-pointer"} >
                   <NumericValueCard
                     cardName={capitalizeFirstLetterOfEachWord(storeName)}
                     cardDetails={capitalizeFirstLetterOfEachWord(storeAddress)}
-                    numericValue={
-                      formatNumberAsAccountingCurrency(calculateStoreTotalSales(id_location, routeTransactionsMap),)
-                    }
+                    numericValue={formatNumberAsAccountingCurrency(calculateStoreTotalSales(id_location, routeTransactionsMap))}
+                    isSelected={locationSelected===id_route_day_store}
                   />
                 </div>
               );

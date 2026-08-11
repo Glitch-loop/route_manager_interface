@@ -10,18 +10,17 @@ import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 // UI components
 import { Badge, Button, ButtonGroup } from "@mui/material";
-// import RouteDayStoreContainer from "./RouteDayStoreContainer";
-import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDateSelection";
 import { SellingGoal } from "@/shared/components/SellingGoal/SellingGoal";
 import { ItemsPicker } from "@/shared/components/ItemsPicker/ItemsPicker";
+import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDateSelection";
 
 // Utils
 import RouteDayContainer from "@/app/analytics/components/RouteDayContainer";
 
 // Types
-import { RouteDayEffect } from "@/app/route_administration/types/types";
-import { RouteDayFilters, routeDayFiltersType } from "@/app/analytics/types/types";
+import { RouteDayEffect } from "@/app/analytics/types/types";
 import { SellingGoalType } from "@/shared/components/SellingGoal/types/types";
+import { RouteDayFilters, routeDayFiltersType } from "@/app/analytics/types/types";
 import { ItemsPickerType, PickerItemType } from "@/shared/components/ItemsPicker/types/types";
 
 type FilterTab = "fechas" | "venta_objetivo" | "producto";
@@ -61,12 +60,9 @@ export default function RouteDayDisplayer({
   routeDayFilters,
   pickerItems,
   onRequireRouteTransactions,
-//   onRequireRouteTransactions,
   onCloseRouteDay,
   onApplyRouteEffects,
   onApplyFilter,
-//   onShowInformation,
-//   onSelectRouteDayColor,
 //   onHoverAutocompleteOption,
 //   onSelectRouteDayStore,
 }: RouteDayContainerProps) {

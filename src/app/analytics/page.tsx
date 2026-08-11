@@ -69,9 +69,9 @@ import { StorePositionInRouteType } from "@/shared/types/types";
 import { coordinates } from "@/shared/components/MarkerMap/types/types";
 import {
   MarkerGroup,
-  RouteDayEffect,
   DraggableRouteDayStore,
 } from "@/app/route_administration/types/types";
+import { RouteDayEffect } from "@/app/analytics/types/types";
 
 // Constants
 import { RANGE_OPTIONS } from "@/app/route_administration/constants/constants";
@@ -101,6 +101,8 @@ import DAY_OPERATIONS from "@/core/enums/DayOperations";
 import { ApplyEffect, PickerItemType } from "@/app/analytics/types/types";
 import { RouteDayFilters } from "@/app/analytics/types/types";
 import { ItemsPicker } from "@/shared/components/ItemsPicker/ItemsPicker";
+import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
+import { useRoute } from "@/shared/hooks/routes/useRoute";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -305,6 +307,10 @@ function createMapClickComponent(
 }
 
 export default function Page() {
+
+  const {stores, mapStores, mapRouteTransactionByStore, fetchRouteTransactions} = useRouteLocation();
+  const { routes, routesMap} = useRoute();
+
   // Collapse menu states
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
@@ -317,17 +323,6 @@ export default function Page() {
   );
 
   // Application states
-  const [routes, setRoutes] = useState<RouteDTO[]>([]); // Source of truth for route days.
-  const [routesMap, setRoutesMap] = useState<Map<string, RouteDTO>>(new Map<string, RouteDTO>()); // Source of truth for route days.
-
-  // States related to store information.
-  const [stores, setStores] = useState<LocationDTO[]>([]);
-  const [mapStores, setMapStores] = useState<Map<string, LocationDTO>>(
-    new Map(),
-  ); // Map of store ID to LocationDTO for quick access
-  const [mapRouteTransactionByStore, setMapRouteTransactionByStore] = useState<
-    Map<string, RouteTransactionDTO[]>
-  >(new Map()); // Map of store ID to list of route transactions
   const [mapStoresInRouteDay, setMapStoresInRouteDay] = useState<
     Map<string, StorePositionInRouteType[]>
   >(new Map()); // Map of store ID to LocationDTO for stores in the selected route day
@@ -340,7 +335,6 @@ export default function Page() {
 
   // States related to route day.
   const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
-  const [effectSelectedRouteDay, setEffectSelectedRouteDay] = useState<Map<string, RouteDayEffect>>(new Map());
 
   // States related to expand menu.
   const [checkedRouteDays, setCheckedRouteDays] = useState<
@@ -374,11 +368,16 @@ export default function Page() {
   const [hideCoordSearchResults, setHideCoordSearchResults] =
     useState<boolean>(false);
 
-  // States for filter
-  const [routeDayFilter, setRouteDaysFilter] = useState<RouteDayFilters>({
-    sellingGoal: null,
-    pickerProduct: null
-  });
+  // States related to filters and effects
+  const [
+    routeDayFilter, 
+    setRouteDaysFilter
+  ] = useState<RouteDayFilters>({ sellingGoal: null, pickerProduct: null });
+
+  const [
+    effectSelectedRouteDay, 
+    setEffectSelectedRouteDay
+  ] = useState<Map<string, RouteDayEffect>>(new Map());
   
   const [vendors] = useState<UserDTO[]>([
     {
@@ -390,25 +389,10 @@ export default function Page() {
     },
   ]);
 
-  const [administrationView, setAdministrationView] = useState(2); // 1 for Routes, 2 for Stores
-
   // Use effects
   useEffect(() => {
     const loadScreenInformation = async () => {
-      const routes: RouteDTO[] = await listRoutes();
-      const routesMap: Map<string, RouteDTO> = new Map<string, RouteDTO>();
-      
-      setRoutes(routes);
-      
-      for (const route of routes) {
-        const { id_route } = route;
-        routesMap.set(id_route, route)
-      }
-
-      setRoutesMap(routesMap);
-
       await fetchProducts();
-      await fetchStores();
     };
 
     void loadScreenInformation();
@@ -430,17 +414,7 @@ export default function Page() {
     setStoreWithinRouteAssigned(storeWithinRouteAssigned);
   }, [routes, stores]);
 
-  const fetchStores = async () => {
-    const storeMap = new Map<string, LocationDTO>();
-    const allStores = await listStores();
-    setStores(allStores);
 
-    allStores.forEach((store) => {
-      const { id_location } = store;
-      storeMap.set(id_location, store);
-    });
-    setMapStores(storeMap);
-  };
 
   const fetchProducts = async() => {
     const allProducts: ProductDTO[] = await retrieveAllProducts(true);
@@ -452,16 +426,6 @@ export default function Page() {
 
     setProductsMap(allProductsMap);
   }
-
-  const handleSelectStoreToUpdate = useCallback((idStore: string): void => {
-    const store = mapStores.get(idStore);
-    if (store) {
-      setSelectedStore(store);
-      setSidebarOpen(true);
-    } else {
-      console.error(`Store with id ${idStore} not found in mapStores.`);
-    }
-  }, [mapStores]);
 
   // Memoized components
   const mapMarkers = useMemo<IMapMarker[]>(() => {
@@ -646,11 +610,10 @@ export default function Page() {
     selectedCoordinate,
     hideCoordSearchResults,
     routeDayFilter,
-    handleSelectStoreToUpdate,
   ]);
 
   // Handlers - Route day menu selection
-  const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
+  const handleSelectRouteDay = (routeDayId: string, state: boolean) => {
     const routeDayFound: RouteDayDTO | null = getRouteDayFromRoutesList(
       routes,
       routeDayId,
@@ -662,7 +625,6 @@ export default function Page() {
       if (selectedRouteDay.find((routeDay) => routeDay.id_route_day === routeDayId) !== undefined) return;
 
       if (routeDayFound !== null) {
-        
         // Add to routesInModification
         setSelectedRouteDay((prev) => ([
           ...prev,
@@ -680,31 +642,12 @@ export default function Page() {
         });
       }
     } else {
-      removeRouteDayByCancelModification(routeDayId);
+      handleUnselectRouteDay(routeDayId);
     }
   };
 
-  const handleConfirmUnselectRouteDay = () => {
-    if (pendingUnselectRouteDayId) {
-      removeRouteDayByCancelModification(pendingUnselectRouteDayId);
-    }
-    setPendingUnselectRouteDayId(null);
-  };
-
-  const handleCancelUnselectRouteDay = () => {
-    // Revert the checkbox state since user cancelled
-    if (pendingUnselectRouteDayId) {
-      setCheckedRouteDays((prev) => ({
-        ...prev,
-        [pendingUnselectRouteDayId]: true,
-      }));
-    }
-    setPendingUnselectRouteDayId(null);
-  };
-
-  const removeRouteDayByCancelModification = (idRouteDayToRemove: string) => {
+  const handleUnselectRouteDay = (idRouteDayToRemove: string) => {
     // Remove route day from routesInModification
-    console.log(selectedRouteDay)
     setSelectedRouteDay((prev) => prev
       .filter((routeDay) => routeDay.id_route_day !== idRouteDayToRemove));
 
@@ -725,33 +668,11 @@ export default function Page() {
 
   const handleCloseRouteDay = (idRouteDay: string) => {
     // Remove route day from routesInModification
-    removeRouteDayByCancelModification(idRouteDay);
-  };
-
-  const handleShowInformation = (idRouteDay: string, state: boolean) => {
-    if (effectSelectedRouteDay.has(idRouteDay)) {
-      effectSelectedRouteDay.get(idRouteDay)!.showStores = state;
-      setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
-    }
-  };
-
-  const handleSelectRouteDayColor = (idRouteDay: string, color: string) => {
-    if (effectSelectedRouteDay.has(idRouteDay)) {
-      effectSelectedRouteDay.get(idRouteDay)!.assignedColor = color;
-      setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
-    }
+    handleUnselectRouteDay(idRouteDay);
   };
 
   const handleOverStoreAutoComplete = (store: LocationDTO | null) => {
     setHoveredStore(store);
-  };
-
-  const handleSelectRouteDayStore = (idRouteDayStore: string) => {
-    if (selectedRouteDayStore === idRouteDayStore) {
-      setSelectedRouteDayStore(null);
-    } else {
-      setSelectedRouteDayStore(idRouteDayStore);
-    }
   };
 
   const handleToggleBottomPanel = () => {
@@ -769,9 +690,7 @@ export default function Page() {
     setBottomPanelExpanded((prev) => !prev);
   };
 
-  const handleCopyCSV = (idRouteDayStore: string) => {
-
-  }
+  const handleCopyCSV = (idRouteDayStore: string) => { }
 
   // Handlers for store search bar
   const handlerSwitchSearchByCoords = (active: boolean) => {
@@ -813,7 +732,41 @@ export default function Page() {
     setHideCoordSearchResults(hide);
   };
 
-  // Map handlers
+  // Transaction handlers
+  const handleRetrieveRouteTransactions = async (startDate: Date, endDate: Date, idStores: string[]) => {
+    await fetchRouteTransactions(startDate, endDate, idStores);
+  };
+
+  // Handlers for route day filters and effects
+  const handleApplyRouteEffects = async (
+    idRouteDay: string,
+    routeDayEffect: RouteDayEffect
+  ) => {
+    const { selectedLocation } = routeDayEffect;
+
+    // Only one location can be selected at a time.
+    if(selectedLocation) {
+      setSelectedRouteDayStore(selectedLocation);
+
+      effectSelectedRouteDay.forEach((value, key) => {
+        if (key === idRouteDay) {
+          effectSelectedRouteDay.set(key, {...routeDayEffect}) 
+        } else {
+          effectSelectedRouteDay.set(key, {...value, selectedLocation: undefined}) 
+        }
+      })
+    }
+
+    effectSelectedRouteDay.set(idRouteDay, routeDayEffect);
+    setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
+  }
+
+  // Handlers for map
+  const handleSelectRouteDayLocation = async (idRouteDayLocation: string|null) => {
+    console.log(idRouteDayLocation)    
+  }
+
+    // Map handlers
   const handleCoordSelected = (selectedCoords: coordinates | IMapMarker) => {
     if ("Lat" in selectedCoords && "Lng" in selectedCoords) {
       // coordinates object
@@ -829,60 +782,23 @@ export default function Page() {
       setSelectedCoordinate(selectedCoords);
     } else {
       // IMarker object
-      const { id_group } = selectedCoords as IMapMarker;
+      const { id_group, id_marker } = selectedCoords as IMapMarker;
 
       if (id_group === "pivot-coord-search") {
         setStoresFoundByPosition([]);
         setSelectedCoordinate(null);
         setTotalStoresFoundBySearchRange(0);
       } else {
-        // Do nothing
+
+        if (effectSelectedRouteDay.has(id_group)) {
+          console.log("id_group: ", id_group)
+          console.log("id_marker: ", id_marker)
+          const routeDayEffect = effectSelectedRouteDay.get(id_group);
+          handleApplyRouteEffects(id_group, {...routeDayEffect!, selectedLocation: id_marker})
+        }
       }
     }
   };
-
-  // Transaction handlers
-  const handleRetrieveRouteTransactions = async (
-    startDate: Date,
-    endDate: Date,
-    idStores: string[],
-  ) => {
-    const uniqueStoreIds = [...new Set(idStores)].filter(Boolean);
-
-    if (uniqueStoreIds.length === 0) {
-      return;
-    }
-
-    try {
-      const transactionsMap = await listRouteTransactionsByStoreWithinDateRange(
-        uniqueStoreIds,
-        startDate,
-        endDate,
-      );
-
-      setMapRouteTransactionByStore((previousMap) => {
-        const nextMap = new Map(previousMap);
-
-        transactionsMap.forEach((transactions, storeId) => {
-          nextMap.set(storeId, transactions);
-        });
-
-        return nextMap;
-      });
-    } catch (error: unknown) {
-      console.error("Error retrieving route transactions: ", error);
-    }
-  };
-
-  const handleApplyRouteEffects = async (
-    idRouteDay: string,
-    routeDayEffect: RouteDayEffect
-  ) => {
-    if (effectSelectedRouteDay.has(idRouteDay)) {
-      effectSelectedRouteDay.set(idRouteDay, routeDayEffect)
-      setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
-    }
-  }
 
   return (
     <div className="h-full w-full overflow-hidden flex flex-row bg-system-primary-background rounded-lg">
@@ -904,9 +820,7 @@ export default function Page() {
                 includeDesactiveStores={includeDeactiveStores}
                 onHandleIncludeDesactiveStores={handleIncludeDeactiveStores}
                 onHoverAutocompleteOption={handleOverStoreAutoComplete}
-                onStartSearchByAutocompletion={
-                  handleStartSearchByAutocompletion
-                }
+                onStartSearchByAutocompletion={handleStartSearchByAutocompletion}
                 onHideSearchCoordResults={handleCoordSearchResult}
               />
             </div>
@@ -954,7 +868,7 @@ export default function Page() {
               mapStores={mapStores}
               onClose={() => setRouteMenuAnchor(null)}
               onDaySelect={() => {}}
-              onDaySelectCheckbox={handleRouteDaySelect}
+              onDaySelectCheckbox={handleSelectRouteDay}
               showDayCheckbox={true}
               checkedDays={checkedRouteDays}
               onCheckedDaysChange={setCheckedRouteDays}
@@ -963,7 +877,7 @@ export default function Page() {
           <MarkerMap
             markers={mapMarkers}
             idMarkerSelected={selectedRouteDayStore}
-            setIdMarkerSelected={setSelectedRouteDayStore}
+            setIdMarkerSelected={handleSelectRouteDayLocation}
             onCoordSelected={handleCoordSelected}
           />
         </div>
