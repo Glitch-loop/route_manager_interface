@@ -9,7 +9,7 @@ import { formatNumberAsAccountingCurrency } from "@/shared/utils/strings/utils";
 import { calculateStoresGreatTotalSales, calculateStoreTotalSales, calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/utils/transactions/utils";
 import DAYS from "@/utils/days";
 import { capitalizeFirstLetterOfEachWord } from "@/utils/generalUtils";
-import { ContentCopy, Visibility, VisibilityOff, PictureAsPdf, Close } from "@mui/icons-material";
+import { ContentCopy, Visibility, VisibilityOff, PictureAsPdf, Close, CheckCircle, WarningAmber, ReportProblem } from "@mui/icons-material";
 import { IconButton, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
@@ -334,9 +334,13 @@ export default function RouteDayContainer({
         style={{ scrollBehavior: "smooth" }}>
           {
             locations.map((location, index) => {
-              const { id_route_day_store, id_location } = location;
               let storeName: string = "Not found";
               let storeAddress: string = "Not found";
+              let showPassedSellingGoalIcon: boolean = false;
+              let showWarningSellingGoalIcon: boolean = false;
+              
+              // About location information
+              const { id_route_day_store, id_location } = location;
               const storeDetails = locationsMap.get(id_location);
               if (storeDetails) {
                 const { location_name } = storeDetails;
@@ -346,6 +350,34 @@ export default function RouteDayContainer({
                     : `${index + 1} - ` + location_name;
                 storeAddress = getAddressOfStore(storeDetails);
               }
+              const totalSelling = calculateTotalStoreOfTransactionDescriptionConcept(
+                  id_location,
+                  DAY_OPERATIONS.sales,
+                  routeTransactionsMap,
+                  false
+              );
+
+              // About sellings
+              const { sellingGoal } = routeDayFilters;
+
+              if(sellingGoal !== null) {
+                const { target, show } = sellingGoal;
+                if (target !== null) {
+                  if (totalSelling >= target) {
+                    showPassedSellingGoalIcon = true;
+                    showWarningSellingGoalIcon = false;
+                  } else {
+                    showWarningSellingGoalIcon = true;
+                    showPassedSellingGoalIcon = false;
+                  }
+                }
+
+                if (show === "show_only_meet") {
+                  showWarningSellingGoalIcon = false;
+                } else if (show === "show_only_not_meet") {
+                  showPassedSellingGoalIcon = false;
+                }
+              } 
 
               return (
                 <div
@@ -359,10 +391,20 @@ export default function RouteDayContainer({
                   }}
                   onClick={() => handleSelectRouteDayLocation(id_route_day, id_route_day_store)}
                   className={"relative p-2 cursor-pointer"} >
+                  { showPassedSellingGoalIcon &&
+                    <div className={"absolute right-4 top-3 text-green-600"}>
+                      <CheckCircle />
+                    </div>
+                  }
+                  { showWarningSellingGoalIcon &&
+                    <div className={"absolute right-4 top-3 text-orange-600"}>
+                      <ReportProblem />
+                    </div>
+                  }
                   <NumericValueCard
                     cardName={capitalizeFirstLetterOfEachWord(storeName)}
                     cardDetails={capitalizeFirstLetterOfEachWord(storeAddress)}
-                    numericValue={formatNumberAsAccountingCurrency(calculateStoreTotalSales(id_location, routeTransactionsMap))}
+                    numericValue={formatNumberAsAccountingCurrency(totalSelling)}
                     isSelected={locationSelected===id_route_day_store}
                   />
                 </div>
