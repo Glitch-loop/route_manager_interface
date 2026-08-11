@@ -6,7 +6,7 @@ import { RouteDTO } from "@/shared/dtos/RouteDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { formatNumberAsAccountingCurrency } from "@/shared/utils/strings/utils";
-import { calculateStoresGreatTotalSales, calculateStoreTotalSales } from "@/shared/utils/transactions/utils";
+import { calculateStoresGreatTotalSales, calculateStoreTotalSales, calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/utils/transactions/utils";
 import DAYS from "@/utils/days";
 import { capitalizeFirstLetterOfEachWord } from "@/utils/generalUtils";
 import { ContentCopy, Visibility, VisibilityOff, PictureAsPdf, Close } from "@mui/icons-material";
@@ -14,8 +14,8 @@ import { IconButton, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 
 // Types
-import { RouteDayEffect } from "@/app/analytics/types/types";
-
+import { RouteDayEffect, RouteDayFilters } from "@/app/analytics/types/types";
+import DAY_OPERATIONS from "@/core/enums/DayOperations";
 
   // Auxiliar function
 const getRouteDayEffect = (idRouteDay: string, routeDayEffectsMap: Map<string, RouteDayEffect>): RouteDayEffect => {
@@ -30,6 +30,7 @@ type RouteDayContainerProps = {
   routeDayToDisplay: RouteDayDTO;
   locationsMap: Map<string, LocationDTO>; // id_store -> LocationDTO
   routeDayEffectsMap: Map<string, RouteDayEffect>; // id_route_day -> RouteDayEffect (for UI state like showStores and assignedColor)
+  routeDayFilters: RouteDayFilters;
   routeTransactionsMap: Map<string, RouteTransactionDTO[]>; // id_store -> LocationDTO
   routesMap: Map<string, RouteDTO>; // id_store -> LocationDTO
   onCloseRouteDay: (idRouteDay: string) => void; // Callback when user wants to close a route day (remove it from the view)
@@ -40,6 +41,7 @@ export default function RouteDayContainer({
   routeDayToDisplay,
   locationsMap,
   routeDayEffectsMap,
+  routeDayFilters,
   routeTransactionsMap,
   routesMap,
   onCloseRouteDay,
@@ -262,6 +264,71 @@ export default function RouteDayContainer({
           {locations.length}
         </span>
       </div>
+      {routeDayFilters.sellingGoal !== null &&
+        <div className="flex flex-col justify-center items-end px-4 py-2">
+          <div className="flex flex-row justify-end font-bold text-lg text-black italic">
+            <span className="text-lg mr-2">
+              Objetivo de venta:
+            </span>
+            <span className="text-lg text-black">
+              {
+                formatNumberAsAccountingCurrency(
+                  routeDayFilters.sellingGoal.target!
+                )
+              }
+            </span>
+          </div>
+          <div className="flex flex-row justify-end text-lg text-black">
+            <span className="text-lg mr-2">
+              Tiendas que cumplen objetivo de venta:
+            </span>
+            <span className="text-lg text-black">
+              {
+                locations.reduce((acc, currnetValue) => {
+                  if (routeDayFilters.sellingGoal!.target === null) return acc;
+                  const total = calculateTotalStoreOfTransactionDescriptionConcept(
+                    currnetValue.id_location,
+                    DAY_OPERATIONS.sales,
+                    routeTransactionsMap,
+                    false
+                  );
+
+                  if (total >= routeDayFilters.sellingGoal!.target) {
+                    return acc + 1;
+                  } else {
+                    return acc;
+                  }
+                }, 0)
+              }
+            </span>
+          </div>
+          <span className="flex flex-row justify-end text-lg text-black">
+            <span className="text-lg mr-2 text-end">
+              Tiendas que NO cumplen objetivo de venta:
+            </span>
+            <span className="flex flex-row items-center text-lg text-black">
+              {
+                locations.reduce((acc, currnetValue) => {
+                  if (routeDayFilters.sellingGoal!.target === null) return acc;
+
+                  const total = calculateTotalStoreOfTransactionDescriptionConcept(
+                    currnetValue.id_location,
+                    DAY_OPERATIONS.sales,
+                    routeTransactionsMap,
+                    false
+                  );
+
+                  if (total < routeDayFilters.sellingGoal!.target) {
+                    return acc + 1;
+                  } else {
+                    return acc;
+                  }
+                }, 0)
+              }
+            </span>
+          </span>
+        </div>
+      }
       <div
         className="flex flex-col min-h-[500px] overflow-y-auto bg-system-secondary-background"
         style={{ scrollBehavior: "smooth" }}>

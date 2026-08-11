@@ -43,6 +43,35 @@ export function calculateStoreTotalSales(
   return total;
 };
 
+export function calculateTotalStoreOfTransactionDescriptionConcept(
+  storeId: string,
+  transactionDescriptionOperation: DAY_OPERATIONS,
+  routeTransactionsMap: Map<string, RouteTransactionDTO[]>,
+  includeCancelled: boolean = false
+) {
+  let total = 0;
+  const transactions = routeTransactionsMap.get(storeId);
+  
+  if (!transactions || transactions.length === 0) {
+    return 0;
+  }
+
+  for (const transaction of transactions) {
+    if (!includeCancelled)
+      if (!(transaction.state === 1)) continue;
+
+    for (const description of transaction.transaction_description) {
+      // Only count sales operations
+      if (
+        description.id_transaction_operation_type === transactionDescriptionOperation
+      ) {
+        total += description.price_at_moment * description.quantity;
+      }
+    }
+  }
+  return total;
+}
+
 /**
  * Calculates the grat total sales of a store based on its transactions.
  * `Great total` means the addition of the sum of the sales for each store.

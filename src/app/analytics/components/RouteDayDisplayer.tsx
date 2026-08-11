@@ -105,7 +105,7 @@ export default function RouteDayDisplayer({
   };
 
 
-  const handleApplyEffect = (config: SellingGoalType | ItemsPickerType) => {
+  const handleApplyFilter = (config: SellingGoalType | ItemsPickerType) => {
     if ('target' in config) {
       onApplyFilter({...routeDayFilters, sellingGoal: {...config}});
       setSellingGoalConfig({...config});
@@ -182,7 +182,8 @@ export default function RouteDayDisplayer({
 
         {activeFilterTab === "venta_objetivo" && (
           <SellingGoal 
-            onChangeSellingGoalConfiguration={handleApplyEffect} 
+            sellingGoalConfiguration={routeDayFilters.sellingGoal}
+            onChangeSellingGoalConfiguration={handleApplyFilter} 
             onResetConfiguration={() => handleReset("sellingGoal")}
             />
         )}
@@ -190,7 +191,7 @@ export default function RouteDayDisplayer({
         {activeFilterTab === "producto" && (
           <ItemsPicker
             pickerItems={pickerItems}
-            onChangePickerConfiguration={handleApplyEffect}
+            onChangePickerConfiguration={handleApplyFilter}
             onResetConfiguration={() => handleReset("pickItemsFilter")}
           />
         )}
@@ -203,6 +204,7 @@ export default function RouteDayDisplayer({
               key={routeDay.id_route_day}
               routeDayToDisplay={routeDay}
               routeDayEffectsMap={routeDayEffectsMap}
+              routeDayFilters={routeDayFilters}
               routeTransactionsMap={routeTransactionsMap}
               locationsMap={locationsMap}
               routesMap={routesMap}

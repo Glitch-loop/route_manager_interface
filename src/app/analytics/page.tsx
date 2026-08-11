@@ -103,6 +103,7 @@ import { RouteDayFilters } from "@/app/analytics/types/types";
 import { ItemsPicker } from "@/shared/components/ItemsPicker/ItemsPicker";
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
 import { useRoute } from "@/shared/hooks/routes/useRoute";
+import { calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/utils/transactions/utils";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -561,18 +562,16 @@ export default function Page() {
 
     // Apply filters
     let filteredMarkers = markers;
-
     if (routeDayFilter.sellingGoal !== null) {
       const { target, show } = routeDayFilter.sellingGoal;
-      if (target !== null) {
+      if (target !== null && show !== "show_all") {
         filteredMarkers = filteredMarkers.filter((marker) => {
-          const transactions = mapRouteTransactionByStore.get(marker.id_item) ?? [];
-          const total = transactions.reduce((sum, transaction) => {
-            const subtotal = transaction.transaction_description
-              .filter((desc) => desc.id_transaction_operation_type === DAY_OPERATIONS.sales)
-              .reduce((s, d) => s + d.quantity * d.price_at_moment, 0);
-            return sum + (subtotal > 0 ? subtotal : transaction.cash_received);
-          }, 0);
+          const total = calculateTotalStoreOfTransactionDescriptionConcept(
+            marker.id_item,
+            DAY_OPERATIONS.sales,
+            mapRouteTransactionByStore,
+            false
+          )
           return show === "show_only_meet" ? total >= target : total < target;
         });
       }
