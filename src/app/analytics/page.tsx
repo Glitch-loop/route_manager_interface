@@ -762,8 +762,12 @@ export default function Page() {
   }
 
   // Handlers for map
-  const handleSelectRouteDayLocation = async (idRouteDayLocation: string|null) => {
-    console.log(idRouteDayLocation)    
+  const handleUnselectMarker = async (idRouteDayLocation: string|null) => { 
+    const updatedRouteDayEffects: Map<string, RouteDayEffect> = new Map<string, RouteDayEffect>();
+    effectSelectedRouteDay.forEach((value, key) => {
+      updatedRouteDayEffects.set(key, {...value, selectedLocation: undefined});
+    });
+    setEffectSelectedRouteDay(new Map(updatedRouteDayEffects));
   }
 
     // Map handlers
@@ -791,10 +795,8 @@ export default function Page() {
       } else {
 
         if (effectSelectedRouteDay.has(id_group)) {
-          console.log("id_group: ", id_group)
-          console.log("id_marker: ", id_marker)
           const routeDayEffect = effectSelectedRouteDay.get(id_group);
-          handleApplyRouteEffects(id_group, {...routeDayEffect!, selectedLocation: id_marker})
+          handleApplyRouteEffects(id_group, {...routeDayEffect!, selectedLocation: id_marker});
         }
       }
     }
@@ -877,7 +879,7 @@ export default function Page() {
           <MarkerMap
             markers={mapMarkers}
             idMarkerSelected={selectedRouteDayStore}
-            setIdMarkerSelected={handleSelectRouteDayLocation}
+            setIdMarkerSelected={handleUnselectMarker}
             onCoordSelected={handleCoordSelected}
           />
         </div>

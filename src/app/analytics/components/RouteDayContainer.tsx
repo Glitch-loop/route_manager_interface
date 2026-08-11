@@ -11,7 +11,7 @@ import DAYS from "@/utils/days";
 import { capitalizeFirstLetterOfEachWord } from "@/utils/generalUtils";
 import { ContentCopy, Visibility, VisibilityOff, PictureAsPdf, Close } from "@mui/icons-material";
 import { IconButton, Tooltip } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 // Types
 import { RouteDayEffect } from "@/app/analytics/types/types";
@@ -63,6 +63,7 @@ export default function RouteDayContainer({
     routeDayEffectsMap.get(id_route_day)?.assignedColor ?? "#000000",
   );
   const [locationSelected, setLocationSelected] = useState<string|null>(null);
+  const locationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Use effects
   useEffect(() => {
@@ -76,6 +77,15 @@ export default function RouteDayContainer({
       }
     }
   }, [routeDayEffectsMap, id_route_day]);
+
+  useEffect(() => {
+    if (locationSelected === null) {
+      return;
+    }
+
+    const selectedLocationElement = locationRefs.current.get(locationSelected);
+    selectedLocationElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [locationSelected]);
 
   // Handlers
   const handleShowInformation = (idRouteDay: string, state: boolean) => {
@@ -273,6 +283,13 @@ export default function RouteDayContainer({
               return (
                 <div
                   key={id_route_day_store}
+                  ref={(element) => {
+                    if (element) {
+                      locationRefs.current.set(id_route_day_store, element);
+                    } else {
+                      locationRefs.current.delete(id_route_day_store);
+                    }
+                  }}
                   onClick={() => handleSelectRouteDayLocation(id_route_day, id_route_day_store)}
                   className={"relative p-2 cursor-pointer"} >
                   <NumericValueCard
