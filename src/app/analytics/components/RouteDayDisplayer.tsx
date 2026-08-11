@@ -158,7 +158,7 @@ export default function RouteDayDisplayer({
           <>
             <RangeDateSelection
               initialDirection="before"
-              initialSelectedRange="1month"
+              initialSelectedRange="0week"
               onRangeChange={handleDateRangeChange}
             />
             <div className="flex flex-col justify-center items-center w-full gap-2">

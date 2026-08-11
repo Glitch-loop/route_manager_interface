@@ -366,7 +366,7 @@ export default function Page() {
   // States related search bar
   const [searchedStore, setSearchedStore] = useState<LocationDTO | null>(null);
   const [hideCoordSearchResults, setHideCoordSearchResults] =
-    useState<boolean>(false);
+    useState<boolean>(true);
 
   // States related to filters and effects
   const [
