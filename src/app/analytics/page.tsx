@@ -140,7 +140,7 @@ function createMapClickComponent(
   const storeTransactions = (transactions.get(id_location) ?? [])
     .slice()
     .sort((a, b) => {
-      return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      return new Date(a.created_at).getTime() + new Date(b.created_at).getTime();
     });
 
   
@@ -763,11 +763,11 @@ export default function Page() {
 
   // Handlers for map
   const handleUnselectMarker = async (idRouteDayLocation: string|null) => { 
-    const updatedRouteDayEffects: Map<string, RouteDayEffect> = new Map<string, RouteDayEffect>();
-    effectSelectedRouteDay.forEach((value, key) => {
-      updatedRouteDayEffects.set(key, {...value, selectedLocation: undefined});
-    });
-    setEffectSelectedRouteDay(new Map(updatedRouteDayEffects));
+    // const updatedRouteDayEffects: Map<string, RouteDayEffect> = new Map<string, RouteDayEffect>();
+    // effectSelectedRouteDay.forEach((value, key) => {
+    //   updatedRouteDayEffects.set(key, {...value, selectedLocation: undefined});
+    // });
+    // setEffectSelectedRouteDay(new Map(updatedRouteDayEffects));
   }
 
     // Map handlers
