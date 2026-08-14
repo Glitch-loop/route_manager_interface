@@ -7,7 +7,7 @@ const Sidebar = () => {
                 <div className="my-2 w-11/12">
                     <ButtonWithNotification 
                         label={"Menú principal"}
-                        notificationAlert={true}
+                        notificationAlert={false}
                         href={"/"}
                         prefetch={false}/>
                 </div>

@@ -3,16 +3,11 @@
 import "reflect-metadata";
 
 // Libraries
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import {
-  Button,
-  ButtonGroup,
   Collapse,
-  Dialog,
   IconButton,
-  List,
-  ListItem,
   Tooltip,
 } from "@mui/material";
 
@@ -21,19 +16,8 @@ import { UserDTO } from "@/shared/dtos/UserDTO";
 import { RouteDTO } from "@/shared/dtos/RouteDTO";
 import { LocationDTO } from "@/shared/dtos/LocationDTO";
 import { RouteDayDTO } from "@/shared/dtos/RouteDayDTO";
-import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
-// Actions
-import { listStores } from "@/shared/actions/locationActions";
-import { listRoutes, organizeRouteDay } from "@/shared/actions/routeActions";
-import { listRouteTransactionsByStoreWithinDateRange } from "@/shared/actions/transactionActions";
-
-// Queries
-// import ListRoutesQuery from "@/application/queries/ListRoutesQuery";
-// import RetrieveRouteInformationQuery  from "@/application/queries/RetrieveRouteInformationQuery";
-// import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdStoresQuery";
-// import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/ListRouteTransactionsByStoreWithinDateRange";
 
 // Commands
 import UpdateStoreCommand from "@/application/commands/UpdateStoreCommand";
@@ -42,17 +26,11 @@ import CreateStoreCommand from "@/application/commands/CreateStoreCommand";
 // import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
 import DesactivateStoreCommand from "@/application/commands/DesactivateStoreCommand";
 
-// DI container
-import { di_container } from "@/infrastructure/di/container";
-
 // UI components
 import {
-  ChevronLeft,
-  ChevronRight,
   KeyboardArrowUp,
   KeyboardArrowDown,
   Menu as MenuIcon,
-  CreateSharp,
 } from "@mui/icons-material";
 import MarkerMap from "@/shared/components/MarkerMap/MarkerMap";
 import StoreForm from "@/app/route_administration/components/StoreForm";
@@ -69,7 +47,6 @@ import { StorePositionInRouteType } from "@/shared/types/types";
 import { coordinates } from "@/shared/components/MarkerMap/types/types";
 import {
   MarkerGroup,
-  DraggableRouteDayStore,
 } from "@/app/route_administration/types/types";
 import { RouteDayEffect } from "@/app/analytics/types/types";
 

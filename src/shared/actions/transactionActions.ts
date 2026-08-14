@@ -134,6 +134,39 @@ async function listAllRouteTransactionsByStore(
   return [...currentItems, ...nextItems];
 }
 
+async function listAllRouteTransactionsWithinDateRange(
+  transactionStatus = 1,
+  startDate: Date,
+  endDate: Date,
+  limit = 100,
+  nextItem?: string,
+): Promise<RouteTransactionDTO[]> {
+  const response = await listRouteTransactions(
+    transactionStatus,
+    undefined,
+    startDate,
+    endDate,
+    limit,
+    nextItem,
+  );
+
+  const currentItems = response.data;
+
+  if (!response.meta?.has_next_page || !response.meta.next_item) {
+    return currentItems;
+  }
+
+  const nextItems = await listAllRouteTransactionsWithinDateRange(
+    transactionStatus,
+    startDate,
+    endDate,
+    limit,
+    response.meta.next_item,
+  );
+
+  return [...currentItems, ...nextItems];
+}
+
 export async function listRouteTransactionsByStoreWithinDateRange(
   storesId: string[],
   startDate: Date,
@@ -154,6 +187,20 @@ export async function listRouteTransactionsByStoreWithinDateRange(
   );
 
   return new Map<string, RouteTransactionDTO[]>(transactionsByStore);
+}
+
+export async function listRouteTransactionsWithinDateRange(
+  startDate: Date,
+  endDate: Date,
+  transactionStatus = 1,
+  limit = 100,
+): Promise<RouteTransactionDTO[]> {
+  return listAllRouteTransactionsWithinDateRange(
+    transactionStatus,
+    startDate,
+    endDate,
+    limit,
+  );
 }
 
 
