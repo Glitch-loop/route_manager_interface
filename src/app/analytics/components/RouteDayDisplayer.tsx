@@ -47,6 +47,7 @@ type RouteDayContainerProps = {
   onCloseRouteDay: (idRouteDay: string) => void; // Callback when user wants to close a route day (remove it from the view)
   onApplyRouteEffects: (idRouteDay: string, state: RouteDayEffect) => void;
   onApplyFilter: (routeDayFilters: RouteDayFilters) => void;
+  onGenerateReport: (idRouteDay: string) => void;
 //   onHoverAutocompleteOption: (store: LocationDTO | null) => void; // Callback to detect hover over autocomplete options, receives the hovered store or null if not hovering any option
 //   onSelectRouteDayStore: (idRouteDayStore: string) => void; // Callback when a store is selected (clicked) in the route day, receives id_route_day_store
 };
@@ -63,6 +64,7 @@ export default function RouteDayDisplayer({
   onCloseRouteDay,
   onApplyRouteEffects,
   onApplyFilter,
+  onGenerateReport
 //   onHoverAutocompleteOption,
 //   onSelectRouteDayStore,
 }: RouteDayContainerProps) {
@@ -210,6 +212,7 @@ export default function RouteDayDisplayer({
               routesMap={routesMap}
               onCloseRouteDay={onCloseRouteDay}
               onApplyRouteEffects={onApplyRouteEffects}
+              onGenerateReport={onGenerateReport}
             />
           );
         })}

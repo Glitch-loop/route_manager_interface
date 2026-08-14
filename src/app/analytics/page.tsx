@@ -104,6 +104,11 @@ import { ItemsPicker } from "@/shared/components/ItemsPicker/ItemsPicker";
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
 import { useRoute } from "@/shared/hooks/routes/useRoute";
 import { calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/utils/transactions/utils";
+import { processDetailedReportData } from "@/app/analytics/reports/historic_selling_report/utils";
+import { DetailedRouteDayPDFDocument } from "@/app/analytics/reports/historic_selling_report/HistoricSellingReport";
+import { pdf } from "@react-pdf/renderer";
+import { processConsolidatedReportData } from "@/app/analytics/reports/consoldate_historic_report/consolidatedReportHelpers";
+import { ConsolidatedRouteDayPDFDocument } from "@/app/analytics/reports/consoldate_historic_report/ConsolidatedRouteDayPDFDocument";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -691,6 +696,36 @@ export default function Page() {
 
   const handleCopyCSV = (idRouteDayStore: string) => { }
 
+  const handleGeneratePDF = async (idRouteDay: string) => {
+    const routeDay = selectedRouteDay.find((selectedRouteDay) => { return selectedRouteDay.id_route_day === idRouteDay});
+    
+    if (routeDay === undefined) {
+      console.log(`There is not a route day with id ${idRouteDay}`);
+      return;
+    }
+    
+    const reportData = processConsolidatedReportData(
+        routeDay,
+        mapStores,
+        mapRouteTransactionByStore,
+        routesMap,
+        productsMap,
+        DAY_OPERATIONS.sales
+      );
+
+      const blob = await pdf(<ConsolidatedRouteDayPDFDocument data={reportData} />).toBlob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `Reporte_Consolidado_${reportData.routeName}_${reportData.dayName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+  }
+
   // Handlers for store search bar
   const handlerSwitchSearchByCoords = (active: boolean) => {
     setSearchByCoords(active);
@@ -953,6 +988,7 @@ export default function Page() {
                 onCloseRouteDay={handleCloseRouteDay}
                 onApplyRouteEffects={handleApplyRouteEffects}
                 onApplyFilter={setRouteDaysFilter}
+                onGenerateReport={handleGeneratePDF}
               />
             </div>
           </Collapse>

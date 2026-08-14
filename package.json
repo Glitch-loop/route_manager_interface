@@ -20,6 +20,7 @@
     "@mui/material": "^7.3.11",
     "@mui/x-date-pickers": "^7.26.0",
     "@react-google-maps/api": "^2.20.6",
+    "@react-pdf/renderer": "^4.6.0",
     "@supabase/supabase-js": "^2.48.1",
     "@vis.gl/react-google-maps": "^1.5.1",
     "axios": "^1.19.0",

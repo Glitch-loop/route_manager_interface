@@ -1,23 +1,42 @@
-import NumericValueCard from "@/shared/components/Cards/NumericValueCard/NumericValueCard";
+// Components
 import ColorPicker from "@/shared/components/ColorPicker/ColorPicker";
+import NumericValueCard from "@/shared/components/Cards/NumericValueCard/NumericValueCard";
+import { 
+  ContentCopy, 
+  Visibility, 
+  VisibilityOff, 
+  PictureAsPdf, 
+  Close, 
+  CheckCircle, 
+  ReportProblem 
+} from "@mui/icons-material";
+import { IconButton, Tooltip } from "@mui/material";
+
+// DTOs
+import { RouteDTO } from "@/shared/dtos/RouteDTO";
 import { LocationDTO } from "@/shared/dtos/LocationDTO";
 import { RouteDayDTO } from "@/shared/dtos/RouteDayDTO";
-import { RouteDTO } from "@/shared/dtos/RouteDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
+
+// Utils
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { formatNumberAsAccountingCurrency } from "@/shared/utils/strings/utils";
-import { calculateStoresGreatTotalSales, calculateStoreTotalSales, calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/utils/transactions/utils";
+import { 
+  calculateStoresGreatTotalSales, 
+  calculateTotalStoreOfTransactionDescriptionConcept 
+} from "@/shared/utils/transactions/utils";
 import DAYS from "@/utils/days";
 import { capitalizeFirstLetterOfEachWord } from "@/utils/generalUtils";
-import { ContentCopy, Visibility, VisibilityOff, PictureAsPdf, Close, CheckCircle, WarningAmber, ReportProblem } from "@mui/icons-material";
-import { IconButton, Tooltip } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
+
 
 // Types
 import { RouteDayEffect, RouteDayFilters } from "@/app/analytics/types/types";
+
+// Enums
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
 
-  // Auxiliar function
+// Auxiliar function
 const getRouteDayEffect = (idRouteDay: string, routeDayEffectsMap: Map<string, RouteDayEffect>): RouteDayEffect => {
   const effects = routeDayEffectsMap.get(idRouteDay)
   if (effects === undefined) {
@@ -35,6 +54,7 @@ type RouteDayContainerProps = {
   routesMap: Map<string, RouteDTO>; // id_store -> LocationDTO
   onCloseRouteDay: (idRouteDay: string) => void; // Callback when user wants to close a route day (remove it from the view)
   onApplyRouteEffects: (idRouteDay: string, effects: RouteDayEffect) => void;
+  onGenerateReport: (idRouteDay: string) => void;
 };
 
 export default function RouteDayContainer({
@@ -45,7 +65,8 @@ export default function RouteDayContainer({
   routeTransactionsMap,
   routesMap,
   onCloseRouteDay,
-  onApplyRouteEffects
+  onApplyRouteEffects,
+  onGenerateReport
 }: RouteDayContainerProps) {
   // Definitions
   let routeTitle: string = 'Ruta disponible.'; 
@@ -113,6 +134,10 @@ export default function RouteDayContainer({
       setLocationSelected(idRouteDayLocation);
       onApplyRouteEffects(idRouteDay, {...effects, selectedLocation: idRouteDayLocation });
     }
+  }
+
+  const handleGeneratePDF = (idRouteDay: string) => {
+    onGenerateReport(idRouteDay);
   }
 
   return (
@@ -205,9 +230,7 @@ export default function RouteDayContainer({
                   width: 40,
                   height: 40,
                 }}
-                // onClick={() =>
-                //   handleCopyInformation(id_route_day)
-                // }
+                onClick={() => handleGeneratePDF(id_route_day) }
                 className="h-fit my-auto shadow-md"
                 size="small"
               >
