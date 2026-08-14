@@ -32,14 +32,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} bg-system-primary-background text-black  w-screen h-screen flex flex-row`}>
+      <body className={`${geistSans.variable} ${geistMono.variable} bg-system-primary-background text-black w-screen h-screen overflow-hidden flex flex-row`}>
         <ToastContainer />
-        <div className="w-2/12 h-full p-5">
+        <div className="w-2/12 h-full p-5 shrink-0 relative z-20">
           <div className='w-full h-full rounded-lg bg-system-secondary-background'>
             <Sidebar />
           </div>
         </div>
-        <div className="w-10/12 h-full p-5 flex">
+        <div className="w-10/12 h-full p-5 flex min-w-0 relative z-10">
           <div className="w-full h-full rounded-lg flex items-center justify-center bg-system-secondary-background">
             {children}
           </div>

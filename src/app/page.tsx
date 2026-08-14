@@ -2,40 +2,14 @@
 import 'reflect-metadata';
 
 import { useEffect, useState } from "react";
-import RouteList from "../components/routes/RouteList";
-import IconButtonWithNotification from "../components/general/IconButtonWithNotification";
-// import ButtonWithNotification from "./components/ButtonWithNotificaion";
 
-import GroupsColorPallete from "../components/general/ColorGroupsPallete";
 import { IColorOption, IConceptOption, IDay, IDayGeneralInformation, IRoute, IRouteDay, IStore } from "../interfaces/interfaces";
-import TextTable from "../components/general/TextTable";
-import SummarizeRouteTransaction from "../components/route_tranactions/SummarizeRouteTransacionsOfTheDay";
-
-
-import OptionConcepts from "../components/general/OptionConcepts";
-
-import { RepositoryFactory } from "@/repositories/RepositoryFactory";
-
-
-
-import { supabase } from "@/lib/supabase";
-import TABLES from "@/utils/tables";
-import { getDataFromApiResponse } from "@/utils/responseUtils";
-import { createSubscriptionToRouteTransactions, getOpenWorkDays } from "@/controllers/WorkDayController";
-import { getAllStores } from "@/controllers/StoreController";
-import StoreMap from "@/components/general/mapComponent/StoreMap";
-import SortableList from '@/shared/components/SortableList';
-
 
 // New imports
 import SimpleCard from '@/shared/components/Cards/SimpleCard/SimpleCard';
-import DragAndDropContainer from '@/shared/components/DragAndDropContainer/DragAndDropContainer';
 
 // Actions
 import { login } from '@/shared/actions/userActions';
-
-// Initializing database repository.
-const repository = RepositoryFactory.createRepository('supabase');
 
 const colors:IColorOption[] = [
   {
@@ -74,25 +48,25 @@ const arrConceptOptions:IConceptOption[] = [
 
 export default function Home() {
   console.log("Rendering Home page");
-  useEffect(() => {
-    // getOpenWorkDays()
-    // .then((data) => setOpenWorkDays(data));
+  // useEffect(() => {
+  //   // getOpenWorkDays()
+  //   // .then((data) => setOpenWorkDays(data));
 
-    // const handleInsert = (payload) => {
-    //       console.log("Something new: ", payload)
-    //     }
-    console.log("Getting stores in Home page");
-    // getAllStores().then((stores) =>{ 
-    //   console.log("Stores in Home page: ", stores);
-    //   setStores(stores)});
-        // supabase
-        //   .channel('sellings')
-        //   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'route_paths'}, handleInsert)
-        //   .subscribe()
+  //   // const handleInsert = (payload) => {
+  //   //       console.log("Something new: ", payload)
+  //   //     }
+  //   console.log("Getting stores in Home page");
+  //   // getAllStores().then((stores) =>{ 
+  //   //   console.log("Stores in Home page: ", stores);
+  //   //   setStores(stores)});
+  //       // supabase
+  //       //   .channel('sellings')
+  //       //   .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'route_paths'}, handleInsert)
+  //       //   .subscribe()
 
-    // Dev purposes
-    devLoginProcess();
-  }, [])
+  //   // Dev purposes
+  //   devLoginProcess();
+  // }, [])
 
   const [palleteColors, setPalleteColors] = useState<IColorOption[]>(colors)
   const [conceptOptions, setConceptOptions] = useState<IConceptOption[]>(arrConceptOptions)
@@ -127,6 +101,11 @@ export default function Home() {
   return (
     <div className="w-full h-full flex flex-col justify-center items-start overflow-y-hidden">
       {/* <main className="w-full "> */}
+        <button onClick={() => {
+          devLoginProcess();
+        }}>
+          Iniciar sesion
+        </button>
         {/* <SortableList /> */}
         <div className='w-full bg-slate-500 flex flex-row'>
           <button>
@@ -137,7 +116,7 @@ export default function Home() {
         <div className='w-11/12 flex flex-row justify-center items-center'>
           {/* <DragAndDropContainer /> */}
         </div>
-
+        
         <div className='flex flex-row w-full h-1/2 overflow-auto bg-blue-600 gap-40'>
           <h1 className='shrink-0'>Hello</h1>
           <div className='w-20 h-20 shrink-0 bg-red-400'></div>

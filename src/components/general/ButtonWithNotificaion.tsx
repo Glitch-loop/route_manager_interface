@@ -5,11 +5,13 @@ function ButtonWithNotification(
     {
         label, 
         href,
+        prefetch = false,
         notificationAlert,
         handlerPress,
     }:{
         label:string,
         href?:string,
+        prefetch?: boolean,
         notificationAlert?:boolean
         handlerPress?: () => void
     }) {
@@ -30,7 +32,8 @@ function ButtonWithNotification(
                 </button> :
                 <Link
                     className={`w-full flex basis-full justify-center bg-system-third-background text-center p-3 rounded-md hover:opacity-75 duration-200`}
-                    href={href}>
+                    href={href}
+                    prefetch={prefetch}>
                         {label}
                 </Link>
             }
