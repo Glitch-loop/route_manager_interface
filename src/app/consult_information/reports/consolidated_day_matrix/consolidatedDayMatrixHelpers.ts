@@ -1,7 +1,13 @@
+// Libraries
 import dayjs from "dayjs";
 import "dayjs/locale/es";
-import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
+
+// DTOs
 import { ProductDTO } from "@/shared/dtos/ProductDTO";
+import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
+import { InventoryOperationDTO } from "@/shared/dtos/InventoryOperationDTO"
+
+// Enums
 import { DAY_OPERATIONS } from "@/core/enums/DayOperations";
 
 dayjs.locale("es");
@@ -179,6 +185,160 @@ export function processConsolidatedDayMatrixData(
 
       const sumQty = qtyList.reduce((acc, v) => acc + v, 0);
       const avgQty = qtyList.length > 0 ? Math.ceil(sumQty / qtyList.length) : 0;
+
+      dayGroups[group.dayOrder] = {
+        cells: dateCells,
+        totalDnText,
+        totalDpText,
+        totalSumQtyText: sumQty > 0 ? `${sumQty}` : "",
+        totalAvgQtyText: qtyList.length > 0 ? `${avgQty}` : "",
+      };
+    });
+
+    return {
+      idProduct: prod.id_product,
+      productName: prod.product_name,
+      dayGroups,
+    };
+  });
+
+  return {
+    createdDate,
+    operationTitle,
+    dateRangeText,
+    dayHeaders,
+    products,
+  };
+}
+
+/**
+ * Handler for Inventory Operations data transformation
+ */
+export function processConsolidatedInventoryDayMatrixData(
+  inventoryOperations: InventoryOperationDTO[],
+  productsMap: Map<string, ProductDTO>,
+  operationTitle: string,
+  fromDate: Date | string,
+  toDate: Date | string
+): ProcessedDayMatrixData {
+  const createdDate = dayjs().format("DD/MM/YY HH:mm");
+  const dateRangeText = `Consolidado de rutas del ${dayjs(fromDate).format("DD/MM/YY")} al ${dayjs(toDate).format("DD/MM/YY")}`;
+
+  const qtyByDateAndProduct: Record<string, Record<string, number>> = {};
+  const activeDatesSet = new Set<string>();
+
+  // Filter operations by movement_type and aggregate quantities by date and product
+  inventoryOperations.forEach((op) => {
+    const opDateStr = dayjs(op.created_at).format("YYYY-MM-DD");
+
+    op.inventory_operation_descriptions?.forEach((desc) => {
+      if (!desc.id_product) return;
+
+      activeDatesSet.add(opDateStr);
+
+      if (!qtyByDateAndProduct[opDateStr]) {
+        qtyByDateAndProduct[opDateStr] = {};
+      }
+
+      const currentQty = qtyByDateAndProduct[opDateStr][desc.id_product] ?? 0;
+      qtyByDateAndProduct[opDateStr][desc.id_product] =
+        currentQty + (desc.quantity ?? 0);
+    });
+  });
+
+  // Organize dates into Spanish day groups (1 = Lunes, ..., 7 = Domingo)
+  const dayGroupsMap: Record<number, DateHeaderInfo[]> = {};
+
+  Array.from(activeDatesSet)
+    .sort((a, b) => dayjs(a).valueOf() - dayjs(b).valueOf())
+    .forEach((rawDate) => {
+      const d = dayjs(rawDate);
+      const dayOrder = d.day() === 0 ? 7 : d.day();
+
+      if (!dayGroupsMap[dayOrder]) {
+        dayGroupsMap[dayOrder] = [];
+      }
+      dayGroupsMap[dayOrder].push({
+        rawDate,
+        formattedDate: d.format("DD/MM/YY"),
+      });
+    });
+
+  const dayHeaders: DayGroupHeader[] = Object.keys(dayGroupsMap)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .map((dayOrder) => ({
+      dayName: SPANISH_DAYS[dayOrder - 1],
+      dayOrder,
+      dates: dayGroupsMap[dayOrder],
+    }));
+
+  const sortedProducts = Array.from(productsMap.values()).sort(
+    (a, b) => (a.order_to_show ?? 0) - (b.order_to_show ?? 0)
+  );
+
+  // Build matrix rows for each product
+  const products: ProductMatrixRow[] = sortedProducts.map((prod) => {
+    const dayGroups: Record<number, ProductDayGroupData> = {};
+
+    dayHeaders.forEach((group) => {
+      const dateCells: ProductCellData[] = [];
+      const dnList: number[] = [];
+      const dpList: number[] = [];
+      const qtyList: number[] = [];
+
+      const baseDate = group.dates[0];
+      const baseQty = baseDate
+        ? (qtyByDateAndProduct[baseDate.rawDate]?.[prod.id_product] ?? 0)
+        : 0;
+
+      group.dates.forEach((dateInfo, index) => {
+        const qty =
+          qtyByDateAndProduct[dateInfo.rawDate]?.[prod.id_product] ?? 0;
+        qtyList.push(qty);
+
+        if (index === 0) {
+          dateCells.push({
+            dnText: "",
+            dpText: "",
+            quantityStr: qty > 0 ? qty : "",
+          });
+        } else {
+          const dn = qty - baseQty;
+          const dp =
+            baseQty > 0
+              ? Math.ceil((dn / baseQty) * 100)
+              : qty > 0
+              ? 100
+              : 0;
+
+          dnList.push(dn);
+          dpList.push(dp);
+
+          dateCells.push({
+            dnText: `${dn}`,
+            dpText: `${dp}%`,
+            quantityStr: qty > 0 ? qty : "",
+          });
+        }
+      });
+
+      let totalDnText = "";
+      let totalDpText = "";
+      if (dnList.length > 0) {
+        const avgDn = Math.ceil(
+          dnList.reduce((acc, v) => acc + v, 0) / dnList.length
+        );
+        const avgDp = Math.ceil(
+          dpList.reduce((acc, v) => acc + v, 0) / dpList.length
+        );
+        totalDnText = `${avgDn}`;
+        totalDpText = `${avgDp}%`;
+      }
+
+      const sumQty = qtyList.reduce((acc, v) => acc + v, 0);
+      const avgQty =
+        qtyList.length > 0 ? Math.ceil(sumQty / qtyList.length) : 0;
 
       dayGroups[group.dayOrder] = {
         cells: dateCells,

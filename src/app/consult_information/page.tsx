@@ -64,10 +64,14 @@ import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 // Hooks
 import { useProduct } from "@/shared/hooks/products/useProducts";
-import { processConsolidatedDayMatrixData } from "@/app/consult_information/reports/consolidated_day_matrix/consolidatedDayMatrixHelpers";
+import { processConsolidatedDayMatrixData, processConsolidatedInventoryDayMatrixData, ProcessedDayMatrixData } from "@/app/consult_information/reports/consolidated_day_matrix/consolidatedDayMatrixHelpers";
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
 import { ConsolidatedDayMatrixPDFDocument } from "@/app/consult_information/reports/consolidated_day_matrix/ConsolidatedDayMatrixPDFDocument";
 import { pdf } from "@react-pdf/renderer";
+import { DayOperationDTO } from "@/shared/dtos/DayOperationDTO";
+import { listDayOpertions } from "@/shared/actions/dayOperationActions";
+import { retrieveInventoryOperationsByIds } from "@/shared/actions/inventoryOperationActions";
+import { InventoryOperationDTO } from "@/shared/dtos/InventoryOperationDTO";
 
 function getRouteName(idRoute: string, routes: IRoute[]): string {
   console.log(routes);
@@ -292,28 +296,61 @@ function ConsultInformation() {
     );
   };
 
-
   // Generate consolidated report
   const handleDateRangeChange = (start: Dayjs | null, end: Dayjs | null) => {
     setStartDateSelected(start);
     setEndDateSelected(end);
   };
 
+  const handleGenerateConsolidatedReport = async (report: "transactions"|"inventory_operations") => {
+    let processedData:ProcessedDayMatrixData|undefined = undefined;
 
-  const handleGenerateConsolidatedRport = async () => {
-    if (startDateSelected !== null && endDateSelected !== null && !isLoading) {
-      const transactions: RouteTransactionDTO[] = await listRouteTransactionsWithinDateRange(
-        startDateSelected.toDate(),
-        endDateSelected.toDate(),
-      );
+    if (startDateSelected !== null && endDateSelected !== null && !isLoading) { 
+      if (report === "transactions") {
+        const transactions: RouteTransactionDTO[] = await listRouteTransactionsWithinDateRange(
+          startDateSelected.toDate(),
+          endDateSelected.toDate(),
+        );
+        
+        processedData = processConsolidatedDayMatrixData(
+          transactions,
+          productsMap,
+          DAY_OPERATIONS.sales,
+          startDateSelected.toDate(),
+          endDateSelected.toDate()
+        );
+      } else {
+        console.log("Inventory operation")
+        const dayOperations: DayOperationDTO[] = await listDayOpertions({
+          start_date_created_at: startDateSelected.toDate(),
+          end_date_created_at: endDateSelected.toDate(),
+          operation_type: [
+            DAYS_OPERATIONS.end_shift_inventory,
+          ]
+        });
+        console.log("end shift: ", DAYS_OPERATIONS.end_shift_inventory)
+        console.log("dayOperations: ", dayOperations.length)
+        const inventoryOpsToRetrieve: string[] = dayOperations
+          .map((dayOp) => dayOp.id_inventory_operation)
+          .filter((dayOp) => typeof dayOp === "string");
+        
+        console.log("IDs: ", inventoryOpsToRetrieve)
+        const inventoryOperations: InventoryOperationDTO[] =  await retrieveInventoryOperationsByIds(inventoryOpsToRetrieve)
+        console.log(inventoryOperations)
+        processedData = processConsolidatedInventoryDayMatrixData(
+          inventoryOperations,
+          productsMap,
+          "Inventario final de rutas (regreso)",
+          startDateSelected.toDate(),
+          endDateSelected.toDate()
+        );
 
-      const processedData = processConsolidatedDayMatrixData(
-        transactions,
-        productsMap,
-        DAY_OPERATIONS.sales,
-        startDateSelected.toDate(),
-        endDateSelected.toDate()
-      );
+        console.log({
+          opsCount: inventoryOperations.length,
+          firstOpDescriptions: inventoryOperations[0]?.inventory_operation_descriptions,
+          activeDatesCount: startDateSelected.toISOString() + " - " + endDateSelected.toISOString(),
+        });
+      }
 
       const blob = await pdf(<ConsolidatedDayMatrixPDFDocument data={processedData} />).toBlob();
       const url = URL.createObjectURL(blob);
@@ -342,8 +379,14 @@ function ConsultInformation() {
       />
       <div>
         <ButtonWithNotification
-          handlerPress={handleGenerateConsolidatedRport}
-          label="Generar reporte consolidado"
+          handlerPress={() => handleGenerateConsolidatedReport("transactions")}
+          label="Generar reporte de transaciones consolidado"
+        />
+      </div>
+      <div>
+        <ButtonWithNotification
+          handlerPress={() => handleGenerateConsolidatedReport("inventory_operations")}
+          label="Generar reporte inventarios finales (regreso) consolidado"
         />
       </div>
       {/* Parameters to consult the days */}
