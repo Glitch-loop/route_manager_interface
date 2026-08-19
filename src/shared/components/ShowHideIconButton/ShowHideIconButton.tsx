@@ -36,7 +36,6 @@ export default function ShowHideIconButton({
   const [isLeftDownState, setIsLeftDownState] = useState<boolean>(leftDownInitialState);
 
   const handleChangeState = () => {
-    console.log("Next state: ", !isLeftDownState)
     setIsLeftDownState(!isLeftDownState);
     onChangeButtonState(!isLeftDownState);
   }
@@ -50,7 +49,7 @@ export default function ShowHideIconButton({
     >
       <IconButton
         onClick={() => handleChangeState()}
-        className="h-fit my-auto bg-color-info-primary shadow-md"
+        className="h-fit my-auto bg-white shadow-md"
         size="small"
       >
         { horizontalHidding ?

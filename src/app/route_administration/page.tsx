@@ -1005,7 +1005,7 @@ export default function Page() {
           </div>
         </Collapse>
         {/* Toggle button - stays at right edge of sidebar area */}
-        <div className="absolute -right-10 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full">
+        <div className="absolute -right-10 top-1/4 -translate-y-1/2 z-10 bg-white rounded-full">
           <ShowHideIconButton 
             horizontalHidding={true}
             tooltipTitle={"Actualizar información de la tienda"}
