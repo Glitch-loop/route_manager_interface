@@ -91,6 +91,7 @@ import {
 import { findStoresAround } from "@/shared/utils/clients/utils";
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { generateRandomColor } from "@/shared/utils/styles/utils";
+import ShowHideIconButton from "@/shared/components/ShowHideIconButton/ShowHideIconButton";
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
   const storeName = store.location_name ?? "Nombre no disponible";
@@ -1005,20 +1006,12 @@ export default function Page() {
         </Collapse>
         {/* Toggle button - stays at right edge of sidebar area */}
         <div className="absolute -right-10 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full">
-          <Tooltip
-            title={"Administracion tiendas / rutas"}
-            placement="right"
-            enterDelay={300}
-            arrow
-          >
-            <IconButton
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="h-fit my-auto bg-color-info-primary shadow-md"
-              size="small"
-            >
-              {sidebarOpen ? <ChevronLeft /> : <ChevronRight />}
-            </IconButton>
-          </Tooltip>
+          <ShowHideIconButton 
+            horizontalHidding={true}
+            tooltipTitle={"Actualizar información de la tienda"}
+            onChangeButtonState={setSidebarOpen}
+            leftDownInitialState={false}
+            placement = "right" />
         </div>
       </div>
       {/* Main content */}
