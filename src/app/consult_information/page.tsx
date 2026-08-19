@@ -72,6 +72,8 @@ import { DayOperationDTO } from "@/shared/dtos/DayOperationDTO";
 import { listDayOpertions } from "@/shared/actions/dayOperationActions";
 import { retrieveInventoryOperationsByIds } from "@/shared/actions/inventoryOperationActions";
 import { InventoryOperationDTO } from "@/shared/dtos/InventoryOperationDTO";
+import { useRoute } from "@/shared/hooks/routes/useRoute";
+import { consolidateWarehouseSupplyData, WarehouseSupplyMatrixData } from "@/app/consult_information/reports/warehouse_supply_matrix/consolidateWarehouseSupplyData";
 
 function getRouteName(idRoute: string, routes: IRoute[]): string {
   console.log(routes);
@@ -108,6 +110,7 @@ function getVendorName(idVendor: string, vendors: IUser[]): string {
 function ConsultInformation() {
   // Hooks
   const { productsMap, isLoading } = useProduct();
+  const { routes, routesMap } = useRoute();
 
   // Related to route transactions
   const [startDateSelected, setStartDateSelected] = useState<Dayjs | null>(null);
@@ -124,7 +127,7 @@ function ConsultInformation() {
     (IRoute & IDayGeneralInformation & IDay & IRouteDay) | undefined
   >();
   const [vendors, setVendors] = useState<IUser[]>([]);
-  const [routes, setRoutes] = useState<IRoute[]>([]);
+  // const [routes, setRoutes] = useState<IRoute[]>([]);
 
   // States related to stores
   const [stores, setStores] = useState<IStore[]>([]);
@@ -180,7 +183,7 @@ function ConsultInformation() {
       ),
     );
     setVendors(await getAllVendors());
-    setRoutes(await getAllRoutes());
+    // setRoutes(await getAllRoutes());
   };
 
   const handlerSelectWorkDay = async (
@@ -369,6 +372,43 @@ function ConsultInformation() {
     }
   }
 
+  // const handleGenerateSupplyConsolidatedReport = async () => {
+  //   if (startDateSelected !== null && endDateSelected !== null && !isLoading) { 
+  //     const transactions: RouteTransactionDTO[] = await listRouteTransactionsWithinDateRange(
+  //       startDateSelected.toDate(),
+  //       endDateSelected.toDate(),
+  //     );
+      
+  //     const processedData:WarehouseSupplyMatrixData = consolidateWarehouseSupplyData(
+  //       {
+  //         transactions: transactions,
+  //         productsMap: productsMap,
+  //         routes: routes,
+  //         date: startDateSelected.toDate(),
+  //         bufferQty: 10
+  //       }
+        
+        
+  //       // DAY_OPERATIONS.sales,
+  //     );
+
+  //     const blob = await pdf(<ConsolidatedDayMatrixPDFDocument data={processedData} />).toBlob();
+  //     const url = URL.createObjectURL(blob);
+
+  //     const link = document.createElement("a");
+  //     link.href = url;
+  //     link.download = `Reporte_Consolidado_${processedData.operationTitle}_${processedData.dateRangeText}.pdf`;
+  //     document.body.appendChild(link);
+  //     link.click();
+
+  //     document.body.removeChild(link);
+  //     URL.revokeObjectURL(url);
+
+  //   } else {
+  //     console.log("There is a problem in the configurations.")
+  //   }
+  // }
+
   return (
     <div className="w-full h-full flex flex-col items-start">
       <span className="text-style-h0 ml-3">Consulta de información</span>
@@ -389,6 +429,12 @@ function ConsultInformation() {
           label="Generar reporte inventarios finales (regreso) consolidado"
         />
       </div>
+      {/* <div>
+        <ButtonWithNotification
+          handlerPress={() => handleGenerateSupplyConsolidatedReport() }
+          label="Generar reporte para surtir rutas"
+        />
+      </div> */}
       {/* Parameters to consult the days */}
       <div className="w-full h-60 flex flex-row justify-start ml-3">
         <div className="flex flex-row basis-4/12 justify-start">
