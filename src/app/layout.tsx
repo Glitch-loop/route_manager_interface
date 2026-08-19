@@ -1,6 +1,6 @@
 "use client"
-import "react-toastify/dist/ReactToastify.css";
 import "./globals.css";
+import "react-toastify/dist/ReactToastify.css";
 
 
 import { useState } from 'react';

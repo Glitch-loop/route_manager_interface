@@ -47,8 +47,6 @@ import { di_container } from "@/infrastructure/di/container";
 
 // UI components
 import {
-  ChevronLeft,
-  ChevronRight,
   KeyboardArrowUp,
   KeyboardArrowDown,
   Menu as MenuIcon,
@@ -62,7 +60,7 @@ import SearchRoute from "@/app/route_administration/components/SearchRoute";
 import StoreSearchBar from "@/app/route_administration/components/StoreSearchBar";
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
 import RouteDayContainer from "@/app/route_administration/components/RouteDayContainer/RouteDayContainer";
-
+import ShowHideIconButton from "@/shared/components/ShowHideIconButton/ShowHideIconButton";
 
 // Types
 import { StorePositionInRouteType } from "@/shared/types/types";
@@ -91,7 +89,7 @@ import {
 import { findStoresAround } from "@/shared/utils/clients/utils";
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { generateRandomColor } from "@/shared/utils/styles/utils";
-import ShowHideIconButton from "@/shared/components/ShowHideIconButton/ShowHideIconButton";
+
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
   const storeName = store.location_name ?? "Nombre no disponible";
@@ -1040,20 +1038,14 @@ export default function Page() {
             </div>
           </Collapse>
           {/* Toggle button */}
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 bg-white rounded-full z-10">
-            <Tooltip
-              title={"Buscar clientes"}
-              placement="bottom"
-              enterDelay={300}
-              arrow
-            >
-              <IconButton
-                onClick={() => setTopPanelOpen(!topPanelOpen)}
-                size="small"
-              >
-                {topPanelOpen ? <KeyboardArrowUp /> : <KeyboardArrowDown />}
-              </IconButton>
-            </Tooltip>
+          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 z-10">
+            <ShowHideIconButton 
+              horizontalHidding={false}
+              tooltipTitle={"Buscar clientes"}
+              onChangeButtonState={setTopPanelOpen}
+              leftDownInitialState={false}
+              placement = "right"
+            />
           </div>
         </div>
 
@@ -1101,44 +1093,21 @@ export default function Page() {
           {/* Toggle button */}
           <div className="absolute -top-10 left-1/2 -translate-x-1/2 flex flex-row items-center gap-2 z-10">
             {bottomPanelOpen && (
-              <div className="bg-white rounded-full">
-                <Tooltip
-                  title={
-                    bottomPanelExpanded ? "Reducir panel" : "Expandir panel"
-                  }
-                  placement="top"
-                  enterDelay={300}
-                  arrow
-                >
-                  <IconButton
-                    onClick={handleToggleBottomPanelExpansion}
-                    size="small"
-                  >
-                    {bottomPanelExpanded ? (
-                      <KeyboardArrowDown />
-                    ) : (
-                      <KeyboardArrowUp />
-                    )}
-                  </IconButton>
-                </Tooltip>
-              </div>
+              <ShowHideIconButton 
+                horizontalHidding={false}
+                tooltipTitle={bottomPanelExpanded ? "Reducir panel" : "Expandir panel"}
+                onChangeButtonState={handleToggleBottomPanelExpansion}
+                leftDownInitialState={true}
+                placement = "top"
+              />
             )}
-            <div className="bg-white rounded-full">
-              <Tooltip
-                title={"Organizar ruta"}
-                placement="top"
-                enterDelay={300}
-                arrow
-              >
-                <IconButton onClick={handleToggleBottomPanel} size="small">
-                  {bottomPanelOpen ? (
-                    <KeyboardArrowDown />
-                  ) : (
-                    <KeyboardArrowUp />
-                  )}
-                </IconButton>
-              </Tooltip>
-            </div>
+            <ShowHideIconButton 
+              horizontalHidding={false}
+              tooltipTitle={"Organizar ruta"}
+              onChangeButtonState={handleToggleBottomPanel}
+              leftDownInitialState={false}
+              placement = "top"
+            />
           </div>
           <Collapse in={bottomPanelOpen}>
             <div

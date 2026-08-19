@@ -41,23 +41,25 @@ export default function ShowHideIconButton({
   }
 
   return (
-    <Tooltip
-      title={tooltipTitle}
-      placement={placement}
-      enterDelay={enterDelay}
-      arrow={arrow}
-    >
-      <IconButton
-        onClick={() => handleChangeState()}
-        className="h-fit my-auto bg-white shadow-md"
-        size="small"
+    <div className="bg-white rounded-full">
+      <Tooltip
+        title={tooltipTitle}
+        placement={placement}
+        enterDelay={enterDelay}
+        arrow={arrow}
       >
-        { horizontalHidding ?
-          isLeftDownState ? <ChevronLeft /> : <ChevronRight />
-          :
-          isLeftDownState ? <KeyboardArrowDown /> : <KeyboardArrowUp />
-        }
-      </IconButton>
-    </Tooltip>
+        <IconButton
+          onClick={() => handleChangeState()}
+          className="h-fit my-auto bg-white shadow-md"
+          size="small"
+        >
+          { horizontalHidding ?
+            isLeftDownState ? <ChevronLeft /> : <ChevronRight />
+            :
+            isLeftDownState ? <KeyboardArrowUp /> : <KeyboardArrowDown />
+          }
+        </IconButton>
+      </Tooltip>
+    </div>
   );
 }
