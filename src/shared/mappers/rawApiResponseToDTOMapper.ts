@@ -3,6 +3,7 @@ import { InventoryOperationDescriptionDTO } from '@/shared/dtos/InventoryOperati
 import { InventoryOperationDTO } from '@/shared/dtos/InventoryOperationDTO';
 import { LocationDTO } from '@/shared/dtos/LocationDTO';
 import { LocationNoteDTO } from '@/shared/dtos/LocationNoteDTO';
+import { LocationTypeDTO } from '@/shared/dtos/LocationTypeDTO';
 import { PaymentMethodDTO } from '@/shared/dtos/PaymentMethodDTO';
 import { PaymentSchemaDTO } from '@/shared/dtos/PaymentSchemaDTO';
 import { ProductDTO } from '@/shared/dtos/ProductDTO';
@@ -19,6 +20,7 @@ import {
 	isInventoryOperationDescriptionDTO,
 	isInventoryOperationDTO,
 	isLocationNoteDTO,
+	isLocationTypeDTO,
 	isPaymentMethodDTO,
 	isPaymentSchemaDTO,
 	isProductDTO,
@@ -37,6 +39,7 @@ import {
 	isRawInventoryOperationDescriptionApiResponse,
 	isRawLocationApiResponse,
 	isRawLocationNoteApiResponse,
+	isRawLocationTypeApiResponse,
 	isRawPaymentMethodApiResponse,
 	isRawPaymentSchemaApiResponse,
 	isRawProductApiResponse,
@@ -54,6 +57,7 @@ import { RawInventoryOperationApiResponse } from '@/shared/raw-api-responses/raw
 import { RawInventoryOperationDescriptionApiResponse } from '@/shared/raw-api-responses/rawInventoryOperationDescriptionApiResponse';
 import { RawLocationApiResponse } from '@/shared/raw-api-responses/rawLocationApiResponse';
 import { RawLocationNoteApiResponse } from '@/shared/raw-api-responses/rawLocationNoteApiResponse';
+import { RawLocationTypeApiResponse } from '@/shared/raw-api-responses/rawLocationTypeApiResponse';
 import { RawPaymentMethodApiResponse } from '@/shared/raw-api-responses/rawPaymentMethodApiResponse';
 import { RawPaymentSchemaApiResponse } from '@/shared/raw-api-responses/rawPaymentSchemaApiResponse';
 import { RawProductApiResponse } from '@/shared/raw-api-responses/rawProductApiResponse';
@@ -75,6 +79,7 @@ export class RawApiResponseToDTOMapper {
 	toDTO(rawApiResponse: RawInventoryOperationDescriptionApiResponse): InventoryOperationDescriptionDTO;
 	toDTO(rawApiResponse: RawLocationApiResponse): LocationDTO;
 	toDTO(rawApiResponse: RawLocationNoteApiResponse): LocationNoteDTO;
+	toDTO(rawApiResponse: RawLocationTypeApiResponse): LocationTypeDTO;
 	toDTO(rawApiResponse: RawPaymentMethodApiResponse): PaymentMethodDTO;
 	toDTO(rawApiResponse: RawPaymentSchemaApiResponse): PaymentSchemaDTO;
 	toDTO(rawApiResponse: RawProductApiResponse): ProductDTO;
@@ -93,6 +98,7 @@ export class RawApiResponseToDTOMapper {
 			| RawInventoryOperationDescriptionApiResponse
 			| RawLocationApiResponse
 			| RawLocationNoteApiResponse
+			| RawLocationTypeApiResponse
 			| RawPaymentMethodApiResponse
 			| RawPaymentSchemaApiResponse
 			| RawProductApiResponse
@@ -110,6 +116,7 @@ export class RawApiResponseToDTOMapper {
 		| InventoryOperationDescriptionDTO
 		| LocationDTO
 		| LocationNoteDTO
+		| LocationTypeDTO
 		| PaymentMethodDTO
 		| PaymentSchemaDTO
 		| ProductDTO
@@ -133,6 +140,9 @@ export class RawApiResponseToDTOMapper {
 		}
 		if (isRawLocationNoteApiResponse(rawApiResponse)) {
 			return this.rawLocationNoteApiResponseToLocationNoteDTO(rawApiResponse);
+		}
+		if (isRawLocationTypeApiResponse(rawApiResponse)) {
+			return this.rawLocationTypeApiResponseToLocationTypeDTO(rawApiResponse);
 		}
 		if (isRawPaymentMethodApiResponse(rawApiResponse)) {
 			return this.rawPaymentMethodApiResponseToPaymentMethodDTO(rawApiResponse);
@@ -178,6 +188,7 @@ export class RawApiResponseToDTOMapper {
 	toRawApiResponse(dto: InventoryOperationDescriptionDTO): RawInventoryOperationDescriptionApiResponse;
 	toRawApiResponse(dto: LocationDTO): RawLocationApiResponse;
 	toRawApiResponse(dto: LocationNoteDTO): RawLocationNoteApiResponse;
+	toRawApiResponse(dto: LocationTypeDTO): RawLocationTypeApiResponse;
 	toRawApiResponse(dto: PaymentMethodDTO): RawPaymentMethodApiResponse;
 	toRawApiResponse(dto: PaymentSchemaDTO): RawPaymentSchemaApiResponse;
 	toRawApiResponse(dto: ProductDTO): RawProductApiResponse;
@@ -196,6 +207,7 @@ export class RawApiResponseToDTOMapper {
 			| InventoryOperationDescriptionDTO
 			| LocationDTO
 			| LocationNoteDTO
+			| LocationTypeDTO
 			| PaymentMethodDTO
 			| PaymentSchemaDTO
 			| ProductDTO
@@ -213,6 +225,7 @@ export class RawApiResponseToDTOMapper {
 		| RawInventoryOperationDescriptionApiResponse
 		| RawLocationApiResponse
 		| RawLocationNoteApiResponse
+		| RawLocationTypeApiResponse
 		| RawPaymentMethodApiResponse
 		| RawPaymentSchemaApiResponse
 		| RawProductApiResponse
@@ -236,6 +249,9 @@ export class RawApiResponseToDTOMapper {
 		}
 		if (isLocationNoteDTO(dto)) {
 			return this.locationNoteDTOToRawLocationNoteApiResponse(dto);
+		}
+		if (isLocationTypeDTO(dto)) {
+			return this.locationTypeDTOToRawLocationTypeApiResponse(dto);
 		}
 		if (isPaymentMethodDTO(dto)) {
 			return this.paymentMethodDTOToRawPaymentMethodApiResponse(dto);
@@ -322,7 +338,7 @@ export class RawApiResponseToDTOMapper {
 			status_location: rawApiResponse.status_location,
 			id_creator: rawApiResponse.id_creator,
 			id_client: rawApiResponse.id_client,
-			id_location_type: rawApiResponse.id_location_type,
+			location_type: this.rawLocationTypeApiResponseToLocationTypeDTO(rawApiResponse.location_type),
 			created_at: rawApiResponse.created_at,
 			updated_at: rawApiResponse.updated_at,
 			notes: rawApiResponse.notes.map((item) => this.rawLocationNoteApiResponseToLocationNoteDTO(item)),
@@ -335,6 +351,14 @@ export class RawApiResponseToDTOMapper {
 			id_location_note: rawApiResponse.id_location_note,
 			note: rawApiResponse.note,
 			id_location: rawApiResponse.id_location,
+			created_at: rawApiResponse.created_at,
+		};
+	}
+
+	private rawLocationTypeApiResponseToLocationTypeDTO(rawApiResponse: RawLocationTypeApiResponse): LocationTypeDTO {
+		return {
+			id_location_type: rawApiResponse.id_location_type,
+			location_type_name: rawApiResponse.location_type_name,
 			created_at: rawApiResponse.created_at,
 		};
 	}
@@ -525,7 +549,7 @@ export class RawApiResponseToDTOMapper {
 			status_location: dto.status_location,
 			id_creator: dto.id_creator,
 			id_client: dto.id_client,
-			id_location_type: dto.id_location_type,
+			location_type: this.locationTypeDTOToRawLocationTypeApiResponse(dto.location_type),
 			created_at: dto.created_at,
 			updated_at: dto.updated_at,
 			notes: dto.notes.map((item) => this.locationNoteDTOToRawLocationNoteApiResponse(item)),
@@ -538,6 +562,14 @@ export class RawApiResponseToDTOMapper {
 			id_location_note: dto.id_location_note,
 			note: dto.note,
 			id_location: dto.id_location,
+			created_at: dto.created_at,
+		};
+	}
+
+	private locationTypeDTOToRawLocationTypeApiResponse(dto: LocationTypeDTO): RawLocationTypeApiResponse {
+		return {
+			id_location_type: dto.id_location_type,
+			location_type_name: dto.location_type_name,
 			created_at: dto.created_at,
 		};
 	}

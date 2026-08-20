@@ -3,6 +3,7 @@ import { RawInventoryOperationApiResponse } from '@/shared/raw-api-responses/raw
 import { RawInventoryOperationDescriptionApiResponse } from '@/shared/raw-api-responses/rawInventoryOperationDescriptionApiResponse';
 import { RawLocationApiResponse } from '@/shared/raw-api-responses/rawLocationApiResponse';
 import { RawLocationNoteApiResponse } from '@/shared/raw-api-responses/rawLocationNoteApiResponse';
+import { RawLocationTypeApiResponse } from '@/shared/raw-api-responses/rawLocationTypeApiResponse';
 import { RawPaymentMethodApiResponse } from '@/shared/raw-api-responses/rawPaymentMethodApiResponse';
 import { RawPaymentSchemaApiResponse } from '@/shared/raw-api-responses/rawPaymentSchemaApiResponse';
 import { RawProductApiResponse } from '@/shared/raw-api-responses/rawProductApiResponse';
@@ -77,6 +78,15 @@ export function isRawLocationNoteApiResponse(dto: unknown): dto is RawLocationNo
 	);
 }
 
+export function isRawLocationTypeApiResponse(dto: unknown): dto is RawLocationTypeApiResponse {
+	return (
+		isObjectRecord(dto) &&
+		'id_location_type' in dto &&
+		'location_type_name' in dto &&
+		'created_at' in dto
+	);
+}
+
 export function isRawLocationApiResponse(dto: unknown): dto is RawLocationApiResponse {
 	return (
 		isObjectRecord(dto) &&
@@ -91,7 +101,8 @@ export function isRawLocationApiResponse(dto: unknown): dto is RawLocationApiRes
 		'status_location' in dto &&
 		'id_creator' in dto &&
 		'id_client' in dto &&
-		'id_location_type' in dto &&
+		'location_type' in dto &&
+		isRawLocationTypeApiResponse(dto.location_type) &&
 		'created_at' in dto &&
 		'updated_at' in dto &&
 		'notes' in dto &&

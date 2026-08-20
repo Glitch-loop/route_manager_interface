@@ -16,6 +16,7 @@ import { PaymentSchemaDTO } from '@/shared/dtos/PaymentSchemaDTO';
 import { ProductInventoryDTO } from '@/shared/dtos/ProductInventoryDTO';
 import { DayOperationDTO } from '@/shared/dtos/DayOperationDTO';
 import { UserDTO } from '@/shared/dtos/UserDTO';
+import { LocationTypeDTO } from '@/shared/dtos/LocationTypeDTO';
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && value !== undefined && typeof value === 'object';
@@ -214,13 +215,23 @@ export function isStoreDTO(dto: unknown): dto is LocationDTO {
     'status_location' in dto &&
     'id_creator' in dto &&
     'id_client' in dto &&
-    'id_location_type' in dto &&
+    'location_type' in dto &&
+    isLocationTypeDTO(dto.location_type) &&
     'created_at' in dto &&
     'updated_at' in dto &&
     'notes' in dto &&
     Array.isArray(dto.notes) &&
     dto.notes.every((item) => isLocationNoteDTO(item)) &&
     (!('address_reference' in dto) || dto.address_reference === undefined || dto.address_reference === null || typeof dto.address_reference === 'string')
+  );
+}
+
+export function isLocationTypeDTO(dto: unknown): dto is LocationTypeDTO {
+  return (
+    isObjectRecord(dto) &&
+    'id_location_type' in dto &&
+    'location_type_name' in dto &&
+    'created_at' in dto
   );
 }
 

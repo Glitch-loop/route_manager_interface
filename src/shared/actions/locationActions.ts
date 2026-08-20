@@ -8,6 +8,7 @@ import { RawLocationApiResponse } from "@/shared/raw-api-responses/rawLocationAp
 import { apiClient } from '@/infrastructure/datasources/BackendDatasource';
 
 import { rawApiResponseToDTOMapper } from "@/shared/mappers/rawApiResponseToDTOMapper";
+import { RawLocationTypeApiResponse } from "@/shared/raw-api-responses/rawLocationTypeApiResponse";
 
 interface RetrieveLocationsByIdsRequestInterface {
   id_locations: string[];
@@ -21,6 +22,19 @@ export async function insertStores(stores: LocationDTO[]): Promise<void> {
 export async function updateStore(store: LocationDTO): Promise<void> {
   // Note (06-20-26): Backend does not expose an update endpoint for locations in this repository.
   return;
+}
+
+export async function retrieveLocationTypes(): Promise<LocationDTO[]> {
+    try {
+    const locationTypesResponse = await apiClient.get<RawLocationTypeApiResponse[]>(
+      '/clients/locations/types'
+    );
+
+    return locationTypesResponse.data.map((location) => rawApiResponseToDTOMapper.toDTO(location));
+
+  } catch (error: any) {
+    throw new Error(`Failed to retrieve stores: ${error.message}`);
+  }
 }
 
 export async function retrieveStore(id_stores: string[]): Promise<LocationDTO[]> {
@@ -45,8 +59,7 @@ export async function listStores(): Promise<LocationDTO[]> {
   try {
     console.log("List all stores")
     const locationsResponse:RawLocationApiResponse[] = await recursiveListStore(undefined);
-    
-      return locationsResponse.map((location) => rawApiResponseToDTOMapper.toDTO(location));
+    return locationsResponse.map((location) => rawApiResponseToDTOMapper.toDTO(location));
   } catch (error: any) {
     throw new Error(`Failed to list stores: ${error.message}`);
   }
@@ -108,8 +121,6 @@ export async function  recursiveListStore(initialNextItem?: string): Promise<Raw
     do {
       const query = nextItem ? `&next_item=${nextItem}` : '';
       const urlToRequest = `/clients/locations?status_location=1,-1&limit=200${query}`;
-
-      console.log("urlToSend: ", urlToRequest);
       const response = await apiClient.get<RawLocationApiResponse[]>(urlToRequest);
 
       if (response.data && response.data.length > 0) {

@@ -1,4 +1,5 @@
 import { LocationNoteDTO } from "@/shared/dtos/LocationNoteDTO";
+import { LocationTypeDTO } from "@/shared/dtos/LocationTypeDTO";
 
 export interface LocationDTO {
   id_location: string;
@@ -12,7 +13,7 @@ export interface LocationDTO {
   status_location: number;
   id_creator: string;
   id_client: string;
-  id_location_type: string;
+  location_type: LocationTypeDTO;
   created_at: Date;
   updated_at: Date;
   notes: LocationNoteDTO[];

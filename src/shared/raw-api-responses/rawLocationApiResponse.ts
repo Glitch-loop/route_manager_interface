@@ -1,4 +1,5 @@
 import { RawLocationNoteApiResponse } from "@/shared/raw-api-responses/rawLocationNoteApiResponse";
+import { RawLocationTypeApiResponse } from "@/shared/raw-api-responses/rawLocationTypeApiResponse";
 
 export interface RawLocationApiResponse {
   id_location: string;
@@ -12,7 +13,7 @@ export interface RawLocationApiResponse {
   status_location: number;
   id_creator: string;
   id_client: string;
-  id_location_type: string;
+  location_type: RawLocationTypeApiResponse;
   created_at: Date;
   updated_at: Date;
   notes: RawLocationNoteApiResponse[];
