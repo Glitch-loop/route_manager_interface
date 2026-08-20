@@ -2,25 +2,66 @@
 
 // Libraries
 import { useState, useEffect } from "react";
-import { TextField, Button, Divider } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Divider,
+  Select,
+  MenuItem,
+  FormControl,
+  SelectChangeEvent,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
+} from "@mui/material";
 
 // Types
 import { coordinates } from "@/shared/components/MarkerMap/types/types";
 
 // Dtos
 import { LocationDTO } from "@/shared/dtos/LocationDTO";
+import { LocationTypeDTO } from "@/shared/dtos/LocationTypeDTO";
+
+// Actions
+import { LocationStatusEnum } from "@/shared/enums/locationStatusEnum";
+import { LocationDeactivationType } from "@/shared/enums/locationDeactivationTypeEnum";
+
+const DEACTIVATION_TYPE_LABELS: Record<LocationDeactivationType, string> = {
+  [LocationDeactivationType.CLOSED]: "Cierre de actividad económica",
+  [LocationDeactivationType.SHUTDOWN]: "Cierre temporal del negocio",
+  [LocationDeactivationType.CHURNED]: "Cambio a otro proveedor",
+};
+
+
+const LOCATION_STATUS_LABELS: Record<LocationStatusEnum, string> = {
+  [LocationStatusEnum.PROSPECT_OF_CLIENT]: "Cliente por confirmar",
+  [LocationStatusEnum.CLIENT]: "Cliente confirmado",
+  [LocationStatusEnum.CLOSED]: "Cierre de actividad económica",
+  [LocationStatusEnum.SHUTDOWN]: "Cierre temporal del negocio",
+  [LocationStatusEnum.CHURNED]: "Cambio a otro proveedor",
+};
+
+const LOCATION_STATUS_OPTIONS = Object.values(LocationStatusEnum).filter(
+  (value): value is LocationStatusEnum => typeof value === "number",
+);
 
 interface StoreFormProps {
+  locationTypes: LocationTypeDTO[],
   existingStore?: LocationDTO | null;
   selectedCoordinates?: coordinates | null;
   onCreate?: (storeData: LocationDTO) => void;
   onUpdate?: (storeData: LocationDTO) => void;
   onCancel?: () => void;
   onActivate?: (idStore: string) => void;
-  onDesactivate?: (idStore: string) => void;
+  onDesactivate?: (idStore: string, deactivationType: LocationDeactivationType) => void;
 }
 
 export default function StoreForm({
+  locationTypes,
   existingStore,
   selectedCoordinates,
   onCreate,
@@ -32,6 +73,8 @@ export default function StoreForm({
   const isEditMode = existingStore !== undefined && existingStore !== null;
 
   const [selectCoordinates, setSelectCoordinates] = useState<boolean>(false);
+  const [deactivationDialogOpen, setDeactivationDialogOpen] = useState<boolean>(false);
+  const [selectedDeactivationType, setSelectedDeactivationType] = useState<LocationDeactivationType | "">("");
 
   const [store, setStore] = useState<LocationDTO>(
     existingStore ?? {
@@ -46,7 +89,7 @@ export default function StoreForm({
       status_location: -1,
       id_creator: "",
       id_client: "",
-      id_location_type: "",
+      location_type: { id_location_type: "", location_type_name: "", created_at: new Date() },
       created_at: new Date(),
       updated_at: new Date(),
       notes: [],
@@ -107,9 +150,21 @@ export default function StoreForm({
     clearForm();
   };
 
-  const handleDesactivate = async () => {
-    if (onDesactivate === undefined || existingStore === null) return;
-    await onDesactivate(store.id_location);
+  const handleOpenDeactivationDialog = () => {
+    setSelectedDeactivationType("");
+    setDeactivationDialogOpen(true);
+  };
+
+  const handleCloseDeactivationDialog = () => {
+    setDeactivationDialogOpen(false);
+    setSelectedDeactivationType("");
+  };
+
+  const handleConfirmDeactivate = async () => {
+    if (onDesactivate === undefined || existingStore === null || selectedDeactivationType === "") return;
+    await onDesactivate(store.id_location, selectedDeactivationType);
+    setDeactivationDialogOpen(false);
+    setSelectedDeactivationType("");
     setSelectCoordinates(false);
     clearForm();
   };
@@ -133,7 +188,7 @@ export default function StoreForm({
       status_location: -1,
       id_creator: "",
       id_client: "",
-      id_location_type: "",
+      location_type: { id_location_type: "", location_type_name: "", created_at: new Date() },
       created_at: new Date(),
       updated_at: new Date(),
       notes: [],
@@ -151,6 +206,20 @@ export default function StoreForm({
       });
     }
     setSelectCoordinates(newState);
+  };
+
+  const handleLocationTypeChange = (e: SelectChangeEvent) => {
+    const selectedLocationType = locationTypes.find(
+      (locationType) => locationType.id_location_type === e.target.value,
+    );
+    if (selectedLocationType) {
+      setStore({ ...store, location_type: selectedLocationType });
+    }
+  };
+
+  const handleLocationStatusChange = (e: SelectChangeEvent) => {
+    const selectedStatusLocation = Number(e.target.value);
+    setStore({ ...store, status_location: selectedStatusLocation });
   };
 
   return (
@@ -219,6 +288,27 @@ export default function StoreForm({
         sx={{ backgroundColor: "white", borderRadius: 1 }}
       />
 
+      {/* Location type */}
+      <FormControl fullWidth size="small" sx={{ backgroundColor: "white", borderRadius: 1 }}>
+        <Select
+          displayEmpty
+          value={store.location_type.id_location_type}
+          onChange={handleLocationTypeChange}
+        >
+          <MenuItem value="" disabled>
+            Seleccionar
+          </MenuItem>
+          {locationTypes.map((locationType) => (
+            <MenuItem
+              key={locationType.id_location_type}
+              value={locationType.id_location_type}
+            >
+              {locationType.location_type_name}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+
       {/* Latitude and Longitude side by side */}
       <div className="flex gap-2">
         <TextField
@@ -249,6 +339,27 @@ export default function StoreForm({
           Haz click en el mapa para seleccionar las coordenadas de la tienda.
         </span>
       )}
+
+      { 
+
+      }
+      {/* Status */}
+      <FormControl fullWidth size="small" sx={{ backgroundColor: "white", borderRadius: 1 }}>
+        <Select
+          displayEmpty
+          value={store.status_location ?? ""}
+          onChange={handleLocationStatusChange}
+        >
+          <MenuItem value="" disabled>
+            Seleccionar
+          </MenuItem>
+          {LOCATION_STATUS_OPTIONS.map((locationStatus) => (
+            <MenuItem key={locationStatus} value={locationStatus}>
+              {LOCATION_STATUS_LABELS[locationStatus]}
+            </MenuItem>
+          ))}
+        </Select>
+      </FormControl>
 
       {/* Divider */}
       <Divider className="my-2" />
@@ -321,11 +432,11 @@ export default function StoreForm({
                 Cancelar
               </Button>
             </div>
-            {store.status_location === 1 ? (
+            {store.status_location !== 1 ? (
               <Button
                 variant="contained"
                 fullWidth
-                onClick={handleDesactivate}
+                onClick={handleOpenDeactivationDialog}
                 sx={{
                   backgroundColor: "#E74C3C",
                   "&:hover": { backgroundColor: "#c0392b" },
@@ -351,6 +462,42 @@ export default function StoreForm({
           </>
         )}
       </div>
+
+      <Dialog open={deactivationDialogOpen} onClose={handleCloseDeactivationDialog} fullWidth maxWidth="xs">
+        <DialogTitle>Motivo de desactivación</DialogTitle>
+        <DialogContent>
+          <RadioGroup
+            value={selectedDeactivationType}
+            onChange={(e) =>
+              setSelectedDeactivationType(e.target.value as LocationDeactivationType)
+            }
+          >
+            {Object.values(LocationDeactivationType).map((deactivationType) => (
+              <FormControlLabel
+                key={deactivationType}
+                value={deactivationType}
+                control={<Radio />}
+                label={DEACTIVATION_TYPE_LABELS[deactivationType]}
+              />
+            ))}
+          </RadioGroup>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDeactivationDialog}>Cancelar</Button>
+          <Button
+            variant="contained"
+            disabled={selectedDeactivationType === ""}
+            onClick={handleConfirmDeactivate}
+            sx={{
+              backgroundColor: "#E74C3C",
+              "&:hover": { backgroundColor: "#c0392b" },
+              textTransform: "none",
+            }}
+          >
+            Desactivar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

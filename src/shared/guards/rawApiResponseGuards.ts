@@ -101,8 +101,7 @@ export function isRawLocationApiResponse(dto: unknown): dto is RawLocationApiRes
 		'status_location' in dto &&
 		'id_creator' in dto &&
 		'id_client' in dto &&
-		'location_type' in dto &&
-		isRawLocationTypeApiResponse(dto.location_type) &&
+		'id_location_type' in dto &&
 		'created_at' in dto &&
 		'updated_at' in dto &&
 		'notes' in dto &&

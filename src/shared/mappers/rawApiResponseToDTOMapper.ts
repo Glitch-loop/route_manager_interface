@@ -77,7 +77,7 @@ export class RawApiResponseToDTOMapper {
 	// ==================== OVERLOADED FUNCTIONS FOR MAPPING ====================
 	toDTO(rawApiResponse: RawInventoryOperationApiResponse): InventoryOperationDTO;
 	toDTO(rawApiResponse: RawInventoryOperationDescriptionApiResponse): InventoryOperationDescriptionDTO;
-	toDTO(rawApiResponse: RawLocationApiResponse): LocationDTO;
+	toDTO(rawApiResponse: RawLocationApiResponse, rawLocationType: RawLocationTypeApiResponse): LocationDTO;
 	toDTO(rawApiResponse: RawLocationNoteApiResponse): LocationNoteDTO;
 	toDTO(rawApiResponse: RawLocationTypeApiResponse): LocationTypeDTO;
 	toDTO(rawApiResponse: RawPaymentMethodApiResponse): PaymentMethodDTO;
@@ -110,7 +110,8 @@ export class RawApiResponseToDTOMapper {
 			| RawTransactionDescriptionApiResponse
 			| RawWorkDayApiResponse
 			| RawWorkDayNoteApiResponse
-			| RawWorkDayOperationHistoricApiResponse
+			| RawWorkDayOperationHistoricApiResponse,
+		rawLocationType?: RawLocationTypeApiResponse
 	):
 		| InventoryOperationDTO
 		| InventoryOperationDescriptionDTO
@@ -136,7 +137,8 @@ export class RawApiResponseToDTOMapper {
 			return this.rawInventoryOperationDescriptionApiResponseToInventoryOperationDescriptionDTO(rawApiResponse);
 		}
 		if (isRawLocationApiResponse(rawApiResponse)) {
-			return this.rawLocationApiResponseToLocationDTO(rawApiResponse);
+			if (!rawLocationType) throw new Error('rawLocationType is required to map a RawLocationApiResponse');
+			return this.rawLocationApiResponseToLocationDTO(rawApiResponse, rawLocationType);
 		}
 		if (isRawLocationNoteApiResponse(rawApiResponse)) {
 			return this.rawLocationNoteApiResponseToLocationNoteDTO(rawApiResponse);
@@ -325,7 +327,7 @@ export class RawApiResponseToDTOMapper {
 		};
 	}
 
-	private rawLocationApiResponseToLocationDTO(rawApiResponse: RawLocationApiResponse): LocationDTO {
+	private rawLocationApiResponseToLocationDTO(rawApiResponse: RawLocationApiResponse, rawLocationType: RawLocationTypeApiResponse): LocationDTO {
 		return {
 			id_location: rawApiResponse.id_location,
 			street: rawApiResponse.street,
@@ -338,7 +340,7 @@ export class RawApiResponseToDTOMapper {
 			status_location: rawApiResponse.status_location,
 			id_creator: rawApiResponse.id_creator,
 			id_client: rawApiResponse.id_client,
-			location_type: this.rawLocationTypeApiResponseToLocationTypeDTO(rawApiResponse.location_type),
+			location_type: this.rawLocationTypeApiResponseToLocationTypeDTO(rawLocationType),
 			created_at: rawApiResponse.created_at,
 			updated_at: rawApiResponse.updated_at,
 			notes: rawApiResponse.notes.map((item) => this.rawLocationNoteApiResponseToLocationNoteDTO(item)),
@@ -549,7 +551,7 @@ export class RawApiResponseToDTOMapper {
 			status_location: dto.status_location,
 			id_creator: dto.id_creator,
 			id_client: dto.id_client,
-			location_type: this.locationTypeDTOToRawLocationTypeApiResponse(dto.location_type),
+			id_location_type: dto.location_type.id_location_type,
 			created_at: dto.created_at,
 			updated_at: dto.updated_at,
 			notes: dto.notes.map((item) => this.locationNoteDTOToRawLocationNoteApiResponse(item)),

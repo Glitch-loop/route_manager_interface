@@ -25,7 +25,8 @@ import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 // Actions
-import { listStores } from "@/shared/actions/locationActions";
+import { listStores, retrieveLocationTypes, insertStores, updateStore } from "@/shared/actions/locationActions";
+import { LocationDeactivationType } from "@/shared/enums/locationDeactivationTypeEnum";
 import { listRoutes, organizeRouteDay } from "@/shared/actions/routeActions";
 import { listRouteTransactionsByStoreWithinDateRange } from "@/shared/actions/transactionActions";
 
@@ -39,7 +40,6 @@ import { listRouteTransactionsByStoreWithinDateRange } from "@/shared/actions/tr
 // Commands
 import UpdateStoreCommand from "@/application/commands/UpdateStoreCommand";
 import ActivateStoreCommand from "@/application/commands/ActivateStoreCommand";
-import CreateStoreCommand from "@/application/commands/CreateStoreCommand";
 // import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
 import DesactivateStoreCommand from "@/application/commands/DesactivateStoreCommand";
 
@@ -88,6 +88,7 @@ import {
 import { findStoresAround } from "@/shared/utils/clients/utils";
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { generateRandomColor } from "@/shared/utils/styles/utils";
+import { LocationTypeDTO } from "@/shared/dtos/LocationTypeDTO";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -228,6 +229,7 @@ export default function Page() {
 
   // Application states
   const [routes, setRoutes] = useState<RouteDTO[]>([]); // Source of truth for route days.
+  const [locationTypes, setLocationTypes] = useState<LocationTypeDTO[]>([]); // Source of truth for route days.
 
   // States related to store information.
   const [stores, setStores] = useState<LocationDTO[]>([]);
@@ -301,6 +303,7 @@ export default function Page() {
     const loadScreenInformation = async () => {
       const routes: RouteDTO[] = await listRoutes();
       setRoutes(routes);
+      await fetchLocationTypes();
       await fetchStores();
     };
 
@@ -334,6 +337,11 @@ export default function Page() {
     });
     setMapStores(storeMap);
   };
+
+  const fetchLocationTypes = async () => {
+    const locationType:LocationTypeDTO[] = await retrieveLocationTypes();
+    setLocationTypes(locationType);
+  }
 
   const handleSelectStoreToUpdate = useCallback((idStore: string): void => {
     const store = mapStores.get(idStore);
@@ -491,10 +499,8 @@ export default function Page() {
 
   // Handlers - Store menu
   const handleCreateStore = async (storeToCreate: LocationDTO) => {
-    const createStoreCommand =
-      di_container.resolve<CreateStoreCommand>(CreateStoreCommand);
     try {
-      await createStoreCommand.execute(storeToCreate);
+      await insertStores([ storeToCreate ]);
       // Update local state after successful creation
       setStores((prevStores) => [...prevStores, storeToCreate]);
       setSelectedStore(null);
@@ -504,11 +510,9 @@ export default function Page() {
   };
 
   const handleUpdateStore = async (updatedStore: LocationDTO) => {
-    const updateStoreCommand =
-      di_container.resolve<UpdateStoreCommand>(UpdateStoreCommand);
     try {
       // Update local state after successful update
-      await updateStoreCommand.execute(updatedStore);
+      await updateStore(updatedStore);
       setStores((prevStores) =>
         prevStores.map((store) =>
           store.id_location === updatedStore.id_location
@@ -541,7 +545,9 @@ export default function Page() {
     }
   };
 
-  const handleDesactivateStore = async (idLocation: string) => {
+  const handleDesactivateStore = async (idLocation: string, deactivationType: LocationDeactivationType) => {
+    // Note (08-19-26): Legacy Supabase store command does not yet support a deactivation reason.
+    void deactivationType;
     const desactivateStoreCommand =
       di_container.resolve<DesactivateStoreCommand>(DesactivateStoreCommand);
     try {
@@ -989,6 +995,7 @@ export default function Page() {
                   )}
                 </List>
                 <StoreForm
+                  locationTypes={locationTypes}
                   existingStore={selectedStore}
                   selectedCoordinates={selectedCoordinate}
                   onCreate={handleCreateStore}

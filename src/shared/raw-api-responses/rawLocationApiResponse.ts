@@ -13,7 +13,7 @@ export interface RawLocationApiResponse {
   status_location: number;
   id_creator: string;
   id_client: string;
-  location_type: RawLocationTypeApiResponse;
+  id_location_type: string;
   created_at: Date;
   updated_at: Date;
   notes: RawLocationNoteApiResponse[];
