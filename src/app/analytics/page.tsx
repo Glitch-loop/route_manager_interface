@@ -1,8 +1,8 @@
 // Critial imports
 "use client";
-import "reflect-metadata";
 
 // Libraries
+import { pdf } from "@react-pdf/renderer";
 import React, { useEffect, useState, useMemo } from "react";
 import { toast } from "react-toastify";
 import {
@@ -19,13 +19,6 @@ import { RouteDayDTO } from "@/shared/dtos/RouteDayDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 
-// Commands
-import UpdateStoreCommand from "@/application/commands/UpdateStoreCommand";
-import ActivateStoreCommand from "@/application/commands/ActivateStoreCommand";
-import CreateStoreCommand from "@/application/commands/CreateStoreCommand";
-// import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
-import DesactivateStoreCommand from "@/application/commands/DesactivateStoreCommand";
-
 // UI components
 import {
   KeyboardArrowUp,
@@ -33,22 +26,17 @@ import {
   Menu as MenuIcon,
 } from "@mui/icons-material";
 import MarkerMap from "@/shared/components/MarkerMap/MarkerMap";
-import StoreForm from "@/app/route_administration/components/StoreForm";
-import RouteForm from "@/app/route_administration/components/RouteForm";
-import SimpleCard from "@/shared/components/Cards/SimpleCard/SimpleCard";
-import SearchRoute from "@/app/route_administration/components/SearchRoute";
 import StoreSearchBar from "@/app/route_administration/components/StoreSearchBar";
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
-import RouteDayContainer from "@/app/route_administration/components/RouteDayContainer/RouteDayContainer";
-
+import RouteDayDisplayer from "@/app/analytics/components/RouteDayDisplayer";
 
 // Types
-import { StorePositionInRouteType } from "@/shared/types/types";
-import { coordinates } from "@/shared/components/MarkerMap/types/types";
-import {
-  MarkerGroup,
-} from "@/app/route_administration/types/types";
 import { RouteDayEffect } from "@/app/analytics/types/types";
+import { PickerItemType } from "@/app/analytics/types/types";
+import { RouteDayFilters } from "@/app/analytics/types/types";
+import { StorePositionInRouteType } from "@/shared/types/types";
+import { MarkerGroup } from "@/app/route_administration/types/types";
+import { coordinates } from "@/shared/components/MarkerMap/types/types";
 
 // Constants
 import { RANGE_OPTIONS } from "@/app/route_administration/constants/constants";
@@ -68,24 +56,19 @@ import {
 import { findStoresAround } from "@/shared/utils/clients/utils";
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { generateRandomColor } from "@/shared/utils/styles/utils";
-import RouteDayDisplayer from "@/app/analytics/components/RouteDayDisplayer";
-import RouteDayStoreDTO from "@/application/dtos/RouteDayStoreDTO";
+
 import { cast_string_to_date_hour_format } from "@/utils/dateUtils";
 import { ProductDTO } from "@/shared/dtos/ProductDTO";
 import { retrieveAllProducts } from "@/shared/actions/productActions";
-import { DAY_OPERATIONS_ENUM } from "@/shared/enums/dayOperationsEnum";
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
-import { ApplyEffect, PickerItemType } from "@/app/analytics/types/types";
-import { RouteDayFilters } from "@/app/analytics/types/types";
-import { ItemsPicker } from "@/shared/components/ItemsPicker/ItemsPicker";
+
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
 import { useRoute } from "@/shared/hooks/routes/useRoute";
 import { calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/utils/transactions/utils";
-import { processDetailedReportData } from "@/app/analytics/reports/historic_selling_report/utils";
-import { DetailedRouteDayPDFDocument } from "@/app/analytics/reports/historic_selling_report/HistoricSellingReport";
-import { pdf } from "@react-pdf/renderer";
 import { processConsolidatedReportData } from "@/app/analytics/reports/consoldate_historic_report/consolidatedReportHelpers";
 import { ConsolidatedRouteDayPDFDocument } from "@/app/analytics/reports/consoldate_historic_report/ConsolidatedRouteDayPDFDocument";
+import { useRouteDayLocationMap } from "@/shared/hooks/route-day-location-map/useRouteDayLocationMap";
+import { useProducts } from "@/shared/hooks/products/useProducts";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -291,16 +274,21 @@ function createMapClickComponent(
 
 export default function Page() {
 
-  const {stores, mapStores, mapRouteTransactionByStore, fetchRouteTransactions} = useRouteLocation();
+  // Custom hooks
   const { routes, routesMap} = useRoute();
+  const { productsMap } = useProducts();
+  const {stores, mapStores, mapRouteTransactionByStore, fetchRouteTransactions} = useRouteLocation();
+  const { 
+    effectRouteDay, 
+    handleAddRouteDayEffects, 
+    handleRemoveRouteDayEffects,
+    handleUpdateRouteDayEffects
+  } = useRouteDayLocationMap();
 
   // Collapse menu states
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
   const [bottomPanelExpanded, setBottomPanelExpanded] = useState(false);
   const [topPanelOpen, setTopPanelOpen] = useState(false);
-  const [selectedRoute, setSelectedRoute] = useState<RouteDTO | null>(null);
-  const [selectedStore, setSelectedStore] = useState<LocationDTO | null>(null);
   const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(
     null,
   );
@@ -312,9 +300,6 @@ export default function Page() {
   const [storeWithinRouteAssigned, setStoreWithinRouteAssigned] = useState<
     Set<string>
   >(new Set()); // Set of store IDs that are already assigned within the route being modified, used to avoid showing them in the search results when modifying a route day.
-
-  // States related to products
-  const [productsMap, setProductsMap] = useState<Map<string, ProductDTO>>(new Map<string, ProductDTO>());
 
   // States related to route day.
   const [selectedRouteDay, setSelectedRouteDay] = useState<RouteDayDTO[]>([]); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
@@ -357,11 +342,7 @@ export default function Page() {
     setRouteDaysFilter
   ] = useState<RouteDayFilters>({ sellingGoal: null, pickerProduct: null });
 
-  const [
-    effectSelectedRouteDay, 
-    setEffectSelectedRouteDay
-  ] = useState<Map<string, RouteDayEffect>>(new Map());
-  
+ 
   const [vendors] = useState<UserDTO[]>([
     {
       id_vendor: "1",
@@ -371,15 +352,6 @@ export default function Page() {
       status: null,
     },
   ]);
-
-  // Use effects
-  useEffect(() => {
-    const loadScreenInformation = async () => {
-      await fetchProducts();
-    };
-
-    void loadScreenInformation();
-  }, []);
 
   useEffect(() => {
     const mapStoresInRouteDay = createMapStoresInRouteDay(routes);
@@ -397,19 +369,6 @@ export default function Page() {
     setStoreWithinRouteAssigned(storeWithinRouteAssigned);
   }, [routes, stores]);
 
-
-
-  const fetchProducts = async() => {
-    const allProducts: ProductDTO[] = await retrieveAllProducts(true);
-    const allProductsMap: Map<string, ProductDTO> = new Map<string, ProductDTO>();
-    allProducts.forEach((product) => {
-      const { id_product } = product;
-      allProductsMap.set(id_product, product)
-    });
-
-    setProductsMap(allProductsMap);
-  }
-
   // Memoized components
   const mapMarkers = useMemo<IMapMarker[]>(() => {
     const markers: IMapMarker[] = [];
@@ -417,7 +376,7 @@ export default function Page() {
     selectedRouteDay.forEach((routeDay) => {
       const { id_route_day, locations } = routeDay;
 
-      const effect = effectSelectedRouteDay.get(id_route_day);
+      const effect = effectRouteDay.get(id_route_day);
 
       // Skip if showStores is false
       if (!effect?.showStores) return;
@@ -582,7 +541,7 @@ export default function Page() {
     selectedRouteDay,
     productsMap,
     mapStores, // Provides store information including coordinates
-    effectSelectedRouteDay, // Provides effects that will be applied to the markers
+    effectRouteDay, // Provides effects that will be applied to the markers
     mapStoresInRouteDay, // Provides information about which route days each store belongs to for the hover and click components
     hoveredStore,
     mapRouteTransactionByStore,
@@ -613,38 +572,27 @@ export default function Page() {
         ]));
 
         // Set effects for map markers
-        setEffectSelectedRouteDay((prev) => {
-          const newMap = new Map(prev);
-          newMap.set(routeDayId, {
-            showStores: true,
-            assignedColor: generateRandomColor(),
-          });
-          return newMap;
-        });
+        handleAddRouteDayEffects(routeDayId);
       }
     } else {
       handleUnselectRouteDay(routeDayId);
     }
   };
 
-  const handleUnselectRouteDay = (idRouteDayToRemove: string) => {
+  const handleUnselectRouteDay = (routeDayId: string) => {
     // Remove route day from routesInModification
     setSelectedRouteDay((prev) => prev
-      .filter((routeDay) => routeDay.id_route_day !== idRouteDayToRemove));
+      .filter((routeDay) => routeDay.id_route_day !== routeDayId));
 
     // Remove from checkedRouteDays
     setCheckedRouteDays((prev) => {
       const newCheckedDays = { ...prev };
-      delete newCheckedDays[idRouteDayToRemove];
+      delete newCheckedDays[routeDayId];
       return newCheckedDays;
     });
 
     // Remove effects
-    setEffectSelectedRouteDay((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(idRouteDayToRemove);
-      return newMap;
-    });
+    handleRemoveRouteDayEffects(routeDayId);
   };
 
   const handleCloseRouteDay = (idRouteDay: string) => {
@@ -750,7 +698,7 @@ export default function Page() {
 
   // Handlers for route day filters and effects
   const handleApplyRouteEffects = async (
-    idRouteDay: string,
+    routeDayId: string,
     routeDayEffect: RouteDayEffect
   ) => {
     const { selectedLocation } = routeDayEffect;
@@ -759,23 +707,22 @@ export default function Page() {
     if(selectedLocation) {
       setSelectedRouteDayStore(selectedLocation);
 
-      effectSelectedRouteDay.forEach((value, key) => {
-        if (key === idRouteDay) {
-          effectSelectedRouteDay.set(key, {...routeDayEffect}) 
+      effectRouteDay.forEach((value, key) => {
+        if (key === routeDayId) {
+          effectRouteDay.set(key, {...routeDayEffect}) 
         } else {
-          effectSelectedRouteDay.set(key, {...value, selectedLocation: undefined}) 
+          effectRouteDay.set(key, {...value, selectedLocation: undefined}) 
         }
       })
     }
 
-    effectSelectedRouteDay.set(idRouteDay, routeDayEffect);
-    setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
+    handleUpdateRouteDayEffects(routeDayId, routeDayEffect);
   }
 
   // Handlers for map
   const handleUnselectMarker = async (idRouteDayLocation: string|null) => { 
     // const updatedRouteDayEffects: Map<string, RouteDayEffect> = new Map<string, RouteDayEffect>();
-    // effectSelectedRouteDay.forEach((value, key) => {
+    // effectRouteDay.forEach((value, key) => {
     //   updatedRouteDayEffects.set(key, {...value, selectedLocation: undefined});
     // });
     // setEffectSelectedRouteDay(new Map(updatedRouteDayEffects));
@@ -805,8 +752,8 @@ export default function Page() {
         setTotalStoresFoundBySearchRange(0);
       } else {
 
-        if (effectSelectedRouteDay.has(id_group)) {
-          const routeDayEffect = effectSelectedRouteDay.get(id_group);
+        if (effectRouteDay.has(id_group)) {
+          const routeDayEffect = effectRouteDay.get(id_group);
           handleApplyRouteEffects(id_group, {...routeDayEffect!, selectedLocation: id_marker});
         }
       }
@@ -948,7 +895,7 @@ export default function Page() {
                 locationsMap={mapStores}
                 routesMap={routesMap}
                 routeTransactionsMap={mapRouteTransactionByStore}
-                routeDayEffectsMap={effectSelectedRouteDay}
+                routeDayEffectsMap={effectRouteDay}
                 routeDayFilters={routeDayFilter}
                 pickerItems={
                   (Array.from(productsMap.values())

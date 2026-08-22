@@ -1,4 +1,4 @@
-export interface IMapMarker{
+export interface IMapMarker {
   id_marker: string,
   id_item: string,
   hoverComponent: React.ReactNode | null;

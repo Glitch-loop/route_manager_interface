@@ -75,7 +75,3 @@ export function useProducts() {
     fetchProducts,
   };
 }
-
-export function useProduct() {
-  return useProducts();
-}

@@ -63,7 +63,7 @@ import { listRouteTransactionsWithinDateRange } from "@/shared/actions/transacti
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 // Hooks
-import { useProduct } from "@/shared/hooks/products/useProducts";
+import { useProducts } from "@/shared/hooks/products/useProducts";
 import { processConsolidatedDayMatrixData, processConsolidatedInventoryDayMatrixData, ProcessedDayMatrixData } from "@/app/consult_information/reports/consolidated_day_matrix/consolidatedDayMatrixHelpers";
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
 import { ConsolidatedDayMatrixPDFDocument } from "@/app/consult_information/reports/consolidated_day_matrix/ConsolidatedDayMatrixPDFDocument";
@@ -109,7 +109,7 @@ function getVendorName(idVendor: string, vendors: IUser[]): string {
 
 function ConsultInformation() {
   // Hooks
-  const { productsMap, isLoading } = useProduct();
+  const { productsMap, isLoading } = useProducts();
   const { routes, routesMap } = useRoute();
 
   // Related to route transactions

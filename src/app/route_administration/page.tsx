@@ -1,6 +1,5 @@
 // Critial imports
 "use client";
-import "reflect-metadata";
 
 // Libraries
 import React, { useCallback, useEffect, useState, useMemo } from "react";
@@ -22,29 +21,11 @@ import { RouteDTO } from "@/shared/dtos/RouteDTO";
 import { LocationDTO } from "@/shared/dtos/LocationDTO";
 import { RouteDayDTO } from "@/shared/dtos/RouteDayDTO";
 import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
-import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 // Actions
-import { listStores, retrieveLocationTypes, insertStores, updateStore } from "@/shared/actions/locationActions";
+import { retrieveLocationTypes, insertStores, updateStore, deactivateStores } from "@/shared/actions/locationActions";
 import { LocationDeactivationType } from "@/shared/enums/locationDeactivationTypeEnum";
 import { listRoutes, organizeRouteDay } from "@/shared/actions/routeActions";
-import { listRouteTransactionsByStoreWithinDateRange } from "@/shared/actions/transactionActions";
-
-
-// Queries
-// import ListRoutesQuery from "@/application/queries/ListRoutesQuery";
-// import RetrieveRouteInformationQuery  from "@/application/queries/RetrieveRouteInformationQuery";
-// import ListAllRegisterdStoresQuery from "@/application/queries/ListAllRegisterdStoresQuery";
-// import ListRouteTransactionsByStoreWithinDateRange from "@/application/queries/ListRouteTransactionsByStoreWithinDateRange";
-
-// Commands
-import UpdateStoreCommand from "@/application/commands/UpdateStoreCommand";
-import ActivateStoreCommand from "@/application/commands/ActivateStoreCommand";
-// import OrganizeRouteDayCommand from "@/application/commands/OrganizeRouteDayCommand";
-import DesactivateStoreCommand from "@/application/commands/DesactivateStoreCommand";
-
-// DI container
-import { di_container } from "@/infrastructure/di/container";
 
 // UI components
 import {
@@ -89,6 +70,7 @@ import { findStoresAround } from "@/shared/utils/clients/utils";
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { generateRandomColor } from "@/shared/utils/styles/utils";
 import { LocationTypeDTO } from "@/shared/dtos/LocationTypeDTO";
+import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -216,6 +198,16 @@ function createMapClickComponent(
 }
 
 export default function Page() {
+  // Hooks
+  const { 
+    stores, 
+    mapStores, 
+    mapRouteTransactionByStore, 
+    fetchRouteTransactions,
+    setStores
+  } = useRouteLocation();
+
+
   // Collapse menu states
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
@@ -223,22 +215,13 @@ export default function Page() {
   const [topPanelOpen, setTopPanelOpen] = useState(false);
   const [selectedRoute, setSelectedRoute] = useState<RouteDTO | null>(null);
   const [selectedStore, setSelectedStore] = useState<LocationDTO | null>(null);
-  const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(
-    null,
-  );
+  const [routeMenuAnchor, setRouteMenuAnchor] = useState<HTMLElement | null>(null);
 
   // Application states
   const [routes, setRoutes] = useState<RouteDTO[]>([]); // Source of truth for route days.
   const [locationTypes, setLocationTypes] = useState<LocationTypeDTO[]>([]); // Source of truth for route days.
 
   // States related to store information.
-  const [stores, setStores] = useState<LocationDTO[]>([]);
-  const [mapStores, setMapStores] = useState<Map<string, LocationDTO>>(
-    new Map(),
-  ); // Map of store ID to LocationDTO for quick access
-  const [mapRouteTransactionByStore, setMapRouteTransactionByStore] = useState<
-    Map<string, RouteTransactionDTO[]>
-  >(new Map()); // Map of store ID to list of route transactions
   const [mapStoresInRouteDay, setMapStoresInRouteDay] = useState<
     Map<string, StorePositionInRouteType[]>
   >(new Map()); // Map of store ID to LocationDTO for stores in the selected route day
@@ -247,39 +230,24 @@ export default function Page() {
   >(new Set()); // Set of store IDs that are already assigned within the route being modified, used to avoid showing them in the search results when modifying a route day.
 
   // States related to route day.
-  const [routesInModification, setRoutesInModification] = useState<
-    Record<string, DraggableRouteDayStore[]>
-  >({}); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
-  const [effectSelectedRouteDay, setEffectSelectedRouteDay] = useState<
-    Map<string, RouteDayEffect>
-  >(new Map());
+  const [routesInModification, setRoutesInModification] 
+    = useState<Record<string, DraggableRouteDayStore[]>>({}); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
+  const [effectSelectedRouteDay, setEffectSelectedRouteDay] 
+    = useState<Map<string, RouteDayEffect>>(new Map());
 
   // States related to expand menu.
-  const [checkedRouteDays, setCheckedRouteDays] = useState<
-    Record<string, boolean>
-  >({});
-  const [pendingUnselectRouteDayId, setPendingUnselectRouteDayId] = useState<
-    string | null
-  >(null);
+  const [checkedRouteDays, setCheckedRouteDays] = useState<Record<string, boolean>>({});
+  const [pendingUnselectRouteDayId, setPendingUnselectRouteDayId] = useState<string | null>(null);
 
   // State for the map
   const [hoveredStore, setHoveredStore] = useState<LocationDTO | null>(null);
-  const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<
-    string | null
-  >(null);
+  const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<string | null>(null);
   const [searchByCoords, setSearchByCoords] = useState<boolean>(false);
-  const [includeDeactiveStores, setIncludeDeactiveStores] =
-    useState<boolean>(false);
-  const [selectedRange, setSelectedRange] = useState<number>(
-    RANGE_OPTIONS[3].value,
-  );
-  const [storesFoundByPosition, setStoresFoundByPosition] = useState<
-    LocationDTO[]
-  >([]);
-  const [selectedCoordinate, setSelectedCoordinate] =
-    useState<coordinates | null>(null);
-  const [totalStoresFoundBySearchRange, setTotalStoresFoundBySearchRange] =
-    useState<number | null>(null);
+  const [includeDeactiveStores, setIncludeDeactiveStores] = useState<boolean>(false);
+  const [selectedRange, setSelectedRange] = useState<number>(RANGE_OPTIONS[3].value,);
+  const [storesFoundByPosition, setStoresFoundByPosition] = useState<LocationDTO[]>([]);
+  const [selectedCoordinate, setSelectedCoordinate] = useState<coordinates | null>(null);
+  const [totalStoresFoundBySearchRange, setTotalStoresFoundBySearchRange] =useState<number | null>(null);
 
   // States related search bar
   const [searchedStore, setSearchedStore] = useState<LocationDTO | null>(null);
@@ -304,7 +272,6 @@ export default function Page() {
       const routes: RouteDTO[] = await listRoutes();
       setRoutes(routes);
       await fetchLocationTypes();
-      await fetchStores();
     };
 
     void loadScreenInformation();
@@ -326,17 +293,6 @@ export default function Page() {
     setStoreWithinRouteAssigned(storeWithinRouteAssigned);
   }, [routes, stores]);
 
-  const fetchStores = async () => {
-    const storeMap = new Map<string, LocationDTO>();
-    const allStores = await listStores();
-    setStores(allStores);
-
-    allStores.forEach((store) => {
-      const { id_location } = store;
-      storeMap.set(id_location, store);
-    });
-    setMapStores(storeMap);
-  };
 
   const fetchLocationTypes = async () => {
     const locationType:LocationTypeDTO[] = await retrieveLocationTypes();
@@ -527,10 +483,7 @@ export default function Page() {
   };
 
   const handleActivateStore = async (idLocation: string) => {
-    const activateStoreCommand =
-      di_container.resolve<ActivateStoreCommand>(ActivateStoreCommand);
     try {
-      await activateStoreCommand.execute(idLocation);
       setSelectedStore(null);
       // Update local state after successful activation
       setStores((prevStores) =>
@@ -546,12 +499,8 @@ export default function Page() {
   };
 
   const handleDesactivateStore = async (idLocation: string, deactivationType: LocationDeactivationType) => {
-    // Note (08-19-26): Legacy Supabase store command does not yet support a deactivation reason.
-    void deactivationType;
-    const desactivateStoreCommand =
-      di_container.resolve<DesactivateStoreCommand>(DesactivateStoreCommand);
     try {
-      await desactivateStoreCommand.execute(idLocation);
+      deactivateStores([ idLocation ], deactivationType)
       setSelectedStore(null);
       // Update local state after successful deactivation
       setStores((prevStores) =>
@@ -695,21 +644,26 @@ export default function Page() {
     }
 
     try {
-      const transactionsMap = await listRouteTransactionsByStoreWithinDateRange(
-        uniqueStoreIds,
+      await fetchRouteTransactions(
         startDate,
         endDate,
-      );
+        uniqueStoreIds,
+      )
+      // const transactionsMap = await listRouteTransactionsByStoreWithinDateRange(
+      //   uniqueStoreIds,
+      //   startDate,
+      //   endDate,
+      // );
 
-      setMapRouteTransactionByStore((previousMap) => {
-        const nextMap = new Map(previousMap);
+      // setMapRouteTransactionByStore((previousMap) => {
+      //   const nextMap = new Map(previousMap);
 
-        transactionsMap.forEach((transactions, storeId) => {
-          nextMap.set(storeId, transactions);
-        });
+      //   transactionsMap.forEach((transactions, storeId) => {
+      //     nextMap.set(storeId, transactions);
+      //   });
 
-        return nextMap;
-      });
+      //   return nextMap;
+      // });
     } catch (error: unknown) {
       console.error("Error retrieving route transactions: ", error);
     }

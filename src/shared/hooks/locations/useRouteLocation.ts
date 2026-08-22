@@ -92,5 +92,6 @@ export function useRouteLocation() {
     isLoading,
     error,
     fetchRouteTransactions,
+    setStores,
   };
 }
