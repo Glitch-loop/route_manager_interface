@@ -37,7 +37,6 @@ type StoreSearchBarProps = {
   onSelectRange: (range: number) => void;
   onHandleIncludeDesactiveStores: (checked: boolean) => void;
   onHoverAutocompleteOption: (store: LocationDTO | null) => void;
-  onStartSearchByAutocompletion: () => void;
   onHideSearchCoordResults: (hide: boolean) => void;
 };
 
@@ -53,7 +52,6 @@ export default function StoreSearchBar({
   onSelectRange,
   onHandleIncludeDesactiveStores,
   onHoverAutocompleteOption,
-  onStartSearchByAutocompletion = () => {},
   onHideSearchCoordResults,
 }: StoreSearchBarProps) {
   const [searchStoreBy, setSearchStoreBy] =

@@ -512,9 +512,6 @@ export default function Page() {
     setIncludeDeactiveStores(active);
   };
 
-  const handleStartSearchByAutocompletion = () => {
-    handleSearchedStore(null);
-  };
 
   const handleSelectedRange = (range: number) => {
     if (searchByCoords && selectedCoordinate !== null) {
@@ -619,7 +616,6 @@ export default function Page() {
                 includeDesactiveStores={includeDeactiveStores}
                 onHandleIncludeDesactiveStores={handleIncludeDeactiveStores}
                 onHoverAutocompleteOption={handleOverStoreAutoComplete}
-                onStartSearchByAutocompletion={handleStartSearchByAutocompletion}
                 onHideSearchCoordResults={handleCoordSearchResult}
               />
             </div>
