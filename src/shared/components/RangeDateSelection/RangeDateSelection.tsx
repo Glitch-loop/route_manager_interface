@@ -144,7 +144,8 @@ export default function RangeDateSelection({
 
   const handleFromDateChange = (date: Dayjs | null) => {
     if (date) {
-      setFromDate(date);
+      console.log(date.startOf('day'))
+      setFromDate(date.startOf('day'));
       setSelectedRange("");
       onRangeChange?.(date, toDate);
     }
@@ -152,7 +153,8 @@ export default function RangeDateSelection({
 
   const handleToDateChange = (date: Dayjs | null) => {
     if (date) {
-      setToDate(date);
+      console.log(date.endOf('day'))
+      setToDate(date.endOf('day'));
       setSelectedRange("");
       onRangeChange?.(fromDate, date);
     }
