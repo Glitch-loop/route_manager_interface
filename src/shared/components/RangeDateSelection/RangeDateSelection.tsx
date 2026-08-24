@@ -105,7 +105,7 @@ export default function RangeDateSelection({
         onRangeChange(calculatedRange.fromDate, calculatedRange.toDate);
       }
     }
-  }, [initialSelectedRange, initialDirection, onRangeChange]);
+  }, []);
 
   const handleRangeSelect = (range: RangeOption, dateDirection: Direction) => {
     setSelectedRange(range);
