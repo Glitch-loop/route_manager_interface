@@ -105,7 +105,7 @@ export default function RangeDateSelection({
         onRangeChange(calculatedRange.fromDate, calculatedRange.toDate);
       }
     }
-  }, []);
+  }, [initialSelectedRange, initialDirection, onRangeChange]);
 
   const handleRangeSelect = (range: RangeOption, dateDirection: Direction) => {
     setSelectedRange(range);
@@ -144,7 +144,6 @@ export default function RangeDateSelection({
 
   const handleFromDateChange = (date: Dayjs | null) => {
     if (date) {
-      console.log(date.startOf('day'))
       setFromDate(date.startOf('day'));
       setSelectedRange("");
       onRangeChange?.(date, toDate);
@@ -153,7 +152,6 @@ export default function RangeDateSelection({
 
   const handleToDateChange = (date: Dayjs | null) => {
     if (date) {
-      console.log(date.endOf('day'))
       setToDate(date.endOf('day'));
       setSelectedRange("");
       onRangeChange?.(fromDate, date);
