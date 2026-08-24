@@ -59,7 +59,6 @@ import { generateRandomColor } from "@/shared/utils/styles/utils";
 
 import { cast_string_to_date_hour_format } from "@/utils/dateUtils";
 import { ProductDTO } from "@/shared/dtos/ProductDTO";
-import { retrieveAllProducts } from "@/shared/actions/productActions";
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
 
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
@@ -89,7 +88,7 @@ function createMapHoverComponent(store: LocationDTO): React.ReactNode {
 
 function createMapClickComponent(
   store: LocationDTO,
-  storePositions: StorePositionInRouteType[],
+  storePositionsMap: Map<string, StorePositionInRouteType[]>,
   transactions: Map<string, RouteTransactionDTO[]>,
   productsMap: Map<string, ProductDTO>,
 ): React.ReactNode {
@@ -97,11 +96,8 @@ function createMapClickComponent(
   const storeName = location_name ?? "Nombre no disponible";
   const storeAddress = getAddressOfStore(store);
   const modifiedRouteDayIds: Set<string> = new Set(); // Replace with actual logic to get modified route day IDs
-  
-  
-
   const productForPrinting:ProductDTO[] = Array.from(productsMap.values())
-  .sort((a, b) => a.order_to_show - b.order_to_show);
+   .sort((a, b) => a.order_to_show - b.order_to_show);
 
   const storeTransactions = (transactions.get(id_location) ?? [])
     .slice()
@@ -131,6 +127,7 @@ function createMapClickComponent(
     return subtotal > 0 ? subtotal : transaction.cash_received;
   });
 
+  const storePositions:StorePositionInRouteType[]|undefined = storePositionsMap.get(id_location);
 
   return (
     <div className="p-3 min-w-[280px]">
@@ -148,57 +145,65 @@ function createMapClickComponent(
       )}
 
       {/* Route days table */}
-      {storePositions.length > 0 && (
-        <div className="mt-3 border-t pt-2">
-          <p className="text-xs font-semibold text-gray-700 mb-1">
-            Días de ruta:
-          </p>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-1 pr-2">Ruta</th>
-                <th className="text-left py-1 pr-2">Día</th>
-                <th className="text-center py-1">Pos.</th>
-                <th className="w-6"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {storePositions.map((pos) => {
-                const isBeingModified = modifiedRouteDayIds.has(pos.idRouteDay);
-                return (
-                  <tr
-                    key={pos.idRouteDayStore}
-                    className="border-b border-gray-100"
-                  >
-                    <td className="py-1 pr-2">
-                      {capitalizeFirstLetter(pos.routeName)}
-                    </td>
-                    <td className="py-1 pr-2">
-                      {capitalizeFirstLetter(pos.dayName)}
-                    </td>
-                    <td className="py-1 text-center">{pos.position}</td>
-                    <td className="py-1 text-center">
-                      {isBeingModified && (
-                        <Tooltip
-                          title="Día de ruta en modificación"
-                          arrow
-                          placement="top"
-                        >
-                          <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-500 rounded-full cursor-help">
-                            <span className="text-white text-xs font-bold">
-                              !
-                            </span>
-                          </span>
-                        </Tooltip>
-                      )}
-                    </td>
+      {
+        storePositions === undefined ?
+        <p className="text-sm text-gray-500 mt-1">
+          La información sobre las posiciones no esta disponible.
+        </p> :
+        <>
+          {storePositions.length > 0 && (
+            <div className="mt-3 border-t pt-2">
+              <p className="text-xs font-semibold text-gray-700 mb-1">
+                Días de ruta:
+              </p>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left py-1 pr-2">Ruta</th>
+                    <th className="text-left py-1 pr-2">Día</th>
+                    <th className="text-center py-1">Pos.</th>
+                    <th className="w-6"></th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                </thead>
+                <tbody>
+                  {storePositions.map((pos) => {
+                    const isBeingModified = modifiedRouteDayIds.has(pos.idRouteDay);
+                    return (
+                      <tr
+                        key={pos.idRouteDayStore}
+                        className="border-b border-gray-100"
+                      >
+                        <td className="py-1 pr-2">
+                          {capitalizeFirstLetter(pos.routeName)}
+                        </td>
+                        <td className="py-1 pr-2">
+                          {capitalizeFirstLetter(pos.dayName)}
+                        </td>
+                        <td className="py-1 text-center">{pos.position}</td>
+                        <td className="py-1 text-center">
+                          {isBeingModified && (
+                            <Tooltip
+                              title="Día de ruta en modificación"
+                              arrow
+                              placement="top"
+                            >
+                              <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-500 rounded-full cursor-help">
+                                <span className="text-white text-xs font-bold">
+                                  !
+                                </span>
+                              </span>
+                            </Tooltip>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
+      }
 
       {/* Table of sales */}
       {storeTransactions.length > 0 && (
@@ -274,17 +279,6 @@ function createMapClickComponent(
 
 export default function Page() {
 
-  // Custom hooks
-  const { routes, routesMap} = useRoute();
-  const { productsMap } = useProducts();
-  const {stores, mapStores, mapRouteTransactionByStore, fetchRouteTransactions} = useRouteLocation();
-  const { 
-    effectRouteDay, 
-    handleAddRouteDayEffects, 
-    handleRemoveRouteDayEffects,
-    handleUpdateRouteDayEffects
-  } = useRouteDayLocationMap();
-
   // Collapse menu states
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
   const [bottomPanelExpanded, setBottomPanelExpanded] = useState(false);
@@ -353,6 +347,26 @@ export default function Page() {
     },
   ]);
 
+
+  // Custom hooks
+  const { routes, routesMap} = useRoute();
+  const { productsMap } = useProducts();
+  const {stores, mapStores, mapRouteTransactionByStore, fetchRouteTransactions} = useRouteLocation();
+  const { 
+    effectRouteDay, 
+    handleAddRouteDayEffects, 
+    handleRemoveRouteDayEffects,
+    handleUpdateRouteDayEffects,
+    routeDayLocationMarkers
+  } = useRouteDayLocationMap({
+    routeDaysToDisplay: selectedRouteDay,
+    storeMap: mapStores,
+    routeTransactionByStoreMap: mapRouteTransactionByStore,
+    onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapHoverComponent(location); },
+    onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapClickComponent(location, mapStoresInRouteDay, mapRouteTransactionByStore, productsMap); }
+  }
+  );
+
   useEffect(() => {
     const mapStoresInRouteDay = createMapStoresInRouteDay(routes);
     setMapStoresInRouteDay(mapStoresInRouteDay);
@@ -389,9 +403,6 @@ export default function Page() {
         if (store !== undefined) {
           const { latitude, longitude, id_location } = store;
           const { id_route_day_store } = routeDayStore;
-          // Get all route days where this store belongs
-          const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
-
           // Calculate gradient color: first store is lightest, last store is darkest
           const gradientColor = baseColor;
           // TODO: Optimize gradient color calculation, user hardly understands what is happening.
@@ -409,7 +420,7 @@ export default function Page() {
             hoverComponent: createMapHoverComponent(store),
             clickComponent: createMapClickComponent(
               store, 
-              storePositions, 
+              mapStoresInRouteDay, 
               mapRouteTransactionByStore,
               productsMap
             ),
@@ -420,7 +431,6 @@ export default function Page() {
 
     if (hoveredStore !== null) {
       const { id_location, latitude, longitude } = hoveredStore;
-      const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
       const markerGroup: MarkerGroup = "searchbar-hovered-coord";
       markers.push({
         id_marker: generateRandomColor(), // Unique ID for hovered store marker
@@ -432,7 +442,7 @@ export default function Page() {
         hoverComponent: createMapHoverComponent(hoveredStore),
         clickComponent: createMapClickComponent(
           hoveredStore, 
-          storePositions, 
+          mapStoresInRouteDay, 
           mapRouteTransactionByStore,
           productsMap
         ),
@@ -441,7 +451,6 @@ export default function Page() {
 
     if (searchedStore !== null) {
       const { id_location, latitude, longitude } = searchedStore;
-      const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
       const markerGroup: MarkerGroup = "searchbar-searched-store";
       markers.push({
         id_marker: generateRandomColor(), // Unique ID for searched store marker
@@ -454,7 +463,7 @@ export default function Page() {
         
         clickComponent: createMapClickComponent(
           searchedStore,
-          storePositions,
+          mapStoresInRouteDay,
           mapRouteTransactionByStore,
           productsMap
         ),
@@ -464,7 +473,6 @@ export default function Page() {
     if (!hideCoordSearchResults) {
       storesFoundByPosition.forEach((store) => {
         const { id_location, latitude, longitude } = store;
-        const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
         const markerGroup: MarkerGroup = "store-found-by-coords";
         markers.push({
           id_marker: generateRandomColor(), // Unique ID for store found by coordinates
@@ -476,7 +484,7 @@ export default function Page() {
           hoverComponent: createMapHoverComponent(store),
           clickComponent: createMapClickComponent(
             store, 
-            storePositions, 
+            mapStoresInRouteDay, 
             mapRouteTransactionByStore,
             productsMap
           ),
@@ -835,7 +843,10 @@ export default function Page() {
             />
           </div>
           <MarkerMap
-            markers={mapMarkers}
+            markers={
+              // routeDayLocationMarkers
+              mapMarkers
+            }
             idMarkerSelected={selectedRouteDayStore}
             setIdMarkerSelected={handleUnselectMarker}
             onCoordSelected={handleCoordSelected}

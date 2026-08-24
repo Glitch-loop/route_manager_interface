@@ -1,21 +1,147 @@
-import { useState } from "react";
+// Libraries
+import React, { useState, useMemo } from "react";
 
+// DTOs
+import { RouteDayDTO } from "@/shared/dtos/RouteDayDTO";
+import { LocationDTO } from "@/shared/dtos/LocationDTO";
+import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
+
+// Interfaces
 import { IMapMarker } from "@/interfaces/interfaces";
 
-import { RouteDayEffect, RouteDayFilters } from "@/shared/hooks/route-day-location-map/types/types";
+// Types
+import { routeDayFiltersType } from "@/app/analytics/types/types";
+import { SellingGoalType } from "@/shared/components/SellingGoal/types/types";
+import { ItemsPickerType } from "@/shared/components/ItemsPicker/types/types";
+import { 
+  RouteDayEffect, 
+  RouteDayFilters 
+} from "@/shared/hooks/route-day-location-map/types/types";
 
+// Enums
+import DAY_OPERATIONS from "@/core/enums/DayOperations";
+
+// Utils
 import { generateRandomColor } from "@/shared/utils/styles/utils";
+import { calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/utils/transactions/utils";
 
-export function useRouteDayLocationMap() {
+/*
+  TODO: When applying this effect the user experienced difficulties at moment of identify a particular store.
+  It got worse if there was several route days each one with its own colors; All of them started in white 
+  color and finnished in black.
+*/ 
+// TODO: At moment of displaying the gradient color, the user was not able to differentiate one 
+// function calculateGradientForMarker(baseColor: string, totalItemInSet: number, itemPositionInSet: number): string {
+//   // Calculate gradient color: first store is lightest, last store is darkest
+//   return totalItemInSet > 1 ? 
+//     getGradientColor(baseColor, totalItemInSet - 1 - itemPositionInSet, totalItemInSet)
+//     : baseColor;
+// }
+
+type RouteDayLocationMap = {
+  routeDaysToDisplay: RouteDayDTO[];
+  storeMap: Map<string, LocationDTO>;
+  routeTransactionByStoreMap: Map<string, RouteTransactionDTO[]>;
+  onHoverMarkerComponent: (location: LocationDTO) => React.ReactNode;
+  onClickMarkerComponent: (location: LocationDTO) => React.ReactNode;
+}
+
+export function useRouteDayLocationMap({
+  routeDaysToDisplay,
+  storeMap,
+  routeTransactionByStoreMap,
+  onHoverMarkerComponent,
+  onClickMarkerComponent
+}: RouteDayLocationMap) {
+  
   const [
     effectRouteDay, 
     setEffectRouteDay
   ] = useState<Map<string, RouteDayEffect>>(new Map());
 
-  const [ 
-    filterRouteDay,
-    setFilterRouteDay
-  ] = useState<Map<string, RouteDayFilters>>(new Map());
+  const [
+    routeDayFilters, 
+    setRouteDaysFilters
+  ] = useState<RouteDayFilters>({ sellingGoal: null, pickerProduct: null });
+
+  const routeDayLocationMarkers = useMemo<IMapMarker[]>(() => {
+    const markers: IMapMarker[] = [];
+    routeDaysToDisplay.forEach((routeDay: RouteDayDTO) => {
+      const { id_route_day, locations } = routeDay;
+      
+      // Apply effects
+      const effect = effectRouteDay.get(id_route_day);
+      if (!effect?.showStores) return; // Skip if showStores is false
+      const baseColor = effect.assignedColor;
+
+      // Create markers
+      locations.forEach((routeDayLocation) => {
+        const location = storeMap.get(routeDayLocation.id_location);
+        if (location !== undefined) {
+          const gradientColor = baseColor;
+          const { id_route_day_store } = routeDayLocation;
+          const { latitude, longitude, id_location } = location;
+
+          markers.push({
+            id_marker: id_route_day_store,
+            id_item: id_location,
+            id_group: id_route_day,
+            color_item: gradientColor,
+            latitude: latitude,
+            longitude: longitude,
+            hoverComponent: onHoverMarkerComponent(location),
+            clickComponent: onClickMarkerComponent(location),
+          });
+        }
+      });
+    });
+
+    // Apply filters
+    let filteredMarkers = [...markers];
+    const { sellingGoal } = routeDayFilters;
+    if (sellingGoal !== null) {
+      const { target, show } = sellingGoal;
+      if (target !== null && show !== "show_all") {
+        filteredMarkers = filteredMarkers.filter((marker) => {
+          const total = calculateTotalStoreOfTransactionDescriptionConcept(
+            marker.id_item,
+            DAY_OPERATIONS.sales,
+            routeTransactionByStoreMap,
+            false
+          )
+          return show === "show_only_meet" ? total >= target : total < target;
+        });
+      }
+    }
+
+    // if (routeDayFilter.pickerProduct !== null) {
+    //   const { selectedItems, show } = routeDayFilter.pickerProduct;
+    //   if (selectedItems.length > 0) {
+    //     const selectedSet = new Set(selectedItems);
+    //     filteredMarkers = filteredMarkers.filter((marker) => {
+    //       const transactions = mapRouteTransactionByStore.get(marker.id_item) ?? [];
+    //       const hasProduct = transactions.some((transaction) =>
+    //         transaction.transaction_description.some(
+    //           (desc) =>
+    //             desc.id_transaction_operation_type === DAY_OPERATIONS.sales &&
+    //             selectedSet.has(desc.id_product)
+    //         )
+    //       );
+    //       return show === "show_only_meet" ? hasProduct : !hasProduct;
+    //     });
+    //   }
+    // }
+
+    return filteredMarkers;
+  }, [
+    routeDaysToDisplay,
+    storeMap,
+    routeTransactionByStoreMap,
+    onHoverMarkerComponent,
+    onClickMarkerComponent,
+    routeDayFilters,
+    effectRouteDay
+  ]);
 
   /**
    * This function add a new effect to a route day.
@@ -26,7 +152,7 @@ export function useRouteDayLocationMap() {
    * @param routeDayId 
    * @param showLocationEffect
    * @param initialColorEffect 
-   */
+  */
   const handleAddRouteDayEffects = (
     routeDayId: string,
     routeDayEffect: RouteDayEffect = {
@@ -76,25 +202,21 @@ export function useRouteDayLocationMap() {
   }
 
   const handleAddRouteDayFilters = (
-    routeDayId: string,
-    routeDayFilters: RouteDayFilters = {
-      sellingGoal: null,
-      pickerProduct: null
-    }
+    config: SellingGoalType | ItemsPickerType
   ) => {
-    setFilterRouteDay((prev) => {
-      const newMap = new Map(prev);
-      newMap.set(routeDayId, { ...routeDayFilters });
-      return newMap;
-    });
+    if ('target' in config) {
+      setRouteDaysFilters({...routeDayFilters, sellingGoal: {...config}});
+    } else {
+      setRouteDaysFilters({...routeDayFilters, pickerProduct: {...config}});
+    }
   }
 
-  const handleRemoveRouteDayFilter = (routeDayId: string) => {
-    setFilterRouteDay((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(routeDayId);
-      return newMap;
-    });
+  const handleResetRouteDayFilter = (filterToReset: routeDayFiltersType) => {
+    if (filterToReset === "sellingGoal") {
+      setRouteDaysFilters({...routeDayFilters, sellingGoal: null});
+    } else if (filterToReset === "pickItemsFilter") {
+      setRouteDaysFilters({...routeDayFilters, pickerProduct: null});
+    }
   }
 
   return {
@@ -102,9 +224,9 @@ export function useRouteDayLocationMap() {
     handleAddRouteDayEffects,
     handleRemoveRouteDayEffects,
     handleUpdateRouteDayEffects,
-    filterRouteDay,
+    routeDayFilters,
     handleAddRouteDayFilters,
-    handleRemoveRouteDayFilter,
-
+    handleResetRouteDayFilter,
+    routeDayLocationMarkers
   };
 }

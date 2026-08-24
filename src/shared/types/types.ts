@@ -1,5 +1,3 @@
-
-
 export type StorePositionInRouteType = {
     idRoute: string;
     routeName: string;
