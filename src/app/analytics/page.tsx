@@ -308,7 +308,6 @@ export default function Page() {
   >(null);
 
   // State for the map
-  const [hoveredStore, setHoveredStore] = useState<LocationDTO | null>(null);
   const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<
     string | null
   >(null);
@@ -318,8 +317,6 @@ export default function Page() {
   const [selectedRange, setSelectedRange] = useState<number>(
     RANGE_OPTIONS[3].value,
   );
-  const [selectedCoordinate, setSelectedCoordinate] =
-    useState<coordinates | null>(null);
   const [totalStoresFoundBySearchRange, setTotalStoresFoundBySearchRange] =
     useState<number | null>(null);
 
@@ -361,14 +358,18 @@ export default function Page() {
   );
   const {
     searchByCoords,
+    selectedCoordinate,
+    hideSearchByCoordsResult,
     handleStoresFoundByCoords,
     handleHoverLocation,
-    handleHideSearchingByCoords,
+    handleActivateSearchingByCoords,
     handleSearchedStore,
     handleSelectCoordinates,
+    handleHideSearchingByCoordsResult,
     markers
   } = useMarker({
     searchingByCoords: false,
+    hideSearchingByCoordsResult: false,
     existingMarkers: routeDayLocationMarkers,
     onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapHoverComponent(location); },
     onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapClickComponent(location, mapStoresInRouteDay, mapRouteTransactionByStore, productsMap); }
@@ -491,7 +492,7 @@ export default function Page() {
 
   // Handlers for store search bar
   const handlerSwitchSearchByCoords = (active: boolean) => {
-    handleHideSearchingByCoords();
+    handleActivateSearchingByCoords();
 
     if (!active) {
       handleStoresFoundByCoords([]);
@@ -516,7 +517,7 @@ export default function Page() {
   };
 
   const handleSelectedRange = (range: number) => {
-    if (searchByCoords && selectedCoordinate) {
+    if (searchByCoords && selectedCoordinate !== null) {
       const foundStores = findStoresAround(selectedCoordinate, stores, range);
       setTotalStoresFoundBySearchRange(foundStores.length);
       handleStoresFoundByCoords(foundStores);
@@ -526,7 +527,7 @@ export default function Page() {
   };
 
   const handleCoordSearchResult = (hide: boolean) => {
-    handleHideSearchingByCoords();
+    handleHideSearchingByCoordsResult();
   };
 
   // Transaction handlers
@@ -673,11 +674,7 @@ export default function Page() {
             />
           </div>
           <MarkerMap
-            markers={
-              // routeDayLocationMarkers
-              // mapMarkers
-              markers
-            }
+            markers={markers}
             idMarkerSelected={selectedRouteDayStore}
             setIdMarkerSelected={handleUnselectMarker}
             onCoordSelected={handleCoordSelected}

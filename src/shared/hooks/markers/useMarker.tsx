@@ -9,17 +9,19 @@ import { generateUUIDv4 } from "@/utils/generalUtils";
 import { coordinates } from "@/shared/components/MarkerMap/types/types";
 
 type MarkerHook = {
-  searchingByCoords: boolean;
   existingMarkers: IMapMarker[];
   onHoverMarkerComponent: (location: LocationDTO) => React.ReactNode;
   onClickMarkerComponent: (location: LocationDTO) => React.ReactNode;
+  searchingByCoords: boolean;
+  hideSearchingByCoordsResult: boolean;
 }
 
 export function  useMarker({
-  searchingByCoords,
   existingMarkers,
   onHoverMarkerComponent,
-  onClickMarkerComponent
+  onClickMarkerComponent,
+  searchingByCoords,
+  hideSearchingByCoordsResult,
 }: MarkerHook) {
   const [selectedCoordinate, setSelectedCoordinate] = useState<coordinates|null>(null);
 
@@ -27,6 +29,7 @@ export function  useMarker({
   const [searchedStore, setSearchedStore] = useState<LocationDTO | null>(null);
   
   const [searchByCoords, setSearchingByCoords] = useState<boolean>(searchingByCoords);
+  const [hideSearchByCoordsResult, setHideSearchByCoordsResult] = useState<boolean>(hideSearchingByCoordsResult);
   const [locationFoundByCoords, setSLocationFoundByCoords] = useState<LocationDTO[]>([]);
 
 
@@ -80,7 +83,7 @@ export function  useMarker({
      * They are those markers that don't need to be highlighted because user actions,
      * if they are already printed, then it doesn't need to be changed in another color.
     */
-    if(searchByCoords) {
+    if(searchByCoords && !hideSearchByCoordsResult) {
       locationFoundByCoords.forEach((locationFound: LocationDTO) => {
         const { id_location, latitude, longitude } = locationFound;
         const markerGroup: MarkerGroup = "store-found-by-coords";
@@ -101,7 +104,7 @@ export function  useMarker({
     }
 
     if (selectedCoordinate) {
-      if (searchByCoords) {
+      if (searchByCoords && !hideSearchByCoordsResult) {
         const { Lat, Lng } = selectedCoordinate;
         const markerGroup: MarkerGroup = "pivot-coord-search";
         markers.push({
@@ -125,6 +128,7 @@ export function  useMarker({
     onClickMarkerComponent,
     hoveredStore,
     searchedStore,
+    hideSearchByCoordsResult,
     searchByCoords,
     selectedCoordinate,
   ]);
@@ -141,7 +145,11 @@ export function  useMarker({
     setSLocationFoundByCoords(storesFound);
   }
 
-  const handleHideSearchingByCoords = () => {
+  const handleHideSearchingByCoordsResult = () => {
+    setHideSearchByCoordsResult(!hideSearchByCoordsResult);
+  }
+
+  const handleActivateSearchingByCoords = () => {
     setSearchingByCoords(!searchByCoords)
   } 
 
@@ -151,11 +159,14 @@ export function  useMarker({
 
   return {
     searchByCoords,
+    hideSearchByCoordsResult,
+    selectedCoordinate,
     handleStoresFoundByCoords,
-    handleHideSearchingByCoords,
+    handleActivateSearchingByCoords,
     handleHoverLocation,
     handleSearchedStore,
     handleSelectCoordinates,
+    handleHideSearchingByCoordsResult,
     markers
   }
 }
