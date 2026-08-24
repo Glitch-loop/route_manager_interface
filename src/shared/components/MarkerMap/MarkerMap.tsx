@@ -69,7 +69,6 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
   }, []);
 
   const handleMarkerClick = (marker: IMapMarker) => {
-
     // Close hover info window
     setHoveredMarker(null);
     if (hoverTimerRef.current) {
@@ -88,9 +87,6 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
       map.moveCamera({ center: { lat, lng } });
     }
 
-    // Notify parent with coordinates
-    console.log("Store selected")
-    
     onCoordSelected(marker);
   };
 
@@ -210,6 +206,10 @@ export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelect
     } else if ("id_marker" in clickCoordinates) {
       onCoordSelected(clickCoordinates);
     }
+  }
+
+  const handleDoubleClick = () => {
+    console.log("Db click")
   }
 
   return (

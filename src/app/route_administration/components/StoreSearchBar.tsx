@@ -2,15 +2,15 @@
 import React, { useState } from "react";
 
 // Components
-import { 
-  Switch, 
-  TextField, 
-  ToggleButton, 
-  ToggleButtonGroup, 
-  FormControlLabel, 
-  Checkbox, 
-  Divider, 
-  Autocomplete 
+import {
+  Switch,
+  TextField,
+  ToggleButton,
+  ToggleButtonGroup,
+  FormControlLabel,
+  Checkbox,
+  Divider,
+  Autocomplete,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 
@@ -23,107 +23,138 @@ import { LocationDTO } from "@/shared/dtos/LocationDTO";
 // Utils
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 
+type searchLocationBy = "name" | "address";
 
 type StoreSearchBarProps = {
   stores: LocationDTO[];
   searchByCoords: boolean;
   includeDesactiveStores: boolean;
-	rangeOptions: RangeOption[];
-	selectedRange: number;
-	totalStoresFoundBySearchRange: number|null;
+  rangeOptions: RangeOption[];
+  selectedRange: number;
+  totalStoresFoundBySearchRange: number | null;
   onSelectStore: (store: LocationDTO | null) => void;
   onSwitchSearchByCoords: (active: boolean) => void;
   onSelectRange: (range: number) => void;
   onHandleIncludeDesactiveStores: (checked: boolean) => void;
-	onHoverAutocompleteOption: (store: LocationDTO|null) => void;
-	onStartSearchByAutocompletion: () => void;
-	onHideSearchCoordResults: (hide: boolean) => void;
+  onHoverAutocompleteOption: (store: LocationDTO | null) => void;
+  onStartSearchByAutocompletion: () => void;
+  onHideSearchCoordResults: (hide: boolean) => void;
 };
 
 export default function StoreSearchBar({
   stores,
   searchByCoords,
   includeDesactiveStores,
-	rangeOptions,
-	selectedRange,
-	totalStoresFoundBySearchRange,
+  rangeOptions,
+  selectedRange,
+  totalStoresFoundBySearchRange,
   onSelectStore,
   onSwitchSearchByCoords,
   onSelectRange,
   onHandleIncludeDesactiveStores,
-	onHoverAutocompleteOption,
-	onStartSearchByAutocompletion = () => {},
-	onHideSearchCoordResults,
+  onHoverAutocompleteOption,
+  onStartSearchByAutocompletion = () => {},
+  onHideSearchCoordResults,
 }: StoreSearchBarProps) {
-	const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">("address");
-	const [inputValue, setInputValue] = useState<string>('');
-	const [hideSearchCoordResults, setHideSearchCoordResults] = useState<boolean>(false);
-	// const [selectedRange, setSelectedRange] = useState<number>(rangeOptions[0] ? rangeOptions[0].value : 100);
+  const [searchStoreBy, setSearchStoreBy] =
+    useState<searchLocationBy>("address");
+  const [inputValue, setInputValue] = useState<string>("");
+  const [hideSearchCoordResults, setHideSearchCoordResults] =
+    useState<boolean>(false);
+  // const [selectedRange, setSelectedRange] = useState<number>(rangeOptions[0] ? rangeOptions[0].value : 100);
 
+  const handleOnChangeSearchBy = (searchBy: searchLocationBy) => {
+    setSearchStoreBy(searchBy);
+  };
 
-	const handleSelectStore = (store: LocationDTO) => {
-			// onAddStore(idRouteDay, idStore);
-			onSelectStore(store);
-			setInputValue("");
-			onHoverAutocompleteOption(null); // Reset hover state after adding a store
-	}
+  const handleSelectStore = (store: LocationDTO) => {
+    // onAddStore(idRouteDay, idStore);
+    onSelectStore(store);
+    if (searchStoreBy === "name") {
+      setInputValue(store.location_name);
+    } else {
+      setInputValue(getAddressOfStore(store));
+    }
+    onHoverAutocompleteOption(null); // Reset hover state after adding a store
+  };
 
-	const handleSelectRange = (range: number) => {
-		// setSelectedRange(range);
-		onSelectRange(range);
-	}
+  const handleSelectRange = (range: number) => {
+    // setSelectedRange(range);
+    onSelectRange(range);
+  };
 
-	const handleHideSearchCoordResults = (hide: boolean) => {
-		setHideSearchCoordResults(hide);
-		onHideSearchCoordResults(hide);
-	}
+  const handleHideSearchCoordResults = (hide: boolean) => {
+    setHideSearchCoordResults(hide);
+    onHideSearchCoordResults(hide);
+  };
+
+  const handleOnClearSearchBy = () => {
+    onSelectStore(null);
+    setInputValue("");
+  }
 
   return (
     <div className="flex flex-row items-center w-full bg-[#f5f5f5] border-2 rounded-md p-2 gap-4">
       {/* Search type toggle */}
       <div className="flex flex-row basis-2/4 items-center gap-2">
         <div className="flex basis-2/5">
-					<ToggleButtonGroup
-						value={searchStoreBy}
-						exclusive
-						onChange={(_, val) => val && setSearchStoreBy(val)}
-						size="small"
-					>
-						<ToggleButton value="name">Nombre</ToggleButton>
-						<ToggleButton value="address">Dirección</ToggleButton>
-					</ToggleButtonGroup>
-				</div>
+          <ToggleButtonGroup
+            value={searchStoreBy}
+            exclusive
+            onChange={(_, val) => val && handleOnChangeSearchBy(val)}
+            size="small"
+          >
+            <ToggleButton value="name">Nombre</ToggleButton>
+            <ToggleButton value="address">Dirección</ToggleButton>
+          </ToggleButtonGroup>
+        </div>
         <div className="flex flex-row items-center gap-1 w-full">
           <SearchIcon />
-            <Autocomplete
-                options={stores.map((item) => { return { id: item.id_location, ...item }})}
-                className="w-full"
-                getOptionKey={(option) => option.id_location}
-                getOptionLabel={(option) => searchStoreBy === "name" ? option.location_name ?? "Nombre no disponible" : getAddressOfStore(option)}
-                inputValue={inputValue}
-								onChange={(event, newValue) => { 
-                    if (newValue) {
-                        handleSelectStore(newValue);
-                    }
-                }}
+          <Autocomplete
+            options={stores.map((item) => {
+              return { id: item.id_location, ...item };
+            })}
+            className="w-full"
+            getOptionKey={(option) => option.id_location}
+            getOptionLabel={(option) =>
+              searchStoreBy === "name"
+                ? (option.location_name ?? "Nombre no disponible")
+                : getAddressOfStore(option)
+            }
+            inputValue={inputValue}
+            onChange={(event, newValue, reason) => {
+              if (reason === "clear") {
+                handleOnClearSearchBy();
+              } else {
+                if (newValue) {
+                  console.log(event.cancelable)
+                  handleSelectStore(newValue);
+                }
+              }
+            }}
             renderOption={(props, option) => (
-                <li
+              <li
                 {...props}
                 key={option.id_location}
                 onMouseEnter={() => onHoverAutocompleteOption(option)} // Detect hover
                 onMouseLeave={() => onHoverAutocompleteOption(null)} // Detect hover
-                >
-									<div className="flex flex-col">
-											<span>{option.location_name ?? "Nombre no disponible"}</span>
-											<span className="text-sm">{getAddressOfStore(option)}</span>
-									</div>
-                </li>
+              >
+                <div className="flex flex-col">
+                  <span>{option.location_name ?? "Nombre no disponible"}</span>
+                  <span className="text-sm">{getAddressOfStore(option)}</span>
+                </div>
+              </li>
             )}
-
-            renderInput={(params) => <TextField 
-                onChange={(event) => { setInputValue(event.target.value); }}
-                {...params} label="Add Item" />}
-            />
+            renderInput={(params) => (
+              <TextField
+                onChange={(event) => {
+                  setInputValue(event.target.value);
+                }}
+                {...params}
+                label="Buscar"
+              />
+            )}
+          />
         </div>
       </div>
       <Divider orientation="vertical" flexItem sx={{ mx: 2 }} />
@@ -133,7 +164,7 @@ export default function StoreSearchBar({
           <span>Buscar por coordenadas</span>
           <Switch
             checked={searchByCoords}
-            onChange={e => onSwitchSearchByCoords(e.target.checked)}
+            onChange={(e) => onSwitchSearchByCoords(e.target.checked)}
             color="primary"
           />
         </div>
@@ -141,11 +172,15 @@ export default function StoreSearchBar({
           <span>Ocultar busqueda: </span>
           <Switch
             checked={hideSearchCoordResults}
-            onChange={e => handleHideSearchCoordResults(e.target.checked)}
+            onChange={(e) => handleHideSearchCoordResults(e.target.checked)}
             color="primary"
           />
         </div>
-				{totalStoresFoundBySearchRange !== null && <span className="text-base font-semibold">Resultado: {totalStoresFoundBySearchRange}</span>}
+        {totalStoresFoundBySearchRange !== null && (
+          <span className="text-base font-semibold">
+            Resultado: {totalStoresFoundBySearchRange}
+          </span>
+        )}
         <span className="text-base italic">Rango de búsqueda</span>
         <ToggleButtonGroup
           value={selectedRange}
@@ -153,8 +188,10 @@ export default function StoreSearchBar({
           onChange={(_, val) => val && handleSelectRange(val)}
           size="small"
         >
-          {rangeOptions.map(opt => (
-            <ToggleButton key={opt.value} value={opt.value}>{opt.label}</ToggleButton>
+          {rangeOptions.map((opt) => (
+            <ToggleButton key={opt.value} value={opt.value}>
+              {opt.label}
+            </ToggleButton>
           ))}
         </ToggleButtonGroup>
       </div>
@@ -165,10 +202,16 @@ export default function StoreSearchBar({
           control={
             <Checkbox
               checked={includeDesactiveStores}
-              onChange={e => onHandleIncludeDesactiveStores(e.target.checked)}
+              onChange={(e) => onHandleIncludeDesactiveStores(e.target.checked)}
             />
           }
-          label={<span>Incluir tiendas desactivadas<br />en la búsqueda</span>}
+          label={
+            <span>
+              Incluir tiendas desactivadas
+              <br />
+              en la búsqueda
+            </span>
+          }
         />
       </div>
     </div>
