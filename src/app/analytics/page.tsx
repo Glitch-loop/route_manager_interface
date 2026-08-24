@@ -319,13 +319,6 @@ export default function Page() {
   );
   const [totalStoresFoundBySearchRange, setTotalStoresFoundBySearchRange] =
     useState<number | null>(null);
-
-  // States related to filters and effects
-  const [
-    routeDayFilter, 
-    setRouteDaysFilter
-  ] = useState<RouteDayFilters>({ sellingGoal: null, pickerProduct: null });
-
  
   const [vendors] = useState<UserDTO[]>([
     {
@@ -344,9 +337,11 @@ export default function Page() {
   const {stores, mapStores, mapRouteTransactionByStore, fetchRouteTransactions} = useRouteLocation();
   const { 
     effectRouteDay, 
+    routeDayFilters,
     handleAddRouteDayEffects, 
     handleRemoveRouteDayEffects,
     handleUpdateRouteDayEffects,
+    handleSetRouteDayFilters,
     routeDayLocationMarkers
   } = useRouteDayLocationMap({
     routeDaysToDisplay: selectedRouteDay,
@@ -359,7 +354,6 @@ export default function Page() {
   const {
     searchByCoords,
     selectedCoordinate,
-    hideSearchByCoordsResult,
     handleStoresFoundByCoords,
     handleHoverLocation,
     handleActivateSearchingByCoords,
@@ -731,7 +725,7 @@ export default function Page() {
                 routesMap={routesMap}
                 routeTransactionsMap={mapRouteTransactionByStore}
                 routeDayEffectsMap={effectRouteDay}
-                routeDayFilters={routeDayFilter}
+                routeDayFilters={routeDayFilters}
                 pickerItems={
                   (Array.from(productsMap.values())
                     .slice()
@@ -746,7 +740,7 @@ export default function Page() {
                 onRequireRouteTransactions={handleRetrieveRouteTransactions}
                 onCloseRouteDay={handleCloseRouteDay}
                 onApplyRouteEffects={handleApplyRouteEffects}
-                onApplyFilter={setRouteDaysFilter}
+                onApplyFilter={handleSetRouteDayFilters}
                 onGenerateReport={handleGeneratePDF}
               />
             </div>

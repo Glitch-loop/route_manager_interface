@@ -11,8 +11,8 @@ import { IMapMarker } from "@/interfaces/interfaces";
 
 // Types
 import { routeDayFiltersType } from "@/app/analytics/types/types";
-import { SellingGoalType } from "@/shared/components/SellingGoal/types/types";
-import { ItemsPickerType } from "@/shared/components/ItemsPicker/types/types";
+// import { SellingGoalType } from "@/shared/components/SellingGoal/types/types";
+// import { ItemsPickerType } from "@/shared/components/ItemsPicker/types/types";
 import { 
   RouteDayEffect, 
   RouteDayFilters 
@@ -201,14 +201,10 @@ export function useRouteDayLocationMap({
     }
   }
 
-  const handleAddRouteDayFilters = (
-    config: SellingGoalType | ItemsPickerType
+  const handleSetRouteDayFilters = (
+    setFilters: RouteDayFilters
   ) => {
-    if ('target' in config) {
-      setRouteDaysFilters({...routeDayFilters, sellingGoal: {...config}});
-    } else {
-      setRouteDaysFilters({...routeDayFilters, pickerProduct: {...config}});
-    }
+    setRouteDaysFilters(setFilters);
   }
 
   const handleResetRouteDayFilter = (filterToReset: routeDayFiltersType) => {
@@ -225,7 +221,7 @@ export function useRouteDayLocationMap({
     handleRemoveRouteDayEffects,
     handleUpdateRouteDayEffects,
     routeDayFilters,
-    handleAddRouteDayFilters,
+    handleSetRouteDayFilters,
     handleResetRouteDayFilter,
     routeDayLocationMarkers
   };
