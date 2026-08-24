@@ -68,6 +68,7 @@ import { processConsolidatedReportData } from "@/app/analytics/reports/consoldat
 import { ConsolidatedRouteDayPDFDocument } from "@/app/analytics/reports/consoldate_historic_report/ConsolidatedRouteDayPDFDocument";
 import { useRouteDayLocationMap } from "@/shared/hooks/route-day-location-map/useRouteDayLocationMap";
 import { useProducts } from "@/shared/hooks/products/useProducts";
+import { useMarker } from "@/shared/hooks/markers/useMarker";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -311,7 +312,7 @@ export default function Page() {
   const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<
     string | null
   >(null);
-  const [searchByCoords, setSearchByCoords] = useState<boolean>(false);
+  // const [searchByCoords, setSearchByCoords] = useState<boolean>(false);
   const [includeDeactiveStores, setIncludeDeactiveStores] =
     useState<boolean>(false);
   const [selectedRange, setSelectedRange] = useState<number>(
@@ -366,6 +367,20 @@ export default function Page() {
     onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapClickComponent(location, mapStoresInRouteDay, mapRouteTransactionByStore, productsMap); }
   }
   );
+  const {
+    searchByCoords,
+    handleStoresFoundByCoords,
+    handleHoverLocation,
+    handleHideSearchingByCoords,
+    handleSearchedStore,
+    handleSelectCoordinates,
+    markers
+  } = useMarker({
+    searchingByCoords: false,
+    existingMarkers: routeDayLocationMarkers,
+    onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapHoverComponent(location); },
+    onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapClickComponent(location, mapStoresInRouteDay, mapRouteTransactionByStore, productsMap); }
+  });
 
   useEffect(() => {
     const mapStoresInRouteDay = createMapStoresInRouteDay(routes);
@@ -609,7 +624,7 @@ export default function Page() {
   };
 
   const handleOverStoreAutoComplete = (store: LocationDTO | null) => {
-    setHoveredStore(store);
+    handleHoverLocation(store);
   };
 
   const handleToggleBottomPanel = () => {
@@ -661,11 +676,11 @@ export default function Page() {
 
   // Handlers for store search bar
   const handlerSwitchSearchByCoords = (active: boolean) => {
-    setSearchByCoords(active);
+    handleHideSearchingByCoords();
 
     if (!active) {
-      setStoresFoundByPosition([]);
-      setSelectedCoordinate(null);
+      handleStoresFoundByCoords([]);
+      handleSelectCoordinates(null);
       setTotalStoresFoundBySearchRange(null);
       setTotalStoresFoundBySearchRange(0);
     } else {
@@ -674,7 +689,7 @@ export default function Page() {
   };
 
   const handleSelectStore = (store: LocationDTO | null) => {
-    setSearchedStore(store);
+    handleSearchedStore(store);
   };
 
   const handleIncludeDeactiveStores = (active: boolean) => {
@@ -682,21 +697,21 @@ export default function Page() {
   };
 
   const handleStartSearchByAutocompletion = () => {
-    setSearchedStore(null);
+    handleSearchedStore(null);
   };
 
   const handleSelectedRange = (range: number) => {
     if (searchByCoords && selectedCoordinate) {
       const foundStores = findStoresAround(selectedCoordinate, stores, range);
       setTotalStoresFoundBySearchRange(foundStores.length);
-      setStoresFoundByPosition(foundStores);
+      handleStoresFoundByCoords(foundStores);
     }
 
     setSelectedRange(range);
   };
 
   const handleCoordSearchResult = (hide: boolean) => {
-    setHideCoordSearchResults(hide);
+    handleHideSearchingByCoords();
   };
 
   // Transaction handlers
@@ -746,17 +761,17 @@ export default function Page() {
           stores,
           selectedRange,
         );
-        setStoresFoundByPosition(foundStores);
+        handleStoresFoundByCoords(foundStores);
         setTotalStoresFoundBySearchRange(foundStores.length);
       }
-      setSelectedCoordinate(selectedCoords);
+      handleSelectCoordinates(selectedCoords);
     } else {
       // IMarker object
       const { id_group, id_marker } = selectedCoords as IMapMarker;
 
       if (id_group === "pivot-coord-search") {
-        setStoresFoundByPosition([]);
-        setSelectedCoordinate(null);
+        handleStoresFoundByCoords([]);
+        handleSelectCoordinates(null);
         setTotalStoresFoundBySearchRange(0);
       } else {
 
@@ -845,7 +860,8 @@ export default function Page() {
           <MarkerMap
             markers={
               // routeDayLocationMarkers
-              mapMarkers
+              // mapMarkers
+              markers
             }
             idMarkerSelected={selectedRouteDayStore}
             setIdMarkerSelected={handleUnselectMarker}
