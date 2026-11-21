@@ -64,7 +64,7 @@ import DAY_OPERATIONS from "@/core/enums/DayOperations";
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
 import { useRoute } from "@/shared/hooks/routes/useRoute";
 import { calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/utils/transactions/utils";
-import { processConsolidatedReportData } from "@/app/analytics/reports/consoldate_historic_report/consolidatedReportHelpers";
+import { processConsolidatedCSVData, processConsolidatedReportData } from "@/app/analytics/reports/consoldate_historic_report/consolidatedReportHelpers";
 import { ConsolidatedRouteDayPDFDocument } from "@/app/analytics/reports/consoldate_historic_report/ConsolidatedRouteDayPDFDocument";
 import { useRouteDayLocationMap } from "@/shared/hooks/route-day-location-map/useRouteDayLocationMap";
 import { useProducts } from "@/shared/hooks/products/useProducts";
@@ -452,7 +452,47 @@ export default function Page() {
     setBottomPanelExpanded((prev) => !prev);
   };
 
-  const handleCopyCSV = (idRouteDayStore: string) => { }
+  const hanldeGenerateCSV = async (idRouteDay: string) => { 
+    const routeDay = selectedRouteDay.find((selectedRouteDay) => { return selectedRouteDay.id_route_day === idRouteDay});
+    
+    if (routeDay === undefined) {
+      console.log(`There is not a route day with id ${idRouteDay}`);
+      return;
+    }
+    
+    const reportData = processConsolidatedCSVData(
+      routeDay,
+      mapStores,
+      mapRouteTransactionByStore,
+      routesMap,
+      productsMap,
+      DAY_OPERATIONS.sales
+    );
+
+// 1. Join array of CSV rows into a single string
+  const csvContent = reportData.join('\n');
+
+  // 2. Copy to clipboard with secure context check
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(csvContent);
+      console.log('CSV data copied to clipboard successfully!');
+    } else {
+      // Fallback for non-HTTPS or older environments
+      const textArea = document.createElement('textarea');
+      textArea.value = csvContent;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      textArea.remove();
+      console.log('CSV data copied using fallback method.');
+    }
+  } catch (err) {
+    console.error('Failed to copy CSV data:', err);
+  }
+  }
 
   const handleGeneratePDF = async (idRouteDay: string) => {
     const routeDay = selectedRouteDay.find((selectedRouteDay) => { return selectedRouteDay.id_route_day === idRouteDay});
@@ -463,13 +503,13 @@ export default function Page() {
     }
     
     const reportData = processConsolidatedReportData(
-        routeDay,
-        mapStores,
-        mapRouteTransactionByStore,
-        routesMap,
-        productsMap,
-        DAY_OPERATIONS.sales
-      );
+      routeDay,
+      mapStores,
+      mapRouteTransactionByStore,
+      routesMap,
+      productsMap,
+      DAY_OPERATIONS.sales
+    );
 
       const blob = await pdf(<ConsolidatedRouteDayPDFDocument data={reportData} />).toBlob();
       const url = URL.createObjectURL(blob);
@@ -740,6 +780,7 @@ export default function Page() {
                 onRequireRouteTransactions={handleRetrieveRouteTransactions}
                 onCloseRouteDay={handleCloseRouteDay}
                 onApplyRouteEffects={handleApplyRouteEffects}
+                onGenerateCSV={hanldeGenerateCSV}
                 onApplyFilter={handleSetRouteDayFilters}
                 onGenerateReport={handleGeneratePDF}
               />

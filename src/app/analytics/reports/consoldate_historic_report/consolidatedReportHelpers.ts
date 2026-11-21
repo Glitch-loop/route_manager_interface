@@ -37,6 +37,82 @@ export interface ProcessedConsolidatedData {
   tableRows: TableRowItem[];
 }
 
+export function processConsolidatedCSVData(
+  routeDay: RouteDayDTO,
+  mapStores: Map<string, LocationDTO>,
+  mapRouteTransactionByStore: Map<string, RouteTransactionDTO[]>,
+  routesMap: Map<string, RouteDTO>,
+  productsMap: Map<string, ProductDTO>,
+  transactionOperationType: DAY_OPERATIONS,
+) {
+  const csvInformation: string[][] = [];
+
+  const productList: ProductColumnHeader[] = Array.from(productsMap.values())
+    .sort((a, b) => ((a as ProductDTO).order_to_show ?? 0) - ((b as ProductDTO).order_to_show ?? 0))
+    .map((product) => ({
+      id_product: product.id_product,
+      label: (product as ProductDTO).product_name,
+    }));
+
+  // 2. Sort locations by position in route
+  const sortedLocations = [...routeDay.locations].sort(
+    (a, b) => a.position_in_route - b.position_in_route
+  );
+  
+  for (const location of sortedLocations) {
+    const { id_location } = location;
+    const storeInfo = mapStores.get(id_location);
+    const storeName = storeInfo?.location_name ?? "Tienda Desconocida";
+    const address = storeInfo
+    ? `${storeInfo.street || ""} ${storeInfo.ext_number || ""}, ${storeInfo.colony || ""}`.trim()
+    : "Sin dirección";
+    
+    // First column will be the name of the products
+    csvInformation.push(["", ...productList.map((product) => product.label)]);
+    // Getting information of the transaction
+    if (mapRouteTransactionByStore.has(id_location)) {
+      const routeTransactions = mapRouteTransactionByStore.get(id_location)!
+      
+      for (const routeTransaction of routeTransactions) {
+        const { transaction_description, created_at } = routeTransaction;
+        const txDate = dayjs(created_at);
+        const dateStr = txDate.format("DD/MM/YY HH:mm");
+        const accProducts: Map<string, number> = new Map<string, number>();
+        const transactionRow: string[] = [];
+        let totalOfOperationType: number = 0;
+        
+        transactionRow.push(dateStr);
+
+        // Accumulate quantity
+        const transactionDescriptionFiltered = transaction_description.filter((desc) => desc.id_transaction_operation_type === transactionOperationType);
+        for (const description of transactionDescriptionFiltered) {
+          const { id_product, quantity, price_at_moment } = description;
+          accProducts.set(
+            id_product,
+            (accProducts.get(id_product) ? accProducts.get(id_product)! : 0) + quantity
+          );
+
+          totalOfOperationType += quantity * price_at_moment;
+        }
+
+        // Creating row for transaction
+        for (const currentProduct of productList) {
+          const { id_product } = currentProduct;
+          const quantity = accProducts.get(id_product) === undefined ? 0 : accProducts.get(id_product)!;
+          transactionRow.push(quantity.toString());
+        }
+        
+        transactionRow.push(totalOfOperationType.toString());
+        csvInformation.push(transactionRow);
+      }
+    }
+    csvInformation.push([storeName + " - " + address]);
+    csvInformation.push([""]);
+  }
+
+  return csvInformation;
+}
+
 export function processConsolidatedReportData(
   routeDay: RouteDayDTO,
   mapStores: Map<string, LocationDTO>,

@@ -72,6 +72,7 @@ export class BackendDataSource {
     config?: BackendRequestConfig
   ): Promise<TResponse> {
     try {
+      console.log( "Method - POST, Path: ", path)
       const response = await this.client.post<BackendResponseInterface<TResponse>>(path, body, await this.buildConfig(config));
       return response.data.data;
     } catch (error) {

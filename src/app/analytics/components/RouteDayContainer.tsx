@@ -54,6 +54,7 @@ type RouteDayContainerProps = {
   routesMap: Map<string, RouteDTO>; // id_store -> LocationDTO
   onCloseRouteDay: (idRouteDay: string) => void; // Callback when user wants to close a route day (remove it from the view)
   onApplyRouteEffects: (idRouteDay: string, effects: RouteDayEffect) => void;
+  onGenerateCSV: (idRouteDay: string) => void;
   onGenerateReport: (idRouteDay: string) => void;
 };
 
@@ -66,6 +67,7 @@ export default function RouteDayContainer({
   routesMap,
   onCloseRouteDay,
   onApplyRouteEffects,
+  onGenerateCSV,
   onGenerateReport
 }: RouteDayContainerProps) {
   // Definitions
@@ -205,9 +207,9 @@ export default function RouteDayContainer({
                   width: 40,
                   height: 40,
                 }}
-                // onClick={() =>
-                //   handleCopyInformation(id_route_day)
-                // }
+                onClick={() =>
+                  onGenerateCSV(id_route_day)
+                }
                 className="h-fit my-auto shadow-md"
                 size="small"
               >
