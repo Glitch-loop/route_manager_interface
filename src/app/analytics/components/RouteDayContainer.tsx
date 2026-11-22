@@ -28,7 +28,7 @@ import {
 import DAYS from "@/utils/days";
 import { capitalizeFirstLetterOfEachWord } from "@/utils/generalUtils";
 import { useEffect, useRef, useState } from "react";
-
+import { getRouteDayEffect } from "@/shared/hooks/route-day-location-map/utils/utils";
 
 // Types
 import { RouteDayEffect, RouteDayFilters } from "@/app/analytics/types/types";
@@ -36,14 +36,8 @@ import { RouteDayEffect, RouteDayFilters } from "@/app/analytics/types/types";
 // Enums
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
 
-// Auxiliar function
-const getRouteDayEffect = (idRouteDay: string, routeDayEffectsMap: Map<string, RouteDayEffect>): RouteDayEffect => {
-  const effects = routeDayEffectsMap.get(idRouteDay)
-  if (effects === undefined) {
-    throw new Error("ChAange of the color is not possible. The effect for the route day doesn't exist.")
-  } 
-  return effects;
-}
+
+
 
 type RouteDayContainerProps = {
   routeDayToDisplay: RouteDayDTO;

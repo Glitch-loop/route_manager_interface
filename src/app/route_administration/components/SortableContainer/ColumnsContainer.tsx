@@ -11,7 +11,6 @@ import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 // Types
-import { RouteDayEffect } from "@/app/route_administration/types/types";
 
 // UI components
 import { Button } from "@mui/material";
@@ -25,12 +24,16 @@ import { getNameOfRouteDay, getRouteDayFromRoutesList } from "@/shared/utils/rou
 import { SortableLocation } from '@/app/route_administration/components/SortableContainer/Types/types';
 import { RouteDayEffectAction } from '@/app/route_administration/types/routeDayEffectActions';
 
+import { 
+  RouteDayEffect, 
+} from "@/shared/hooks/route-day-location-map/types/types";
+
 type RouteDayContainerProps = {
   selectedRouteDays:Map<string, RouteDayDTO>; // id route day, compact information of location for sorting.
   locationMap: Map<string, LocationDTO>; // id location, locationDTO.
   routes: RouteDTO[];
   routeDayEffects: Map<string, RouteDayEffect>,
-  routeDayEffectDispatcher: Dispatch<RouteDayEffectAction>,
+  handleUpdateRouteDayEffects: (routeDayId: string, routeDayEffect: RouteDayEffect) => void,
   onChangeRouteDayOrder: (newOrder: Map<string, RouteDayDTO>) => void;
 };
 
@@ -39,7 +42,7 @@ export default function ColumnsContainer({
   locationMap,
   routes,
   routeDayEffects,
-  routeDayEffectDispatcher,
+  handleUpdateRouteDayEffects,
   onChangeRouteDayOrder,
   // onSaveRouteModification,
 }: RouteDayContainerProps) {
@@ -200,7 +203,7 @@ export default function ColumnsContainer({
               routeName={ getNameOfRouteDay(routes, column) }
               onSaveRouteModification={handleSaveRouteModification}
               routeDayEffectsMap={routeDayEffects}
-              routeDayEffectDispatcher={routeDayEffectDispatcher}
+              handleUpdateRouteDayEffects={handleUpdateRouteDayEffects}
               >
             <div className="overflow-auto">
               {items.map((sortableItem, index) => {

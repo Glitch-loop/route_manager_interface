@@ -562,7 +562,13 @@ export default function Page() {
         // Add to routesInModification
         setRoutesInModification((prev) => (
           new Map<string, RouteDayDTO>(prev.set(routeDayId, routeDayFound))));
-        handleAddRouteDayEffects(routeDayId); // Use default effects settings.
+        handleAddRouteDayEffects(
+          routeDayId, 
+          {
+            showStores: true,
+            assignedColor: generateRandomColor(),
+            selectedLocation: undefined 
+          });
       }
     } else {
       // If changes are detected, show dialog for confirming unselecting.
@@ -590,7 +596,7 @@ export default function Page() {
       } else {
         askValidation = true;
       }
-      
+
       if (askValidation) setPendingUnselectRouteDayId(routeDayId);
       else removeRouteDayByCancelModification(routeDayId);
     }
@@ -1098,8 +1104,8 @@ export default function Page() {
                 selectedRouteDays={routesInModification}
                 locationMap={mapStores}
                 routes={routes}
-                routeDayEffects={routeDayEffect}
-                routeDayEffectDispatcher={routeDayEffectDispatch}
+                routeDayEffects={effectRouteDay}
+                handleUpdateRouteDayEffects={handleUpdateRouteDayEffects}
                 onChangeRouteDayOrder={setRoutesInModification}
                 />
             </div>

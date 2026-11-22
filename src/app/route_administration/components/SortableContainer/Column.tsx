@@ -20,17 +20,19 @@ import {
   RemoveCircleOutline,
 } from "@mui/icons-material";
 import { capitalizeFirstLetterOfEachWord } from '@/utils/generalUtils';
-import { RouteDayEffect } from '@/app/route_administration/types/types';
-import { RouteDayEffectAction } from '@/app/route_administration/types/routeDayEffectActions';
 import ColorPicker from '@/shared/components/ColorPicker/ColorPicker';
 
+import { 
+  RouteDayEffect, 
+} from "@/shared/hooks/route-day-location-map/types/types";
+import { getRouteDayEffect } from "@/shared/hooks/route-day-location-map/utils/utils";
 
 type ColumnType = {
   children: ReactNode;
   id: string;
   routeName: string;
   routeDayEffectsMap: Map<string, RouteDayEffect>;
-  routeDayEffectDispatcher: Dispatch<RouteDayEffectAction>,
+  handleUpdateRouteDayEffects: (routeDayId: string, routeDayEffect: RouteDayEffect) => void,
   onSaveRouteModification: (idRouteDay: string) => void;
 }
 
@@ -41,7 +43,7 @@ export function Column({
   id, // The ID of the component is the same that the route day.
   routeName,
   routeDayEffectsMap, // Map of id_route_day to its effect (showStores and assignedColor)
-  routeDayEffectDispatcher,
+  handleUpdateRouteDayEffects,
   onSaveRouteModification
 }: ColumnType) {
   // --Custom hooks--
@@ -155,19 +157,13 @@ export function Column({
 
   // Handlers regarded to effects
   const handleShowInformation = (id: string, newState: boolean) => {
-    routeDayEffectDispatcher({
-      type: 'show_information', 
-      idRouteDay: id,
-      state: newState
-    });
+    const routeDayEffect = getRouteDayEffect(id, routeDayEffectsMap);
+    handleUpdateRouteDayEffects(id, { ...routeDayEffect, showStores: newState });
   }
 
   const handleSelectRouteDayColor = (id: string, selectedColor: string) => {
-    routeDayEffectDispatcher({
-      type: 'assign_color', 
-      idRouteDay: id,
-      color: selectedColor
-    });
+    const routeDayEffect = getRouteDayEffect(id, routeDayEffectsMap);
+    handleUpdateRouteDayEffects(id, { ...routeDayEffect, assignedColor: selectedColor });
   }
 
   return (
