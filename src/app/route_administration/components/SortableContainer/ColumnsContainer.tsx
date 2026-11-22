@@ -21,34 +21,51 @@ import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDate
 // Utils
 import { generateUUIDv4 } from "@/utils/generalUtils";
 import { getNameOfRouteDay, getRouteDayFromRoutesList } from "@/shared/utils/routes/utils";
-import { SortableLocation } from '@/app/route_administration/components/SortableContainer/Types/types';
+import { 
+  SortableLocationType, 
+  RouteDayActionStateType 
+} from '@/app/route_administration/components/SortableContainer/Types/types';
 import { RouteDayEffectAction } from '@/app/route_administration/types/routeDayEffectActions';
 
 import { 
   RouteDayEffect, 
 } from "@/shared/hooks/route-day-location-map/types/types";
+import { getRouteDayEffect } from '@/shared/hooks/route-day-location-map/utils/utils';
 
 type RouteDayContainerProps = {
   selectedRouteDays:Map<string, RouteDayDTO>; // id route day, compact information of location for sorting.
   locationMap: Map<string, LocationDTO>; // id location, locationDTO.
   routes: RouteDTO[];
   routeDayEffects: Map<string, RouteDayEffect>,
-  handleUpdateRouteDayEffects: (routeDayId: string, routeDayEffect: RouteDayEffect) => void,
+  onChangeRouteDayEffect: (routeDayId: string, routeDayEffect: RouteDayEffect) => void,
   onChangeRouteDayOrder: (newOrder: Map<string, RouteDayDTO>) => void;
 };
+
+
+
+// Auxiliars functions
+function getRouteDayActionState(idRouteDay: string, routeActionStatesMap: Map<string, RouteDayActionStateType>): RouteDayActionStateType {
+  const actionStates = routeActionStatesMap.get(idRouteDay)
+  if (actionStates === undefined) {
+    throw new Error(`Route day with id ${idRouteDay} doesn't have its action state.`)
+  } 
+  return actionStates;
+}
 
 export default function ColumnsContainer({
   selectedRouteDays,
   locationMap,
   routes,
   routeDayEffects,
-  handleUpdateRouteDayEffects,
+  onChangeRouteDayEffect,
   onChangeRouteDayOrder,
   // onSaveRouteModification,
 }: RouteDayContainerProps) {
   // --Use states--
   // Related to route organization
-  const [routeDaysInModification, setRouteDaysInModification] = useState<Record<string, SortableLocation[]>>({});
+  const [routeDaysInModification, setRouteDaysInModification] = useState<Record<string, SortableLocationType[]>>({});
+  const [routeDayActionStateMap, setRouteDayActionStateMap] = useState<Map<string, RouteDayActionStateType>>(new Map<string, RouteDayActionStateType>());
+  const [selectedRouteDayLocationMap, setSelectedRouteDayLocationMap] = useState<Map<string, Set<string>>>(new Map<string, Set<string>>());
 
   // Related to route transactions
   const [startDateSelected, setStartDateSelected] = useState<Dayjs | null>(null);
@@ -59,7 +76,8 @@ export default function ColumnsContainer({
   // Synchronize the state from page
   useEffect(() => {
     setRouteDaysInModification((prev) => {
-      const newRouteDay:Record<string, SortableLocation[]> = {};
+      // Transforming route day location information to sortable type. 
+      const newRouteDay:Record<string, SortableLocationType[]> = {};
       selectedRouteDays.values()
         .forEach((routeDay:RouteDayDTO) => {
           const {id_route_day, locations} = routeDay;
@@ -73,13 +91,31 @@ export default function ColumnsContainer({
           }
       });
       return {...newRouteDay};
-    })
+    });
+
+    // Setting action for the route day.
+    setRouteDayActionStateMap((prev) => {
+      const newRouteDayActionsMap:Map<string, RouteDayActionStateType> 
+        = new Map<string, RouteDayActionStateType>();
+      
+      selectedRouteDays.values().forEach((routeDay) => {
+        const { id_route_day } = routeDay;
+        if (!prev.has(id_route_day)) {
+          newRouteDayActionsMap.set(id_route_day, {
+            isEditable: false,
+            isDeletedMode: false
+          })
+        } else {
+          newRouteDayActionsMap.set(id_route_day, {...prev.get(id_route_day)!});
+        }
+      });
+      return newRouteDayActionsMap;
+    });
   }, [selectedRouteDays]);
 
   // Synchronize internal state with page
   useEffect(() => {
     const newOrderOfSelectedRouteDays = new Map<string, RouteDayDTO>(selectedRouteDays);
-
     Object.entries(routeDaysInModification).forEach(([idRouteDay, routeDayLocations]) => {
       if(newOrderOfSelectedRouteDays.has(idRouteDay)) {
         const currentRouteDay: RouteDayDTO = newOrderOfSelectedRouteDays.get(idRouteDay)!;
@@ -96,7 +132,7 @@ export default function ColumnsContainer({
   }, [setRouteDaysInModification]);
 
 
-  // --Use handlers--
+  // --Handlers--
   const handleDateRangeChange = (start: Dayjs | null, end: Dayjs | null) => {
     setStartDateSelected(start);
     setEndDateSelected(end);
@@ -118,7 +154,7 @@ export default function ColumnsContainer({
     }
   };
 
-    /**
+  /**
    * Save route modification for a specific route day.
    */
   const handleSaveRouteModification = async (idRouteDay: string) => {
@@ -138,6 +174,45 @@ export default function ColumnsContainer({
     // await onSaveRouteModification(idRouteDay, updatedStoresInRouteDay);
   };
 
+  const handleModifyActionState = (idRouteDay: string, newState: RouteDayActionStateType) => {
+    setRouteDayActionStateMap((prev) => (new Map<string, RouteDayActionStateType>(prev.set(idRouteDay, newState))));
+  }
+
+  /**
+   * Remove stores from a route day by their id_route_day_store.
+   */
+  const handleRemoveStores = (idRouteDay: string) => {
+    if(selectedRouteDayLocationMap.has(idRouteDay)) {
+      const idsToRemove:Set<string> = selectedRouteDayLocationMap.get(idRouteDay)!
+      setRouteDaysInModification((prev) => {
+        const sortableLocations  = prev[idRouteDay];
+        prev[idRouteDay] = sortableLocations.filter((location) => 
+          !idsToRemove.has(location.id_route_day_store))
+        return {...prev};
+      });
+    }
+  };
+
+  const handleSelectRouteDayLocation = (idRouteDay: string, idRouteDayLocation: string) => {
+    /*
+      Rules:
+      1. If the item is not in the data structure then the user has selected it.
+      2. If the items is already in the structure then the user is unselected it.
+    */
+    if(selectedRouteDayLocationMap.has(idRouteDay)) {
+      const idRouteDayLocationsSet:Set<string> =  selectedRouteDayLocationMap.get(idRouteDay)!;
+
+      if (idRouteDayLocationsSet.has(idRouteDayLocation)) {
+        idRouteDayLocationsSet.delete(idRouteDayLocation);
+      } else {
+        idRouteDayLocationsSet.add(idRouteDayLocation);
+      }
+    } else {
+      // This case is when the user is starting the process for selecting route day locations.
+      selectedRouteDayLocationMap.set(idRouteDay, new Set(idRouteDayLocation))   
+    }
+    setSelectedRouteDayLocationMap(new Map<string, Set<string>>(selectedRouteDayLocationMap));
+  }
 
   return (
   <div className="w-full h-full bg-system-secondary-background flex flex-row p-2">
@@ -177,7 +252,7 @@ export default function ColumnsContainer({
     </div>
       <DragDropProvider
         onDragOver={(event) => {
-          setRouteDaysInModification((items:Record<string, SortableLocation[]>) => 
+          setRouteDaysInModification((items:Record<string, SortableLocationType[]>) => 
             { return {...move(items, event)}; }
           );
         }}
@@ -196,32 +271,56 @@ export default function ColumnsContainer({
       >
       <div className="Root overflow-auto ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2">        
         {
-          Object.entries(routeDaysInModification).map(([column, items]) => (
-            <Column 
-              key={column} 
-              id={column} 
-              routeName={ getNameOfRouteDay(routes, column) }
-              onSaveRouteModification={handleSaveRouteModification}
-              routeDayEffectsMap={routeDayEffects}
-              handleUpdateRouteDayEffects={handleUpdateRouteDayEffects}
-              >
-            <div className="overflow-auto">
-              {items.map((sortableItem, index) => {
-                const { id_location } = sortableItem;
-                const locationData = locationMap.get(id_location);
-                return (
-                  <Item 
-                    key={sortableItem.id} 
-                    id={sortableItem.id} 
-                    index={index} 
-                    column={column} 
-                    locationData={locationData}
-                  />
-                )
-              })}
-            </div>
-          </Column>
-          ))
+          Object.entries(routeDaysInModification).map(([column, items]) => {
+            const currentRouteDayEffect:RouteDayEffect = getRouteDayEffect(column, routeDayEffects);
+            const routeDayActionState:RouteDayActionStateType = getRouteDayActionState(column, routeDayActionStateMap)
+            const {isEditable, isDeletedMode} = routeDayActionState;
+
+            return (
+              <Column 
+                key={column} 
+                id={column} 
+                routeName={ getNameOfRouteDay(routes, column) }
+                numberOfClientsInRoute={ items.length }
+                onSaveRouteModification={handleSaveRouteModification}
+                routeDayActionState={routeDayActionState}
+                onChangeRouteDayActionState={handleModifyActionState}
+                routeDayEffect={currentRouteDayEffect}
+                onChangeRouteDayEffect={onChangeRouteDayEffect}
+                onRemoveStores={handleRemoveStores}
+                >
+              <div className="overflow-auto">
+                {items.map((sortableItem, index) => {
+                  let isSelected: boolean = false;
+                  const { id_location, id } = sortableItem;
+                  const locationData = locationMap.get(id_location);
+                  if(isDeletedMode) {
+                    const selectedRouteDayLocationSet:Set<string>|undefined = 
+                      selectedRouteDayLocationMap.get(column);
+                    if (selectedRouteDayLocationSet === undefined) 
+                      isSelected = false;
+                    else
+                      isSelected = selectedRouteDayLocationSet.has(id);
+                  }
+                  return (
+                    <Item 
+                      key={sortableItem.id} 
+                      id={sortableItem.id} 
+                      index={index} 
+                      column={column} 
+                      locationData={locationData}
+                      onSelectItem={handleSelectRouteDayLocation}
+                      isDraggable={isEditable}
+                      isSelectable={isDeletedMode}
+                      isSelected={isSelected}
+                    />
+                  )
+                })}
+              </div>
+            </Column>
+            )
+          }
+        )
         }
       </div>
     </DragDropProvider>

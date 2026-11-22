@@ -66,9 +66,8 @@ export function useRouteDayLocationMap({
 
   const routeDayLocationMarkers = useMemo<IMapMarker[]>(() => {
     const markers: IMapMarker[] = [];
-
     let routeDays:RouteDayDTO[] = [];
-    console.log(Array.isArray(routeDaysToDisplay))
+    
     if (Array.isArray(routeDaysToDisplay)) routeDays = [...routeDays];
     else routeDays = Array.from(routeDaysToDisplay.values());
     
