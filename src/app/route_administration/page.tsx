@@ -2,7 +2,7 @@
 "use client";
 
 // Libraries
-import React, { useCallback, useEffect, useState, useMemo } from "react";
+import React, { useCallback, useEffect, useState, useMemo, useReducer } from "react";
 import { toast } from "react-toastify";
 import {
   Button,
@@ -73,6 +73,8 @@ import { generateRandomColor } from "@/shared/utils/styles/utils";
 import { LocationTypeDTO } from "@/shared/dtos/LocationTypeDTO";
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
 import { SortableLocationType } from "@/app/route_administration/components/SortableContainer/Types/types";
+import routeDayReducer from "@/app/route_administration/reducers/routeDayEffectReducer";
+import { useRouteDayLocationMap } from "@/shared/hooks/route-day-location-map/useRouteDayLocationMap";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -200,16 +202,6 @@ function createMapClickComponent(
 }
 
 export default function Page() {
-  // Hooks
-  const { 
-    stores, 
-    mapStores, 
-    mapRouteTransactionByStore, 
-    fetchRouteTransactions,
-    setStores
-  } = useRouteLocation();
-
-
   // Collapse menu states
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bottomPanelOpen, setBottomPanelOpen] = useState(true);
@@ -223,6 +215,9 @@ export default function Page() {
   const [routes, setRoutes] = useState<RouteDTO[]>([]); // Source of truth for route days.
   const [locationTypes, setLocationTypes] = useState<LocationTypeDTO[]>([]); // Source of truth for route days.
 
+  // reducers
+  const [routeDayEffect, routeDayEffectDispatch] = useReducer(routeDayReducer, new Map<string, RouteDayEffect>());
+
   // States related to store information.
   const [mapStoresInRouteDay, setMapStoresInRouteDay] = useState<
     Map<string, StorePositionInRouteType[]>
@@ -233,7 +228,9 @@ export default function Page() {
 
   // States related to route day.
   const [routesInModification, setRoutesInModification] 
-    = useState<Record<string, SortableLocationType[]>>({}); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
+    = useState<Map<string, RouteDayDTO>>(new Map<string, RouteDayDTO>()); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
+  // const [routeDaysToModify, setRouteDaysToModify] = useState<RouteDayDTO[]>();
+
   const [effectSelectedRouteDay, setEffectSelectedRouteDay] 
     = useState<Map<string, RouteDayEffect>>(new Map());
 
@@ -267,6 +264,34 @@ export default function Page() {
   ]);
 
   const [administrationView, setAdministrationView] = useState(2); // 1 for Routes, 2 for Stores
+
+  // Hooks
+  const { 
+    stores, 
+    mapStores, 
+    mapRouteTransactionByStore, 
+    fetchRouteTransactions,
+    setStores
+  } = useRouteLocation();
+
+    const { 
+    effectRouteDay, 
+    routeDayFilters,
+    handleAddRouteDayEffects, 
+    handleRemoveRouteDayEffects,
+    handleUpdateRouteDayEffects,
+    handleSetRouteDayFilters,
+    routeDayLocationMarkers
+  } = useRouteDayLocationMap({
+    routeDaysToDisplay: routesInModification,
+    storeMap: mapStores,
+    routeTransactionByStoreMap: mapRouteTransactionByStore,
+    onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => { 
+      return createMapHoverComponent(location); },
+    onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { return <div></div>
+      // return createMapClickComponent(store, storePositions, () => handleSelectStoreToUpdate(id_location)); 
+    }
+  });
 
   // Use effects
   useEffect(() => {
@@ -312,139 +337,139 @@ export default function Page() {
   }, [mapStores]);
 
   // Memoized components
-  const mapMarkers = useMemo<IMapMarker[]>(() => {
-    const markers: IMapMarker[] = [];
+  // const mapMarkers = useMemo<IMapMarker[]>(() => {
+  //   const markers: IMapMarker[] = [];
 
-    Object.entries(routesInModification).forEach(([idRouteDay, stores]) => {
-      const effect = effectSelectedRouteDay.get(idRouteDay);
+  //   Object.entries(routesInModification).forEach(([idRouteDay, stores]) => {
+  //     const effect = effectSelectedRouteDay.get(idRouteDay);
 
-      // Skip if showStores is false
-      if (!effect?.showStores) return;
+  //     // Skip if showStores is false
+  //     if (!effect?.showStores) return;
 
-      const baseColor = effect.assignedColor;
-      // const totalStores = stores.length;
+  //     const baseColor = effect.assignedColor;
+  //     // const totalStores = stores.length;
 
-      stores.forEach((routeDayStore) => {
-        const store = mapStores.get(routeDayStore.id_location);
-        if (store !== undefined) {
-          const { latitude, longitude, id_location } = store;
-          const { id_route_day_store } = routeDayStore;
-          // Get all route days where this store belongs
-          const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
+  //     stores.forEach((routeDayStore) => {
+  //       const store = mapStores.get(routeDayStore.id_location);
+  //       if (store !== undefined) {
+  //         const { latitude, longitude, id_location } = store;
+  //         const { id_route_day_store } = routeDayStore;
+  //         // Get all route days where this store belongs
+  //         const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
 
-          // Calculate gradient color: first store is lightest, last store is darkest
-          const gradientColor = baseColor;
-          // TODO: Optimize gradient color calculation, user hardly understands what is happening.
-          // const gradientColor = totalStores > 1
-          //     ? getGradientColor(baseColor, totalStores - 1 - storeIndex, totalStores)
-          //     : baseColor;
+  //         // Calculate gradient color: first store is lightest, last store is darkest
+  //         const gradientColor = baseColor;
+  //         // TODO: Optimize gradient color calculation, user hardly understands what is happening.
+  //         // const gradientColor = totalStores > 1
+  //         //     ? getGradientColor(baseColor, totalStores - 1 - storeIndex, totalStores)
+  //         //     : baseColor;
 
-          markers.push({
-            id_marker: id_route_day_store,
-            id_item: id_location,
-            id_group: idRouteDay,
-            color_item: gradientColor,
-            latitude: latitude,
-            longitude: longitude,
-            hoverComponent: createMapHoverComponent(store),
-            clickComponent: createMapClickComponent(store, storePositions, () =>
-              handleSelectStoreToUpdate(id_location),
-            ),
-          });
-        }
-      });
-    });
+  //         markers.push({
+  //           id_marker: id_route_day_store,
+  //           id_item: id_location,
+  //           id_group: idRouteDay,
+  //           color_item: gradientColor,
+  //           latitude: latitude,
+  //           longitude: longitude,
+  //           hoverComponent: createMapHoverComponent(store),
+  //           clickComponent: createMapClickComponent(store, storePositions, () =>
+  //             handleSelectStoreToUpdate(id_location),
+  //           ),
+  //         });
+  //       }
+  //     });
+  //   });
 
-    if (hoveredStore !== null) {
-      const { id_location, latitude, longitude } = hoveredStore;
-      const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
-      const markerGroup: MarkerGroup = "searchbar-hovered-coord";
-      markers.push({
-        id_marker: generateRandomColor(), // Unique ID for hovered store marker
-        id_item: id_location,
-        id_group: markerGroup,
-        color_item: "#FF8C00", // Default color
-        latitude: latitude,
-        longitude: longitude,
-        hoverComponent: createMapHoverComponent(hoveredStore),
-        clickComponent: createMapClickComponent(
-          hoveredStore,
-          storePositions,
-          () => handleSelectStoreToUpdate(id_location),
-        ),
-      });
-    }
+  //   if (hoveredStore !== null) {
+  //     const { id_location, latitude, longitude } = hoveredStore;
+  //     const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
+  //     const markerGroup: MarkerGroup = "searchbar-hovered-coord";
+  //     markers.push({
+  //       id_marker: generateRandomColor(), // Unique ID for hovered store marker
+  //       id_item: id_location,
+  //       id_group: markerGroup,
+  //       color_item: "#FF8C00", // Default color
+  //       latitude: latitude,
+  //       longitude: longitude,
+  //       hoverComponent: createMapHoverComponent(hoveredStore),
+  //       clickComponent: createMapClickComponent(
+  //         hoveredStore,
+  //         storePositions,
+  //         () => handleSelectStoreToUpdate(id_location),
+  //       ),
+  //     });
+  //   }
 
-    if (searchedStore !== null) {
-      const { id_location, latitude, longitude } = searchedStore;
-      const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
-      const markerGroup: MarkerGroup = "searchbar-searched-store";
-      markers.push({
-        id_marker: generateRandomColor(), // Unique ID for searched store marker
-        id_item: id_location,
-        id_group: markerGroup,
-        color_item: "#bd2cb6", // Default color
-        latitude: latitude,
-        longitude: longitude,
-        hoverComponent: createMapHoverComponent(searchedStore),
-        clickComponent: createMapClickComponent(
-          searchedStore,
-          storePositions,
-          () => handleSelectStoreToUpdate(id_location),
-        ),
-      });
-    }
+  //   if (searchedStore !== null) {
+  //     const { id_location, latitude, longitude } = searchedStore;
+  //     const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
+  //     const markerGroup: MarkerGroup = "searchbar-searched-store";
+  //     markers.push({
+  //       id_marker: generateRandomColor(), // Unique ID for searched store marker
+  //       id_item: id_location,
+  //       id_group: markerGroup,
+  //       color_item: "#bd2cb6", // Default color
+  //       latitude: latitude,
+  //       longitude: longitude,
+  //       hoverComponent: createMapHoverComponent(searchedStore),
+  //       clickComponent: createMapClickComponent(
+  //         searchedStore,
+  //         storePositions,
+  //         () => handleSelectStoreToUpdate(id_location),
+  //       ),
+  //     });
+  //   }
 
-    if (!hideCoordSearchResults) {
-      storesFoundByPosition.forEach((store) => {
-        const { id_location, latitude, longitude } = store;
-        const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
-        const markerGroup: MarkerGroup = "store-found-by-coords";
-        markers.push({
-          id_marker: generateRandomColor(), // Unique ID for store found by coordinates
-          id_item: id_location,
-          id_group: markerGroup,
-          color_item: "#3713da", // Default color
-          latitude: latitude,
-          longitude: longitude,
-          hoverComponent: createMapHoverComponent(store),
-          clickComponent: createMapClickComponent(store, storePositions, () =>
-            handleSelectStoreToUpdate(id_location),
-          ),
-        });
-      });
-    }
+  //   if (!hideCoordSearchResults) {
+  //     storesFoundByPosition.forEach((store) => {
+  //       const { id_location, latitude, longitude } = store;
+  //       const storePositions = mapStoresInRouteDay.get(id_location) ?? [];
+  //       const markerGroup: MarkerGroup = "store-found-by-coords";
+  //       markers.push({
+  //         id_marker: generateRandomColor(), // Unique ID for store found by coordinates
+  //         id_item: id_location,
+  //         id_group: markerGroup,
+  //         color_item: "#3713da", // Default color
+  //         latitude: latitude,
+  //         longitude: longitude,
+  //         hoverComponent: createMapHoverComponent(store),
+  //         clickComponent: createMapClickComponent(store, storePositions, () =>
+  //           handleSelectStoreToUpdate(id_location),
+  //         ),
+  //       });
+  //     });
+  //   }
 
-    if (selectedCoordinate) {
-      if (!hideCoordSearchResults) {
-        const { Lat, Lng } = selectedCoordinate;
-        const markerGroup: MarkerGroup = "pivot-coord-search";
-        markers.push({
-          id_marker: generateRandomColor(), // Unique ID for store found by coordinates
-          id_item: generateRandomColor(),
-          id_group: markerGroup,
-          color_item: "#dc3d35", // Default color
-          latitude: Lat.toString(),
-          longitude: Lng.toString(),
-          hoverComponent: <span>Click para cancelar busqueda</span>,
-          clickComponent: null,
-        });
-      }
-    }
+  //   if (selectedCoordinate) {
+  //     if (!hideCoordSearchResults) {
+  //       const { Lat, Lng } = selectedCoordinate;
+  //       const markerGroup: MarkerGroup = "pivot-coord-search";
+  //       markers.push({
+  //         id_marker: generateRandomColor(), // Unique ID for store found by coordinates
+  //         id_item: generateRandomColor(),
+  //         id_group: markerGroup,
+  //         color_item: "#dc3d35", // Default color
+  //         latitude: Lat.toString(),
+  //         longitude: Lng.toString(),
+  //         hoverComponent: <span>Click para cancelar busqueda</span>,
+  //         clickComponent: null,
+  //       });
+  //     }
+  //   }
 
-    return markers;
-  }, [
-    routesInModification, // Provides the route days currently being modified
-    mapStores, // Provides store information including coordinates
-    effectSelectedRouteDay, // Provides effects that will be applied to the markers
-    mapStoresInRouteDay, // Provides information about which route days each store belongs to for the hover and click components
-    hoveredStore,
-    searchedStore,
-    storesFoundByPosition,
-    selectedCoordinate,
-    hideCoordSearchResults,
-    handleSelectStoreToUpdate,
-  ]);
+  //   return markers;
+  // }, [
+  //   routesInModification, // Provides the route days currently being modified
+  //   mapStores, // Provides store information including coordinates
+  //   effectSelectedRouteDay, // Provides effects that will be applied to the markers
+  //   mapStoresInRouteDay, // Provides information about which route days each store belongs to for the hover and click components
+  //   hoveredStore,
+  //   searchedStore,
+  //   storesFoundByPosition,
+  //   selectedCoordinate,
+  //   hideCoordSearchResults,
+  //   handleSelectStoreToUpdate,
+  // ]);
 
   // Handlers - Route menu
   const handleRouteSelect = (route: RouteDTO) => {
@@ -527,7 +552,7 @@ export default function Page() {
     if (state) {
       // Add route day because it was selected
       // Check if already selected to avoid duplication
-      if (routesInModification[routeDayId]) return;
+      if (routesInModification.has(routeDayId)) return;
       const routeDayFound: RouteDayDTO | null = getRouteDayFromRoutesList(
         routes,
         routeDayId,
@@ -535,21 +560,20 @@ export default function Page() {
 
       console.log("Modification: ", routeDayFound)
       if (routeDayFound !== null) {
-        // Transform RouteDayStoreDTO[] to DraggableRouteDayStore[] for dnd-kit compatibility
-        const sortableLocations: SortableLocationType[] = (
-          routeDayFound.locations || []
-        ).map((location) => ({
-          ...location,
-          id: location.id_route_day_store,
-        }));
-
         // Add to routesInModification
-        setRoutesInModification((prev) => ({
-          ...prev,
-          [routeDayId]: sortableLocations,
-        }));
+        setRoutesInModification((prev) => (
+           new Map<string, RouteDayDTO>(prev.set(routeDayId, routeDayFound))
+          // {
+          // ...prev,
+          // [routeDayId]: routeDayFound,
+          // }
+        ));
+
+        handleAddRouteDayEffects(routeDayId); // Use default effects settings.
 
         // Set effects for map markers
+        // Replace with the dispatcher: add_new_route_day
+        
         setEffectSelectedRouteDay((prev) => {
           const newMap = new Map(prev);
           newMap.set(routeDayId, {
@@ -593,9 +617,7 @@ export default function Page() {
   };
 
   const handleConfirmUnselectRouteDay = () => {
-    if (pendingUnselectRouteDayId) {
-      removeRouteDayByCancelModification(pendingUnselectRouteDayId);
-    }
+    if (pendingUnselectRouteDayId) removeRouteDayByCancelModification(pendingUnselectRouteDayId);
     setPendingUnselectRouteDayId(null);
   };
 
@@ -613,9 +635,8 @@ export default function Page() {
   const removeRouteDayByCancelModification = (idRouteDayToRemove: string) => {
     // Remove route day from routesInModification
     setRoutesInModification((prev) => {
-      const updated = { ...prev };
-      delete updated[idRouteDayToRemove];
-      return updated;
+      prev.delete(idRouteDayToRemove)
+      return new Map<string, RouteDayDTO>(prev);
     });
 
     // Remove from checkedRouteDays
@@ -626,6 +647,7 @@ export default function Page() {
     });
 
     // Remove effects
+    // Replace with the dispather remove_route_day
     setEffectSelectedRouteDay((prev) => {
       const newMap = new Map(prev);
       newMap.delete(idRouteDayToRemove);
@@ -724,9 +746,8 @@ export default function Page() {
   const handleCloseRouteDay = (idRouteDay: string) => {
     // Remove route day from routesInModification
     setRoutesInModification((prev) => {
-      const updated = { ...prev };
-      delete updated[idRouteDay];
-      return updated;
+      prev.delete(idRouteDay)
+      return new Map<string, RouteDayDTO>(prev);
     });
 
     // Remove from checkedRouteDays
@@ -1046,7 +1067,7 @@ export default function Page() {
             />
           </div>
           <MarkerMap
-            markers={mapMarkers}
+            markers={routeDayLocationMarkers}
             idMarkerSelected={selectedRouteDayStore}
             setIdMarkerSelected={setSelectedRouteDayStore}
             onCoordSelected={handleCoordSelected}
@@ -1094,10 +1115,12 @@ export default function Page() {
                 onSelectRouteDayStore={handleSelectRouteDayStore}
               /> */}
               <ColumnsContainer 
-                routeDaysInModification={routesInModification}
-                onChangeRouteDayOrder={setRoutesInModification}
+                selectedRouteDays={routesInModification}
                 locationMap={mapStores}
                 routes={routes}
+                routeDayEffects={routeDayEffect}
+                routeDayEffectDispatcher={routeDayEffectDispatch}
+                onChangeRouteDayOrder={setRoutesInModification}
                 />
             </div>
           </Collapse>

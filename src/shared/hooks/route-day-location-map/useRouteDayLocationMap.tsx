@@ -39,7 +39,7 @@ import { calculateTotalStoreOfTransactionDescriptionConcept } from "@/shared/uti
 // }
 
 type RouteDayLocationMap = {
-  routeDaysToDisplay: RouteDayDTO[];
+  routeDaysToDisplay: RouteDayDTO[]|Map<string,RouteDayDTO>;
   storeMap: Map<string, LocationDTO>;
   routeTransactionByStoreMap: Map<string, RouteTransactionDTO[]>;
   onHoverMarkerComponent: (location: LocationDTO) => React.ReactNode;
@@ -66,7 +66,13 @@ export function useRouteDayLocationMap({
 
   const routeDayLocationMarkers = useMemo<IMapMarker[]>(() => {
     const markers: IMapMarker[] = [];
-    routeDaysToDisplay.forEach((routeDay: RouteDayDTO) => {
+
+    let routeDays:RouteDayDTO[] = [];
+    console.log(Array.isArray(routeDaysToDisplay))
+    if (Array.isArray(routeDaysToDisplay)) routeDays = [...routeDays];
+    else routeDays = Array.from(routeDaysToDisplay.values());
+    
+    routeDays.forEach((routeDay: RouteDayDTO) => {
       const { id_route_day, locations } = routeDay;
       
       // Apply effects
@@ -131,7 +137,6 @@ export function useRouteDayLocationMap({
     //     });
     //   }
     // }
-
     return filteredMarkers;
   }, [
     routeDaysToDisplay,

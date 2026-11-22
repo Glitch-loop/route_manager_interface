@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Dispatch } from 'react';
 import { Dayjs } from "dayjs";
 import { move } from '@dnd-kit/helpers';
 import { DragDropProvider } from '@dnd-kit/react';
@@ -10,6 +10,9 @@ import { LocationDTO } from "@/shared/dtos/LocationDTO";
 import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
+// Types
+import { RouteDayEffect } from "@/app/route_administration/types/types";
+
 // UI components
 import { Button } from "@mui/material";
 import {Column} from '@/app/route_administration/components/SortableContainer/Column';
@@ -20,25 +23,77 @@ import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDate
 import { generateUUIDv4 } from "@/utils/generalUtils";
 import { getNameOfRouteDay, getRouteDayFromRoutesList } from "@/shared/utils/routes/utils";
 import { SortableLocation } from '@/app/route_administration/components/SortableContainer/Types/types';
+import { RouteDayEffectAction } from '@/app/route_administration/types/routeDayEffectActions';
 
 type RouteDayContainerProps = {
-  routeDaysInModification:Record<string, SortableLocation[]>; // id route day, compact information of location for sorting.
+  selectedRouteDays:Map<string, RouteDayDTO>; // id route day, compact information of location for sorting.
   locationMap: Map<string, LocationDTO>; // id location, locationDTO.
   routes: RouteDTO[];
-  onChangeRouteDayOrder: (newOrder: Record<string, SortableLocation[]>) => void;
+  routeDayEffects: Map<string, RouteDayEffect>,
+  routeDayEffectDispatcher: Dispatch<RouteDayEffectAction>,
+  onChangeRouteDayOrder: (newOrder: Map<string, RouteDayDTO>) => void;
 };
 
 export default function ColumnsContainer({
-  routeDaysInModification,
+  selectedRouteDays,
   locationMap,
   routes,
+  routeDayEffects,
+  routeDayEffectDispatcher,
   onChangeRouteDayOrder,
   // onSaveRouteModification,
 }: RouteDayContainerProps) {
+  // --Use states--
+  // Related to route organization
+  const [routeDaysInModification, setRouteDaysInModification] = useState<Record<string, SortableLocation[]>>({});
+
   // Related to route transactions
   const [startDateSelected, setStartDateSelected] = useState<Dayjs | null>(null);
   const [endDateSelected, setEndDateSelected] = useState<Dayjs | null>(null);
 
+
+  // --Use effects
+  // Synchronize the state from page
+  useEffect(() => {
+    setRouteDaysInModification((prev) => {
+      const newRouteDay:Record<string, SortableLocation[]> = {};
+      selectedRouteDays.values()
+        .forEach((routeDay:RouteDayDTO) => {
+          const {id_route_day, locations} = routeDay;
+          if (prev[id_route_day] === undefined) {
+            return newRouteDay[id_route_day] = locations.map((loc:RouteDayLocationDTO) => {
+              return {
+                ...loc,
+                id: loc.id_route_day_store,
+              }
+            });
+          }
+      });
+      return {...newRouteDay};
+    })
+  }, [selectedRouteDays]);
+
+  // Synchronize internal state with page
+  useEffect(() => {
+    const newOrderOfSelectedRouteDays = new Map<string, RouteDayDTO>(selectedRouteDays);
+
+    Object.entries(routeDaysInModification).forEach(([idRouteDay, routeDayLocations]) => {
+      if(newOrderOfSelectedRouteDays.has(idRouteDay)) {
+        const currentRouteDay: RouteDayDTO = newOrderOfSelectedRouteDays.get(idRouteDay)!;
+        newOrderOfSelectedRouteDays.set(
+          idRouteDay, 
+          {
+            ...currentRouteDay,
+            locations: routeDayLocations as RouteDayLocationDTO[]
+          }
+        );
+      }
+    });
+    onChangeRouteDayOrder(newOrderOfSelectedRouteDays);
+  }, [setRouteDaysInModification]);
+
+
+  // --Use handlers--
   const handleDateRangeChange = (start: Dayjs | null, end: Dayjs | null) => {
     setStartDateSelected(start);
     setEndDateSelected(end);
@@ -119,13 +174,8 @@ export default function ColumnsContainer({
     </div>
       <DragDropProvider
         onDragOver={(event) => {
-          onChangeRouteDayOrder((items:Record<string, SortableLocation[]>) => 
-            {
-              console.log("Last order: ", items)
-              const newOrder = move(items, event);
-              console.log("New order: ", newOrder)
-            return { ...newOrder };
-            }
+          setRouteDaysInModification((items:Record<string, SortableLocation[]>) => 
+            { return {...move(items, event)}; }
           );
         }}
         // onDragEnd={(event) => {
@@ -149,6 +199,8 @@ export default function ColumnsContainer({
               id={column} 
               routeName={ getNameOfRouteDay(routes, column) }
               onSaveRouteModification={handleSaveRouteModification}
+              routeDayEffectsMap={routeDayEffects}
+              routeDayEffectDispatcher={routeDayEffectDispatcher}
               >
             <div className="overflow-auto">
               {items.map((sortableItem, index) => {

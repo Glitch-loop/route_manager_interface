@@ -1,4 +1,4 @@
-import React, { ReactNode, useState } from 'react';
+import React, { Dispatch, ReactNode, useState } from 'react';
 import {useDroppable} from '@dnd-kit/react';
 import {CollisionPriority} from '@dnd-kit/abstract';
 import {
@@ -20,12 +20,17 @@ import {
   RemoveCircleOutline,
 } from "@mui/icons-material";
 import { capitalizeFirstLetterOfEachWord } from '@/utils/generalUtils';
+import { RouteDayEffect } from '@/app/route_administration/types/types';
+import { RouteDayEffectAction } from '@/app/route_administration/types/routeDayEffectActions';
+import ColorPicker from '@/shared/components/ColorPicker/ColorPicker';
 
 
 type ColumnType = {
   children: ReactNode;
   id: string;
   routeName: string;
+  routeDayEffectsMap: Map<string, RouteDayEffect>;
+  routeDayEffectDispatcher: Dispatch<RouteDayEffectAction>,
   onSaveRouteModification: (idRouteDay: string) => void;
 }
 
@@ -33,11 +38,13 @@ type RouteDayContainerActions = "reset" | "remove" | "save" | "close";
 
 export function Column({
   children, 
-  id, 
+  id, // The ID of the component is the same that the route day.
   routeName,
+  routeDayEffectsMap, // Map of id_route_day to its effect (showStores and assignedColor)
+  routeDayEffectDispatcher,
   onSaveRouteModification
 }: ColumnType) {
-  // Custom hooks
+  // --Custom hooks--
   const {isDropTarget, ref} = useDroppable({
     id,
     type: 'column',
@@ -45,45 +52,76 @@ export function Column({
     collisionPriority: CollisionPriority.Low,
   });
 
-  // Use states
-  const handleCancelDeleteMode = () => {
-    if (deleteMode) {
-      // Just exit delete mode without removing anything
-      setDeleteMode(false);
+  // Get effect from map
+  const routeDayEffect = routeDayEffectsMap.get(id);
+
+  // --Use states--
+  const [inputValue, setInputValue] = useState<string>("");
+  const [onlyViewMode, setOnlyViewMode] = useState<boolean>(true);
+  const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">(
+    "name",
+  );
+  const [menuExpanded, setMenuExpanded] = useState<boolean>(true);
+
+  // Selected states
+  const [selectedStores, setSelectedStores] = useState<Set<string>>(new Set()); // Track selected stores for deletion
+  const [selectAll, setSelectAll] = useState<boolean>(false);
+
+  // Delete mode states
+  const [deleteMode, setDeleteMode] = useState<boolean>(false);
+
+  // Dialog states
+  const [dialogAction, setDialogAction] =
+    useState<RouteDayContainerActions | null>(null);
+
+  // --Handlers--
+  const handleSelectAll = () => {
+    if (selectAll) {
       setSelectedStores(new Set());
+    } else {
+      const allStoreIds = storesToAttend.map(
+        (store) => store.id_route_day_store,
+      );
+      setSelectedStores(new Set(allStoreIds));
     }
+
+    setSelectAll(!selectAll);
   };
 
-    // State
-    const [inputValue, setInputValue] = useState<string>("");
-    const [onlyViewMode, setOnlyViewMode] = useState<boolean>(true);
-    const [showInformation, setShowInformation] = useState<boolean>(true);
-    const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">(
-      "name",
-    );
-    const [menuExpanded, setMenuExpanded] = useState<boolean>(true);
-    // const [colorSelected, setColorSelected] = useState<string>(
-    //   routeDayEffectsMap.get(idRouteDayColumn)?.assignedColor ?? "#000000",
-    // );
-  
-    // Selected states
-    const [selectedStores, setSelectedStores] = useState<Set<string>>(new Set()); // Track selected stores for deletion
-    const [selectAll, setSelectAll] = useState<boolean>(false);
-  
-    // Delete mode states
-    const [deleteMode, setDeleteMode] = useState<boolean>(false);
-  
-    // Dialog states
-    const [dialogAction, setDialogAction] =
-      useState<RouteDayContainerActions | null>(null);
-
-  // Handlers
-  const handleCloseDeleteDialog = () => {
-    setDialogAction(null);
+  const handleStartDeleteMode = () => {
+    if (onlyViewMode) return; // Do not allow entering delete mode if we are in view mode
+    setDeleteMode(!deleteMode);
   };
+
+  // const handleAcceptDeleteStores = () => {
+  //   if (deleteMode) {
+  //     // Remove selected stores
+  //     if (selectedStores.size > 0) {
+  //       onRemoveStores(Array.from(selectedStores));
+  //     }
+  //     setDeleteMode(false);
+  //     setSelectedStores(new Set());
+  //   }
+  // };
+
+  // const handleResetRouteModification = () => {
+  //   onResetRouteModification(id);
+  // };
 
   const handleSaveModifications = () => {
     onSaveRouteModification(id);
+  };
+
+  // const handleCloseRouteModification = () => {
+  //   onCancelRouteModification(id);
+  // };
+
+  const handleOpenDialog = (actionType: RouteDayContainerActions) => {
+    setDialogAction(actionType);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setDialogAction(null);
   };
 
   const handleAcceptDialog = () => {
@@ -100,14 +138,37 @@ export function Column({
     setDialogAction(null);
   };
 
-  const handleOpenDialog = (actionType: RouteDayContainerActions) => {
-    setDialogAction(actionType);
+  const handleCancelDeleteMode = () => {
+    if (deleteMode) {
+      // Just exit delete mode without removing anything
+      setDeleteMode(false);
+      setSelectedStores(new Set());
+    }
   };
 
-  const handleStartDeleteMode = () => {
-    if (onlyViewMode) return; // Do not allow entering delete mode if we are in view mode
-    setDeleteMode(!deleteMode);
-  };
+  // const handleAddStore = (idRouteDay: string, idStore: string) => {
+  //   if (onlyViewMode) return; // Do not allow add new clients if we are in view mode
+  //   onAddStore(idRouteDay, idStore);
+  //   setInputValue("");
+  //   onHoverAutocompleteOption(null); // Reset hover state after adding a store
+  // };
+
+  // Handlers regarded to effects
+  const handleShowInformation = (id: string, newState: boolean) => {
+    routeDayEffectDispatcher({
+      type: 'show_information', 
+      idRouteDay: id,
+      state: newState
+    });
+  }
+
+  const handleSelectRouteDayColor = (id: string, selectedColor: string) => {
+    routeDayEffectDispatcher({
+      type: 'assign_color', 
+      idRouteDay: id,
+      color: selectedColor
+    });
+  }
 
   return (
     <div className="Column w-96 h-full flex flex-col shrink-0 overflow-auto  bg-system-primary-background rounded-lg" ref={ref}>
@@ -200,9 +261,9 @@ export function Column({
               {onlyViewMode ? <LockOutline /> : <LockOpen />}
             </IconButton>
           </Tooltip>
-          {/* <Tooltip
+          <Tooltip
             title={
-              showInformation ? "Ocultar información" : "Mostrar información"
+              routeDayEffectsMap.get(id)?.showStores ? "Ocultar información" : "Mostrar información"
             }
             placement="top"
             enterDelay={300}
@@ -219,27 +280,27 @@ export function Column({
                 height: 40,
               }}
               onClick={() =>
-                handleShowInformation(idRouteDayColumn, !showInformation)
+                handleShowInformation(id, !routeDayEffectsMap.get(id)?.showStores)
               }
               className="h-fit my-auto shadow-md"
               size="small"
             >
-              {showInformation ? <Visibility /> : <VisibilityOff />}
+              {routeDayEffectsMap.get(id)?.showStores ? <Visibility /> : <VisibilityOff />}
             </IconButton>
-          </Tooltip> */}
-          {/* <Tooltip
+          </Tooltip>
+          <Tooltip
             title={"Cambiar color del día de ruta"}
             placement="top"
             enterDelay={300}
             arrow
           >
             <ColorPicker
-              initialColor={colorSelected}
+              initialColor={routeDayEffectsMap.get(id)?.assignedColor}
               onChange={(color) =>
-                handleSelectRouteDayColor(idRouteDayColumn, color)
+                handleSelectRouteDayColor(id, color)
               }
             />
-          </Tooltip> */}
+          </Tooltip>
         </div>
         <div className="flex basis-1/2 justify-end mr-3">
           <Tooltip
