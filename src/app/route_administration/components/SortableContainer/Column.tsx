@@ -18,6 +18,8 @@ import {
   Visibility,
   DeleteOutline,
   RemoveCircleOutline,
+  ExpandLess,
+  ExpandMore,
 } from "@mui/icons-material";
 import { capitalizeFirstLetterOfEachWord } from '@/utils/generalUtils';
 import ColorPicker from '@/shared/components/ColorPicker/ColorPicker';
@@ -26,19 +28,21 @@ import {
   RouteDayEffect, 
 } from "@/shared/hooks/route-day-location-map/types/types";
 import { getRouteDayEffect } from "@/shared/hooks/route-day-location-map/utils/utils";
-import { RouteDayActionStateType } from '@/app/route_administration/components/SortableContainer/Types/types';
+import { RouteDayActionStateType, SortableLocationType } from '@/app/route_administration/components/SortableContainer/Types/types';
 
 type ColumnType = {
   children: ReactNode;
   id: string;
   routeName: string;
-  numberOfClientsInRoute: number
+  clientsInRoute: SortableLocationType[],
   routeDayActionState: RouteDayActionStateType,
   routeDayEffect: RouteDayEffect,
+  selectedRouteDayLocations: Set<string>,
   onChangeRouteDayEffect: (routeDayId: string, routeDayEffect: RouteDayEffect) => void,
   onChangeRouteDayActionState: (routeDayId: string, routeDayActionState: RouteDayActionStateType) => void,
   onSaveRouteModification: (idRouteDay: string) => void;
-  onRemoveStores: (idRouteDay: string, idsRouteDayStore: string[]) => void; // Callback to remove stores from route day, receives list of id_route_day_store to remove
+  onRemoveStores: (idRouteDay: string) => void; // Callback to remove stores from route day, receives list of id_route_day_store to remove
+  onSelectAll: (idRouteDay: string, isSelectAll: boolean) => void;
 }
 
 type RouteDayContainerActions = "reset" | "remove" | "save" | "close";
@@ -49,13 +53,15 @@ export function Column({
   children, 
   id, // The ID of the component is the same that the route day.
   routeName,
-  numberOfClientsInRoute,
+  clientsInRoute,
   routeDayActionState,
-  onChangeRouteDayActionState,
   routeDayEffect,
+  selectedRouteDayLocations,
   onChangeRouteDayEffect,
+  onChangeRouteDayActionState,
   onSaveRouteModification,
-  onRemoveStores
+  onRemoveStores,
+  onSelectAll
 }: ColumnType) {
   // --Custom hooks--
   const {isDropTarget, ref} = useDroppable({
@@ -72,11 +78,7 @@ export function Column({
   const [searchStoreBy, setSearchStoreBy] = useState<"name" | "address">("name");
 
   // Selected states
-  const [selectedStores, setSelectedStores] = useState<Set<string>>(new Set()); // Track selected stores for deletion
   const [selectAll, setSelectAll] = useState<boolean>(false);
-
-  // Delete mode states
-  const [deleteMode, setDeleteMode] = useState<boolean>(false);
 
   // UI states
   const [dialogAction, setDialogAction] =
@@ -87,12 +89,9 @@ export function Column({
   // --Handlers--
   const handleSelectAll = () => {
     if (selectAll) {
-      setSelectedStores(new Set());
+      onSelectAll(id, false);
     } else {
-      const allStoreIds = storesToAttend.map(
-        (store) => store.id_route_day_store,
-      );
-      setSelectedStores(new Set(allStoreIds));
+      onSelectAll(id, true);
     }
 
     setSelectAll(!selectAll);
@@ -119,6 +118,7 @@ export function Column({
   };
 
   const handleAcceptDialog = () => {
+    console.log("Dialog action: ", dialogAction)
     if (dialogAction === "remove") {
       handleAcceptDeleteStores();
     } else if (dialogAction === "reset") {
@@ -149,29 +149,30 @@ export function Column({
   const handleStartDeleteMode = () => {
     onChangeRouteDayActionState(id, {...routeDayActionState, 
       isDeletedMode: true, isEditable: true});
+    setSelectAll(false);
   };
 
   const handleCancelDeleteMode = () => {
     const { isDeletedMode } = routeDayActionState;
     if (isDeletedMode) {
       // Just exit delete mode without removing anything
-      setSelectedStores(new Set());
       onChangeRouteDayActionState(id, {...routeDayActionState, 
         isDeletedMode: false, isEditable: false});
     }
+    setSelectAll(false);
   };
 
   const handleAcceptDeleteStores = () => {
     const { isDeletedMode } = routeDayActionState;
     if (isDeletedMode) {
       // Remove selected stores
-      if (selectedStores.size > 0) {
-        onRemoveStores(id, Array.from(selectedStores));
+      if (selectedRouteDayLocations.size > 0) {
+        onRemoveStores(id);
       }
       onChangeRouteDayActionState(id, {...routeDayActionState, 
         isDeletedMode: false, isEditable: false});
-      setSelectedStores(new Set());
     }
+    setSelectAll(false);
   };
 
   // Handlers regarded to effects
@@ -196,7 +197,7 @@ export function Column({
           {dialogAction === "remove" && (
             <div className="flex flex-col justify-center items-center">
               <span className="text-center text-red-600 font-semibold">
-                Se eliminarán {selectedStores.size} cliente(s) de este día de
+                Se eliminarán {selectedRouteDayLocations.size} cliente(s) de este día de
                 ruta.
               </span>
               <span className="text-center font-bold">
@@ -241,112 +242,217 @@ export function Column({
           </div>
         </div>
       </Dialog>
-      {/* Title and main actions */}
-      <div className="flex flex-row justify-start items-center my-2">
-        <div className="flex basis-1/2 gap-2 items-center">
-          <h3 className="text-center align-middle font-bold text-lg">
-            {capitalizeFirstLetterOfEachWord(routeName)}
-          </h3>
-          {/* Control if editable */}
-          <Tooltip
-            title={
-              !routeDayActionState.isEditable
-                ? "Cambiar a modo edición"
-                : "Cambiar a modo solo vista"
-            }
-            placement="top"
-            enterDelay={300}
-            arrow
-          >
-            <IconButton
-              sx={{
-                backgroundColor: "#f5a623",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#e09620",
-                },
-                width: 40,
-                height: 40,
-              }}
-              onClick={() => handleChangeEditableState(id, !routeDayActionState.isEditable)}
-              className="h-fit my-auto shadow-md"
-              size="small"
-            >
-              {!routeDayActionState.isEditable ? <LockOutline /> : <LockOpen />}
-            </IconButton>
-          </Tooltip>
-          {/* Control if visible */}
-          <Tooltip
-            title={
-              routeDayEffect.showStores ? "Ocultar información" : "Mostrar información"
-            }
-            placement="top"
-            enterDelay={300}
-            arrow
-          >
-            <IconButton
-              sx={{
-                backgroundColor: "#f58220",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#e0741a",
-                },
-                width: 40,
-                height: 40,
-              }}
-              onClick={() =>
-                handleShowInformation(id, routeDayEffect.showStores)
+      <div className="p-2 flex flex-col">
+        {/* Title and main actions */}
+        <div className="flex flex-row justify-start items-center my-2">
+          <div className="flex basis-1/2 gap-2 items-center">
+            <h3 className="text-center align-middle font-bold text-lg">
+              {capitalizeFirstLetterOfEachWord(routeName)}
+            </h3>
+            {/* Control if editable */}
+            <Tooltip
+              title={
+                !routeDayActionState.isEditable
+                  ? "Cambiar a modo edición"
+                  : "Cambiar a modo solo vista"
               }
-              className="h-fit my-auto shadow-md"
-              size="small"
+              placement="top"
+              enterDelay={300}
+              arrow
             >
-              {routeDayEffect.showStores ? <Visibility /> : <VisibilityOff />}
-            </IconButton>
-          </Tooltip>
-          {/* Control the color of the route day */}
-          <Tooltip
-            title={"Cambiar color del día de ruta"}
-            placement="top"
-            enterDelay={300}
-            arrow
-          >
-            <ColorPicker
-              initialColor={routeDayEffect.assignedColor}
-              onChange={(color) =>
-                handleSelectRouteDayColor(id, color)
+              <IconButton
+                sx={{
+                  backgroundColor: "#f5a623",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "#e09620",
+                  },
+                  width: 40,
+                  height: 40,
+                }}
+                onClick={() => handleChangeEditableState(id, !routeDayActionState.isEditable)}
+                className="h-fit my-auto shadow-md"
+                size="small"
+              >
+                {!routeDayActionState.isEditable ? <LockOutline /> : <LockOpen />}
+              </IconButton>
+            </Tooltip>
+            {/* Control if visible */}
+            <Tooltip
+              title={
+                routeDayEffect.showStores ? "Ocultar información" : "Mostrar información"
               }
-            />
-          </Tooltip>
+              placement="top"
+              enterDelay={300}
+              arrow
+            >
+              <IconButton
+                sx={{
+                  backgroundColor: "#f58220",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "#e0741a",
+                  },
+                  width: 40,
+                  height: 40,
+                }}
+                onClick={() =>
+                  handleShowInformation(id, routeDayEffect.showStores)
+                }
+                className="h-fit my-auto shadow-md"
+                size="small"
+              >
+                {routeDayEffect.showStores ? <Visibility /> : <VisibilityOff />}
+              </IconButton>
+            </Tooltip>
+            {/* Control the color of the route day */}
+            <Tooltip
+              title={"Cambiar color del día de ruta"}
+              placement="top"
+              enterDelay={300}
+              arrow
+            >
+              <ColorPicker
+                initialColor={routeDayEffect.assignedColor}
+                onChange={(color) =>
+                  handleSelectRouteDayColor(id, color)
+                }
+              />
+            </Tooltip>
+          </div>
+          <div className="flex basis-1/2 justify-end mr-3">
+            <Tooltip
+              title={"Remover clientes de este día"}
+              placement="top"
+              enterDelay={300}
+              arrow
+            >
+              <IconButton
+                sx={{
+                  backgroundColor: "#f3281a",
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "#c72418",
+                  },
+                  width: 40,
+                  height: 40,
+                }}
+                onClick={() =>
+                  routeDayActionState.isDeletedMode
+                    ? handleCancelDeleteMode()
+                    : handleStartDeleteMode()
+                }
+                className="h-fit my-auto shadow-md"
+                size="small"
+              >
+                <DeleteOutline />
+              </IconButton>
+            </Tooltip>
+          </div>
         </div>
-        <div className="flex basis-1/2 justify-end mr-3">
-          <Tooltip
-            title={"Remover clientes de este día"}
-            placement="top"
-            enterDelay={300}
-            arrow
-          >
-            <IconButton
-              sx={{
-                backgroundColor: "#f3281a",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#c72418",
-                },
-                width: 40,
-                height: 40,
-              }}
-              onClick={() =>
-                deleteMode
-                  ? handleCancelDeleteMode()
-                  : handleStartDeleteMode()
-              }
-              className="h-fit my-auto shadow-md"
-              size="small"
-            >
-              <DeleteOutline />
-            </IconButton>
-          </Tooltip>
+        {/* Menu toggle button */}
+        <div
+          className="flex flex-row items-center justify-between cursor-pointer hover:bg-gray-100 rounded px-2 py-1"
+          onClick={() => setMenuExpanded(!menuExpanded)}
+        >
+          <span className="font-semibold text-sm text-gray-600">
+            {routeDayActionState.isDeletedMode ? "Opciones de eliminación" : "Opciones de cliente"}
+          </span>
+          {menuExpanded ? <ExpandLess /> : <ExpandMore />}
         </div>
+        {/* Menu - Collapsible */}
+        <Collapse in={menuExpanded}>
+          <div className="flex flex-row w-full justify-center items-center gap-2">
+            {routeDayActionState.isDeletedMode ? (
+              <div className="flex flex-row w-full justify-between">
+                <h5 className="font-bold text-lg">Eliminar clientes</h5>
+                <Button
+                  onClick={handleSelectAll}
+                  color="info"
+                  variant="contained"
+                >
+                  {selectAll ? "Deseleccionar todo" : "Seleccionar todo"}
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1 w-full">
+                <h5 className="font-bold text-lg">Agregar cliente</h5>
+                <div className="flex flex-row">
+                  <Switch
+                    checked={searchStoreBy === "name"}
+                    onChange={(e) =>
+                      setSearchStoreBy(e.target.checked ? "name" : "address")
+                    }
+                    size="small"
+                  />
+                  <span className="text-sm">{`Buscar por ${searchStoreBy === "name" ? "nombre" : "dirección"}`}</span>
+                </div>
+                {/* <div className="flex flex-row gap-3">
+                  <div className="flex basis-4/5">
+                    <Autocomplete
+                      disabled={onlyViewMode}
+                      options={Array.from(storesMap.values()).map((item) => {
+                        return { id: item.id_location, ...item };
+                      })}
+                      className="w-full"
+                      getOptionKey={(option) => option.id_location}
+                      getOptionLabel={(option) =>
+                        searchStoreBy === "name"
+                          ? (option.location_name ?? "Nombre no disponible")
+                          : getAddressOfStore(option)
+                      }
+                      inputValue={inputValue}
+                      onChange={(event, newValue) => {
+                        if (newValue) {
+                          handleAddStore(idRouteDayColumn, newValue.id_location);
+                        }
+                      }}
+                      renderOption={(props, option) => (
+                        <li
+                          {...props}
+                          key={option.id_location}
+                          onMouseEnter={() => onHoverAutocompleteOption(option)} // Detect hover
+                          onMouseLeave={() => onHoverAutocompleteOption(null)} // Detect hover
+                        >
+                          <div className="flex flex-col">
+                            <span>
+                              {option.location_name ?? "Nombre no disponible"}
+                            </span>
+                            <span className="text-sm">
+                              {getAddressOfStore(option)}
+                            </span>
+                          </div>
+                        </li>
+                      )}
+                      renderInput={(params) => (
+                        <TextField
+                          onChange={(event) => {
+                            setInputValue(event.target.value);
+                          }}
+                          {...params}
+                          label="Add Item"
+                        />
+                      )}
+                    />
+                  </div>
+                  <Tooltip
+                    title={"Revierte los cambios al ultimo estado guardado"}
+                    placement="top"
+                    enterDelay={300}
+                    arrow
+                  >
+                    <Button
+                      variant="contained"
+                      onClick={() => handleOpenDialog("reset")}
+                    >
+                      Reset
+                    </Button>
+                  </Tooltip>
+                </div> */}
+              </div>
+            )}
+          </div>
+        </Collapse>
       </div>
       {/* Estimated total section */}
       <div className="flex flex-row justify-end items-center px-4 py-2 ">
@@ -356,7 +462,7 @@ export function Column({
         <span className="font-bold text-lg text-black">
           {/* {formatNumberAsAccountingCurrency(
             calculateStoresGreatTotalSales(
-              deleteMode ? storesToAttend.filter((storeToAttend) => !selectedStores.has(storeToAttend.id_location)) : storesToAttend,
+              routeDayActionState.isDeletedMode ? storesToAttend.filter((storeToAttend) => !selectedStores.has(storeToAttend.id_location)) : storesToAttend,
               routeTransactionsMap
             )
           )} */}
@@ -366,7 +472,7 @@ export function Column({
         <span className="font-bold text-lg mr-2">
           Total clientes en día de ruta:{" "}
         </span>
-        <span className="font-bold text-lg text-black"> {numberOfClientsInRoute} </span>
+        <span className="font-bold text-lg text-black"> {clientsInRoute.length} </span>
       </div>
       {children}
       {/* Actions buttons bar - Always visible */}
@@ -392,10 +498,10 @@ export function Column({
           variant="contained"
           color="warning"
           onClick={() =>
-            deleteMode ? handleCancelDeleteMode() : handleOpenDialog("close")
+            routeDayActionState.isDeletedMode ? handleCancelDeleteMode() : handleOpenDialog("close")
           }
         >
-          {deleteMode ? "Cancelar eliminación" : "Cerrar día de ruta"}
+          {routeDayActionState.isDeletedMode ? "Cancelar eliminación" : "Cerrar día de ruta"}
         </Button>
       </div>
     </div>

@@ -81,15 +81,9 @@ export default function RouteDayContainer({
       NonNullable<React.ComponentProps<typeof DragDropProvider>["onDragOver"]>
     >[0],
   ) => {
-    console.log("routeDaysInModification: ", routeDaysInModification)
     const result = move(routeDaysInModification, event);
-    console.log("Result of the modification: ", result)
     onModifyRouteDays(result as Record<string, DraggableRouteDayStore[]>);
   };
-
-  const handleDragEnd = (e:any) => {
-    console.log(e)
-  }
 
   const handleAddNewStore = (idRouteDay: string, idStore: string) => {
     if (routeDaysInModification[idRouteDay]) {
@@ -247,10 +241,7 @@ export default function RouteDayContainer({
           </Button>
         </div>
       </div>
-      <DragDropProvider 
-        // onDragOver={handleDragOver}
-        onDragEnd={handleDragEnd}
-      >
+      <DragDropProvider onDragOver={handleDragOver}>
         <div className="overflow-auto ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2">
           {Object.entries(routeDaysInModification).map(
             ([idRouteDay, stores]) => (

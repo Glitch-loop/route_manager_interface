@@ -41,8 +41,6 @@ type RouteDayContainerProps = {
   onChangeRouteDayOrder: (newOrder: Map<string, RouteDayDTO>) => void;
 };
 
-
-
 // Auxiliars functions
 function getRouteDayActionState(idRouteDay: string, routeActionStatesMap: Map<string, RouteDayActionStateType>): RouteDayActionStateType {
   const actionStates = routeActionStatesMap.get(idRouteDay)
@@ -184,7 +182,7 @@ export default function ColumnsContainer({
     // return
     if (!storesInRouteDay) return;
 
-    const updatedStoresInRouteDay:SortableLocation[] = storesInRouteDay.map((store, index) => ({
+    const updatedStoresInRouteDay:SortableLocationType[] = storesInRouteDay.map((store, index) => ({
       ...store,
       position_in_route: index,
     }));
@@ -197,6 +195,13 @@ export default function ColumnsContainer({
   };
 
   const handleModifyActionState = (idRouteDay: string, newState: RouteDayActionStateType) => {
+    if (routeDayActionStateMap.has(idRouteDay)) {
+      if (routeDayActionStateMap.get(idRouteDay)!.isDeletedMode 
+      !== newState.isDeletedMode) {
+        // If user change the delete mode, then restart items selected.
+        selectedRouteDayLocationMap.delete(idRouteDay);
+      }
+    }
     setRouteDayActionStateMap((prev) => (new Map<string, RouteDayActionStateType>(prev.set(idRouteDay, newState))));
   }
 
@@ -204,10 +209,12 @@ export default function ColumnsContainer({
    * Remove stores from a route day by their id_route_day_store.
    */
   const handleRemoveStores = (idRouteDay: string) => {
+    console.log("remove stores: ", idRouteDay)
     if(selectedRouteDayLocationMap.has(idRouteDay)) {
       const idsToRemove:Set<string> = selectedRouteDayLocationMap.get(idRouteDay)!
       setRouteDaysInModification((prev) => {
         const sortableLocations  = prev[idRouteDay];
+        console.log("Route days to delete: ", idsToRemove)
         prev[idRouteDay] = sortableLocations.filter((location) => 
           !idsToRemove.has(location.id_route_day_store))
         return {...prev};
@@ -231,10 +238,32 @@ export default function ColumnsContainer({
       }
     } else {
       // This case is when the user is starting the process for selecting route day locations.
-      selectedRouteDayLocationMap.set(idRouteDay, new Set(idRouteDayLocation))   
+      selectedRouteDayLocationMap.set(idRouteDay, new Set<string>());
+      selectedRouteDayLocationMap.get(idRouteDay)!.add(idRouteDayLocation)
     }
     setSelectedRouteDayLocationMap(new Map<string, Set<string>>(selectedRouteDayLocationMap));
   }
+
+  const handleSelectAllRouteDayLocations = (idRouteDay: string, isSelectAll: boolean) => {
+    setSelectedRouteDayLocationMap((prev) => {
+      if(isSelectAll) {
+        if(routeDaysInModification[idRouteDay] !== undefined) {
+          const routDayLocationsSet:Set<string> = new Set<string>();
+          const routeDayLocations = routeDaysInModification[idRouteDay];
+
+          routeDayLocations.forEach((loc) => {
+            routDayLocationsSet.add(loc.id);
+          });
+
+          prev.set(idRouteDay, routDayLocationsSet); 
+        }
+      } else {
+        prev.set(idRouteDay, new Set<string>()); 
+      }
+      return new Map<string, Set<string>>(prev);
+    });
+  }
+
 
   return (
   <div className="w-full h-full bg-system-secondary-background flex flex-row p-2">
@@ -284,6 +313,8 @@ export default function ColumnsContainer({
           Object.entries(routeDaysInModification).map(([column, items]) => {
             const currentRouteDayEffect:RouteDayEffect = getRouteDayEffect(column, routeDayEffects);
             const routeDayActionState:RouteDayActionStateType = getRouteDayActionState(column, routeDayActionStateMap)
+            const selectedRouteDayLocationSet:Set<string>|undefined = 
+              selectedRouteDayLocationMap.get(column);
             const {isEditable, isDeletedMode} = routeDayActionState;
 
             return (
@@ -291,13 +322,15 @@ export default function ColumnsContainer({
                 key={column} 
                 id={column} 
                 routeName={ getNameOfRouteDay(routes, column) }
-                numberOfClientsInRoute={ items.length }
-                onSaveRouteModification={handleSaveRouteModification}
+                clientsInRoute={ items }
                 routeDayActionState={routeDayActionState}
-                onChangeRouteDayActionState={handleModifyActionState}
                 routeDayEffect={currentRouteDayEffect}
+                selectedRouteDayLocations={selectedRouteDayLocationSet ? selectedRouteDayLocationSet : new Set<string>()}
+                onSaveRouteModification={handleSaveRouteModification}
+                onChangeRouteDayActionState={handleModifyActionState}
                 onChangeRouteDayEffect={onChangeRouteDayEffect}
                 onRemoveStores={handleRemoveStores}
+                onSelectAll={handleSelectAllRouteDayLocations}
                 >
               <div className="overflow-auto">
                 {items.map((sortableItem, index) => {
@@ -305,8 +338,6 @@ export default function ColumnsContainer({
                   const { id_location, id } = sortableItem;
                   const locationData = locationMap.get(id_location);
                   if(isDeletedMode) {
-                    const selectedRouteDayLocationSet:Set<string>|undefined = 
-                      selectedRouteDayLocationMap.get(column);
                     if (selectedRouteDayLocationSet === undefined) 
                       isSelected = false;
                     else
