@@ -256,18 +256,6 @@ export default function ColumnsContainer({
             { return {...move(items, event)}; }
           );
         }}
-        // onDragEnd={(event) => {
-        //   console.log("Hello")
-        //   const {source, target} = event.operation;
-        //   console.log(source)
-        //   if (event.canceled || source.type !== 'column') return;
-
-        //   setColumnOrder((columns) => {
-        //     const newColumns = move(columns, event)
-        //     console.log("These are the columns after reordering: ", newColumns)
-        //     return newColumns; 
-        //   });
-        // }}
       >
       <div className="Root overflow-auto ml-2 p-2 flex flex-row w-full bg-system-third-background rounded-lg gap-2">        
         {

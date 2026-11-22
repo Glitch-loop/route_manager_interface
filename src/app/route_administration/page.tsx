@@ -751,19 +751,6 @@ export default function Page() {
     });
   };
 
-  const handleShowInformation = (idRouteDay: string, state: boolean) => {
-    if (effectSelectedRouteDay.has(idRouteDay)) {
-      effectSelectedRouteDay.get(idRouteDay)!.showStores = state;
-      setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
-    }
-  };
-
-  const handleSelectRouteDayColor = (idRouteDay: string, color: string) => {
-    if (effectSelectedRouteDay.has(idRouteDay)) {
-      effectSelectedRouteDay.get(idRouteDay)!.assignedColor = color;
-      setEffectSelectedRouteDay(new Map(effectSelectedRouteDay));
-    }
-  };
 
   const handleOverStoreAutoComplete = (store: LocationDTO | null) => {
     setHoveredStore(store);
@@ -1105,7 +1092,7 @@ export default function Page() {
                 locationMap={mapStores}
                 routes={routes}
                 routeDayEffects={effectRouteDay}
-                handleUpdateRouteDayEffects={handleUpdateRouteDayEffects}
+                onChangeRouteDayEffect={handleUpdateRouteDayEffects}
                 onChangeRouteDayOrder={setRoutesInModification}
                 />
             </div>
