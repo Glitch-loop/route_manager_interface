@@ -144,12 +144,11 @@ export default function RouteExpandMenu({
     }, 150);
   };
 
-  const handleDayHover = (dayId: string, dayName: string) => {
+  const handleDayHover = (dayId: string) => {
     clearDayHoverTimeout();
 
     // 3-second hover detection for day
     dayHoverTimeoutRef.current = setTimeout(() => {
-      console.log(`Day hovered for 3 seconds: ${dayName}`);
       setHoveredDayTooltip(dayId);
     }, 1000);
   };
@@ -194,13 +193,15 @@ export default function RouteExpandMenu({
     }, 150);
   };
 
-  const handleDayClick = (dayId: string) => {
+  const handleDayClick = (dayId: string) => {    
     if (showDayCheckbox) {
+      console.log("checkedDays[dayId]: ", checkedDays[dayId])
       const newCheckedState = !checkedDays[dayId];
       const newCheckedDays = {
         ...checkedDays,
         [dayId]: newCheckedState,
       };
+
 
       // Notify parent of state change
       if (onCheckedDaysChange) {
@@ -208,9 +209,6 @@ export default function RouteExpandMenu({
       }
 
       if (onDaySelectCheckbox !== undefined) {
-        console.log(
-          `Day ${dayId} checkbox clicked. New state: ${newCheckedState}`,
-        );
         onDaySelectCheckbox(dayId, newCheckedState);
       }
     } else {
@@ -362,7 +360,7 @@ export default function RouteExpandMenu({
                         <MenuItem
                           onClick={() => handleDayClick(id_route_day)}
                           onMouseEnter={() =>
-                            handleDayHover(id_route_day, day_name)
+                            handleDayHover(id_route_day)
                           }
                           onMouseLeave={handleDayLeave}
                           sx={{

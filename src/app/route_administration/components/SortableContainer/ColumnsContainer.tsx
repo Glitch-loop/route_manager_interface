@@ -73,32 +73,30 @@ export default function ColumnsContainer({
 
 
   // --Use effects
-  // Synchronize the state from page
+  // Synchronize state: transform selectedRouteDays to sortable format (INITIAL LOAD ONLY)
   useEffect(() => {
-    setRouteDaysInModification((prev) => {
-      // Transforming route day location information to sortable type. 
-      const newRouteDay:Record<string, SortableLocationType[]> = {};
-      selectedRouteDays.values()
-        .forEach((routeDay:RouteDayDTO) => {
-          const {id_route_day, locations} = routeDay;
-          if (prev[id_route_day] === undefined) {
-            return newRouteDay[id_route_day] = locations.map((loc:RouteDayLocationDTO) => {
-              return {
-                ...loc,
-                id: loc.id_route_day_store,
-              }
-            });
-          }
+    const newRouteDaysInModification: Record<string, SortableLocationType[]> = {};
+
+    // Transform to sortable format
+    selectedRouteDays.forEach((routeDay: RouteDayDTO) => {
+      const { id_route_day, locations } = routeDay;
+      newRouteDaysInModification[id_route_day] = locations.map((loc: RouteDayLocationDTO) => {
+        return {
+          ...loc,
+          id: loc.id_route_day_store,
+        }
       });
-      return {...newRouteDay};
     });
+
+    // Update internal state - DO NOT call onChangeRouteDayOrder here
+    setRouteDaysInModification(newRouteDaysInModification);
 
     // Setting action for the route day.
     setRouteDayActionStateMap((prev) => {
-      const newRouteDayActionsMap:Map<string, RouteDayActionStateType> 
+      const newRouteDayActionsMap: Map<string, RouteDayActionStateType>
         = new Map<string, RouteDayActionStateType>();
-      
-      selectedRouteDays.values().forEach((routeDay) => {
+
+      selectedRouteDays.forEach((routeDay) => {
         const { id_route_day } = routeDay;
         if (!prev.has(id_route_day)) {
           newRouteDayActionsMap.set(id_route_day, {
@@ -106,30 +104,54 @@ export default function ColumnsContainer({
             isDeletedMode: false
           })
         } else {
-          newRouteDayActionsMap.set(id_route_day, {...prev.get(id_route_day)!});
+          newRouteDayActionsMap.set(id_route_day, { ...prev.get(id_route_day)! });
         }
       });
       return newRouteDayActionsMap;
     });
   }, [selectedRouteDays]);
 
-  // Synchronize internal state with page
+  // Handle drag-and-drop changes ONLY - sync back to parent
   useEffect(() => {
-    const newOrderOfSelectedRouteDays = new Map<string, RouteDayDTO>(selectedRouteDays);
+    // Create a reference to compare with selectedRouteDays
+    // Only sync if internal state has changed from drag operations
+    let hasChanged = false;
+    
     Object.entries(routeDaysInModification).forEach(([idRouteDay, routeDayLocations]) => {
-      if(newOrderOfSelectedRouteDays.has(idRouteDay)) {
-        const currentRouteDay: RouteDayDTO = newOrderOfSelectedRouteDays.get(idRouteDay)!;
-        newOrderOfSelectedRouteDays.set(
-          idRouteDay, 
-          {
-            ...currentRouteDay,
-            locations: routeDayLocations as RouteDayLocationDTO[]
+      if (selectedRouteDays.has(idRouteDay)) {
+        const originalLocations = selectedRouteDays.get(idRouteDay)?.locations || [];
+        // Check if the locations have changed
+        if (originalLocations.length !== routeDayLocations.length) {
+          hasChanged = true;
+        } else {
+          for (let i = 0; i < originalLocations.length; i++) {
+            if (originalLocations[i].id_route_day_store !== routeDayLocations[i].id_route_day_store) {
+              hasChanged = true;
+              break;
+            }
           }
-        );
+        }
       }
     });
-    onChangeRouteDayOrder(newOrderOfSelectedRouteDays);
-  }, [setRouteDaysInModification]);
+
+    // Only sync if something actually changed
+    if (hasChanged) {
+      const newOrderOfSelectedRouteDays = new Map<string, RouteDayDTO>(selectedRouteDays);
+      Object.entries(routeDaysInModification).forEach(([idRouteDay, routeDayLocations]) => {
+        if (newOrderOfSelectedRouteDays.has(idRouteDay)) {
+          const currentRouteDay: RouteDayDTO = newOrderOfSelectedRouteDays.get(idRouteDay)!;
+          newOrderOfSelectedRouteDays.set(
+            idRouteDay,
+            {
+              ...currentRouteDay,
+              locations: routeDayLocations as RouteDayLocationDTO[]
+            }
+          );
+        }
+      });
+      onChangeRouteDayOrder(newOrderOfSelectedRouteDays);
+    }
+  }, [routeDaysInModification]);
 
 
   // --Handlers--

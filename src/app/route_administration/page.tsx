@@ -549,15 +549,18 @@ export default function Page() {
 
   // Handlers - Route day menu selection
   const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
+    console.log("routeDayId: ", routeDayId, " - state: ", state)
     if (state) {
       // Add route day because it was selected
       // Check if already selected to avoid duplication
+      console.log("This route is already considered? ", routesInModification.has(routeDayId))
       if (routesInModification.has(routeDayId)) return;
       const routeDayFound: RouteDayDTO | null = getRouteDayFromRoutesList(
         routes,
         routeDayId,
       );
 
+      console.log("Get route day for appending in the map: ", routeDayFound)
       if (routeDayFound !== null) {
         // Add to routesInModification
         setRoutesInModification((prev) => (
@@ -568,7 +571,8 @@ export default function Page() {
             showStores: true,
             assignedColor: generateRandomColor(),
             selectedLocation: undefined 
-          });
+          }
+        );
       }
     } else {
       // If changes are detected, show dialog for confirming unselecting.
@@ -629,7 +633,7 @@ export default function Page() {
     setCheckedRouteDays((prev) => {
       const newCheckedDays = { ...prev };
       delete newCheckedDays[idRouteDayToRemove];
-      return newCheckedDays;
+      return {...newCheckedDays};
     });
 
     // Remove effects
