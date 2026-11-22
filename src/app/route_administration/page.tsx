@@ -542,7 +542,7 @@ export default function Page() {
     setSelectedStore(null);
   };
 
-  // Handlers - Administration menu management
+  // Handlers - Administration menu management.
   const handleAdministrationView = (option: number) => {
     setAdministrationView(option);
   };
@@ -558,59 +558,39 @@ export default function Page() {
         routeDayId,
       );
 
-      console.log("Modification: ", routeDayFound)
       if (routeDayFound !== null) {
         // Add to routesInModification
         setRoutesInModification((prev) => (
-           new Map<string, RouteDayDTO>(prev.set(routeDayId, routeDayFound))
-          // {
-          // ...prev,
-          // [routeDayId]: routeDayFound,
-          // }
-        ));
-
+          new Map<string, RouteDayDTO>(prev.set(routeDayId, routeDayFound))));
         handleAddRouteDayEffects(routeDayId); // Use default effects settings.
-
-        // Set effects for map markers
-        // Replace with the dispatcher: add_new_route_day
-        
-        setEffectSelectedRouteDay((prev) => {
-          const newMap = new Map(prev);
-          newMap.set(routeDayId, {
-            showStores: true,
-            assignedColor: generateRandomColor(),
-          });
-          return newMap;
-        });
       }
     } else {
-      // Show confirmation dialog before unselecting
+      // If changes are detected, show dialog for confirming unselecting.
       let askValidation = false;
       const routeDayFound: RouteDayDTO | null = getRouteDayFromRoutesList(
         routes,
         routeDayId,
       );
-      const routeDayBeingModified: SortableLocationType[] | undefined =
-        routesInModification[routeDayId];
+      const routeDayBeingModified: RouteDayDTO|undefined = 
+        routesInModification.get(routeDayId);
 
       if (routeDayFound === null || routeDayBeingModified == undefined) return;
 
       const locationOfRouteDay = routeDayFound.locations;
+      const locationsInContainerForModifying = routeDayBeingModified.locations;
 
-      if (locationOfRouteDay.length === routeDayBeingModified.length) {
+      if (locationOfRouteDay.length === locationsInContainerForModifying.length) {
         for (let i = 0; i < locationOfRouteDay.length; i++) {
           const store = locationOfRouteDay[i];
-          const storeBeingModified = routeDayBeingModified[i];
+          const storeBeingModified = locationsInContainerForModifying[i];
 
-          if (
-            store.id_route_day_store !== storeBeingModified.id_route_day_store
-          )
+          if (store.id_route_day_store !== storeBeingModified.id_route_day_store)
             askValidation = true;
         }
       } else {
-        // It means there are changes in the store of the route day.
         askValidation = true;
       }
+      
       if (askValidation) setPendingUnselectRouteDayId(routeDayId);
       else removeRouteDayByCancelModification(routeDayId);
     }
