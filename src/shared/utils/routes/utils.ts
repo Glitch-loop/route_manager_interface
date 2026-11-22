@@ -77,3 +77,28 @@ export function createMapStoresInRouteDay(
   }
   return map;
 }
+
+export function getNameOfRouteDay(
+  routes: RouteDTO[],
+  idRouteDayToFind: string,
+): string {
+  let routeName:string = "Día no encontrado";
+  const foundRoute: RouteDTO|null = getRouteWhereRouteDayBelongs(routes, idRouteDayToFind);
+  const foundRouteDay: RouteDayDTO|null = getRouteDayFromRoutesList(routes, idRouteDayToFind);
+  
+  if (foundRoute !== null) {
+    const { route_name } = foundRoute;
+    routeName = route_name;
+
+    if (foundRouteDay !== null) {
+      const { id_day } = foundRouteDay;
+      const dayInfo = DAYS[id_day];
+
+      if (dayInfo) {
+        routeName += ` - ${dayInfo.day_name}`;
+      }
+    }
+  }
+
+  return routeName;
+}

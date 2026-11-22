@@ -112,6 +112,7 @@ export default function RouteDayStoreContainer({
     routes,
     idRouteDayColumn,
   );
+  
   const routeDayBeingModified = getRouteDayFromRoutesList(
     routes,
     idRouteDayColumn,
@@ -244,7 +245,7 @@ export default function RouteDayStoreContainer({
   };
 
   return (
-    <div className="w-96 h-full flex flex-col shrink-0 overflow-auto bg-system-primary-background rounded-lg">
+    <div className="w-96 h-full flex flex-col shrink-0 overflow-auto  bg-system-primary-background rounded-lg">
       <Dialog
         open={dialogAction !== null}
         onClose={() => handleCloseDeleteDialog()}

@@ -41,6 +41,7 @@ import StoreSearchBar from "@/app/route_administration/components/StoreSearchBar
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
 import RouteDayContainer from "@/app/route_administration/components/RouteDayContainer/RouteDayContainer";
 import ShowHideIconButton from "@/shared/components/ShowHideIconButton/ShowHideIconButton";
+import ColumnsContainer from "@/app/route_administration/components/SortableContainer/ColumnsContainer";
 
 // Types
 import { StorePositionInRouteType } from "@/shared/types/types";
@@ -71,6 +72,7 @@ import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { generateRandomColor } from "@/shared/utils/styles/utils";
 import { LocationTypeDTO } from "@/shared/dtos/LocationTypeDTO";
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
+import { SortableLocationType } from "@/app/route_administration/components/SortableContainer/Types/types";
 
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
@@ -231,7 +233,7 @@ export default function Page() {
 
   // States related to route day.
   const [routesInModification, setRoutesInModification] 
-    = useState<Record<string, DraggableRouteDayStore[]>>({}); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
+    = useState<Record<string, SortableLocationType[]>>({}); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
   const [effectSelectedRouteDay, setEffectSelectedRouteDay] 
     = useState<Map<string, RouteDayEffect>>(new Map());
 
@@ -534,7 +536,7 @@ export default function Page() {
       console.log("Modification: ", routeDayFound)
       if (routeDayFound !== null) {
         // Transform RouteDayStoreDTO[] to DraggableRouteDayStore[] for dnd-kit compatibility
-        const draggableStores: DraggableRouteDayStore[] = (
+        const sortableLocations: SortableLocationType[] = (
           routeDayFound.locations || []
         ).map((location) => ({
           ...location,
@@ -544,7 +546,7 @@ export default function Page() {
         // Add to routesInModification
         setRoutesInModification((prev) => ({
           ...prev,
-          [routeDayId]: draggableStores,
+          [routeDayId]: sortableLocations,
         }));
 
         // Set effects for map markers
@@ -564,7 +566,7 @@ export default function Page() {
         routes,
         routeDayId,
       );
-      const routeDayBeingModified: DraggableRouteDayStore[] | undefined =
+      const routeDayBeingModified: SortableLocationType[] | undefined =
         routesInModification[routeDayId];
 
       if (routeDayFound === null || routeDayBeingModified == undefined) return;
@@ -672,7 +674,7 @@ export default function Page() {
   const handleModifyRouteDays = (
     modifiedRouteDays: Record<string, DraggableRouteDayStore[]>,
   ) => {
-    setRoutesInModification(modifiedRouteDays);
+    // setRoutesInModification(modifiedRouteDays);
   };
 
   const handleSaveRouteModification = async (
@@ -680,13 +682,16 @@ export default function Page() {
     storesInRouteDay: RouteDayLocationDTO[],
   ) => {
     // Update position_in_route based on array index
+
     const updatedStores = storesInRouteDay.map((store, index) => ({
       ...store,
       position_in_route: index + 1, // Position is 1-indexed
     }));
-
+    console.log("Stores in route day: ", storesInRouteDay)
+    console.log("Updated stores: ", updatedStores)
     try {
-      await organizeRouteDay(idRouteDayColumn, updatedStores);
+
+      // await organizeRouteDay(idRouteDayColumn, updatedStores); // Uncomment for saving
 
       // Update routes state with new store order and positions (using callback to get current state)
       // Routes state is the source of truth for route days.
@@ -1073,7 +1078,7 @@ export default function Page() {
             <div
               className={`flex flex-row w-full overflow-auto transition-all duration-300 ${bottomPanelExpanded ? "h-[75vh]" : "h-[50vh]"}`}
             >
-              <RouteDayContainer
+              {/* <RouteDayContainer
                 storeMap={mapStores}
                 routeDaysInModification={routesInModification}
                 routeDayEffectsMap={effectSelectedRouteDay}
@@ -1087,7 +1092,13 @@ export default function Page() {
                 onModifyRouteDays={handleModifyRouteDays}
                 onHoverAutocompleteOption={handleOverStoreAutoComplete}
                 onSelectRouteDayStore={handleSelectRouteDayStore}
-              />
+              /> */}
+              <ColumnsContainer 
+                routeDaysInModification={routesInModification}
+                onChangeRouteDayOrder={setRoutesInModification}
+                locationMap={mapStores}
+                routes={routes}
+                />
             </div>
           </Collapse>
         </div>
