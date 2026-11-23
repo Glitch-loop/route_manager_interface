@@ -75,7 +75,7 @@ import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
 import { SortableLocationType } from "@/app/route_administration/components/SortableContainer/Types/types";
 import routeDayReducer from "@/app/route_administration/reducers/routeDayEffectReducer";
 import { useRouteDayLocationMap } from "@/shared/hooks/route-day-location-map/useRouteDayLocationMap";
-
+import { generateUUIDv4 } from "@/utils/generalUtils";
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
   const storeName = store.location_name ?? "Nombre no disponible";
@@ -697,13 +697,14 @@ export default function Page() {
 
     const updatedStores = storesInRouteDay.map((store, index) => ({
       ...store,
+      id_route_day_store: generateUUIDv4(), // If the location comes from another route day, it prevents the backend of detecting a duplication.
       position_in_route: index + 1, // Position is 1-indexed
     }));
     console.log("Stores in route day: ", storesInRouteDay)
     console.log("Updated stores: ", updatedStores)
     try {
 
-      // await organizeRouteDay(idRouteDayColumn, updatedStores); // Uncomment for saving
+      await organizeRouteDay(idRouteDayColumn, updatedStores); // Uncomment for saving
 
       // Update routes state with new store order and positions (using callback to get current state)
       // Routes state is the source of truth for route days.
@@ -822,7 +823,6 @@ export default function Page() {
   const handleCoordSearchResult = (hide: boolean) => {
     setHideCoordSearchResults(hide);
   };
-
 
 
   // Map handlers
@@ -1100,6 +1100,8 @@ export default function Page() {
                 routeDayEffects={effectRouteDay}
                 onChangeRouteDayEffect={handleUpdateRouteDayEffects}
                 onChangeRouteDayOrder={setRoutesInModification}
+                onCloseRouteDay={handleCloseRouteDay}
+                onSaveRouteModification={handleSaveRouteModification}
                 />
             </div>
           </Collapse>

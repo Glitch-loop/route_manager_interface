@@ -408,8 +408,9 @@ export function Column({
                           ? (option.location_name ?? "Nombre no disponible")
                           : getAddressOfStore(option)
                       }
+                      value={null}
                       inputValue={inputValue}
-                      onInputChange={(event, newInputValue) => {
+                      onInputChange={(event, newInputValue, reason) => {
                         setInputValue(newInputValue);
                       }}
                       onChange={(event, newValue) => {
@@ -481,7 +482,13 @@ export function Column({
         </span>
         <span className="font-bold text-lg text-black"> {clientsInRoute.length} </span>
       </div>
-      {children}
+      {/* Droppable container */}
+      <div
+        className="flex min-h-[500px] overflow-y-auto bg-system-secondary-background"
+        style={{ scrollBehavior: "smooth" }}
+      >
+        {children}
+      </div>
       {/* Actions buttons bar - Always visible */}
       <div className="bg-system-primary-background w-full flex flex-row gap-5 justify-center py-2 flex-shrink-0">
         {routeDayActionState.isDeletedMode ? (

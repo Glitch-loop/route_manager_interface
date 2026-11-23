@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Dayjs } from "dayjs";
 import { move } from '@dnd-kit/helpers';
-import { DragDropProvider } from '@dnd-kit/react';
+import { DragDropProvider, DragOverEvent } from '@dnd-kit/react';
 
 // DTOs
 import { RouteDTO } from "@/shared/dtos/RouteDTO";
@@ -38,6 +38,7 @@ type RouteDayContainerProps = {
   onChangeRouteDayEffect: (routeDayId: string, routeDayEffect: RouteDayEffect) => void,
   onChangeRouteDayOrder: (newOrder: Map<string, RouteDayDTO>) => void;
   onCloseRouteDay: (routeDayId: string) => void;
+  onSaveRouteModification: (routeDayId: string, routeDayLocations: RouteDayLocationDTO[]) => void;
 };
 
 // Auxiliars functions
@@ -56,8 +57,8 @@ export default function ColumnsContainer({
   routeDayEffects,
   onChangeRouteDayEffect,
   onChangeRouteDayOrder,
-  onCloseRouteDay
-  // onSaveRouteModification,
+  onCloseRouteDay,
+  onSaveRouteModification
 }: RouteDayContainerProps) {
   // --Use states--
   // Related to route organization
@@ -192,7 +193,7 @@ export default function ColumnsContainer({
     updatedStoresInRouteDay.forEach((store) => {
       console.log(locationMap.get(store.id_location)?.location_name)
     })
-    // await onSaveRouteModification(idRouteDay, updatedStoresInRouteDay);
+    await onSaveRouteModification(idRouteDay, updatedStoresInRouteDay);
   };
 
   const handleModifyActionState = (idRouteDay: string, newState: RouteDayActionStateType) => {
@@ -210,12 +211,10 @@ export default function ColumnsContainer({
    * Remove stores from a route day by their id_route_day_store.
    */
   const handleRemoveStores = (idRouteDay: string) => {
-    console.log("remove stores: ", idRouteDay)
     if(selectedRouteDayLocationMap.has(idRouteDay)) {
       const idsToRemove:Set<string> = selectedRouteDayLocationMap.get(idRouteDay)!
       setRouteDaysInModification((prev) => {
         const sortableLocations  = prev[idRouteDay];
-        console.log("Route days to delete: ", idsToRemove)
         prev[idRouteDay] = sortableLocations.filter((location) => 
           !idsToRemove.has(location.id_route_day_store))
         return {...prev};
@@ -228,7 +227,6 @@ export default function ColumnsContainer({
    * Creates a new RouteDayLocationDTO entry with the next position in route.
    */
   const handleAddStore = (idRouteDay: string, idStore: string) => {
-    console.log("New store: ", idStore, " - idRouteDay: ", idRouteDay)
     if(routeDaysInModification[idRouteDay] !== undefined) {
       // Check if store is not already in this route day
       const currentLocations = routeDaysInModification[idRouteDay] || [];
@@ -318,10 +316,12 @@ export default function ColumnsContainer({
     if (originalRouteDay) {      
       const { locations } = originalRouteDay;
       setRouteDaysInModification((prev) => {
-        prev[idRouteDay] = [...locations] as SortableLocationType[];
+        prev[idRouteDay] = locations.map(location => ({
+          ...location,
+          id: location.id_route_day_store
+        })) as SortableLocationType[];
         return {...prev}
       })
-      
     }
   };
 
