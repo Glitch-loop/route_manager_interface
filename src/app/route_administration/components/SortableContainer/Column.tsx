@@ -1,4 +1,4 @@
-import React, { Dispatch, ReactNode, useState } from 'react';
+import React, { ReactNode, useState } from 'react';
 import {useDroppable} from '@dnd-kit/react';
 import {CollisionPriority} from '@dnd-kit/abstract';
 import {
@@ -17,17 +17,17 @@ import {
   VisibilityOff,
   Visibility,
   DeleteOutline,
-  RemoveCircleOutline,
   ExpandLess,
   ExpandMore,
 } from "@mui/icons-material";
 import { capitalizeFirstLetterOfEachWord } from '@/utils/generalUtils';
+import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import ColorPicker from '@/shared/components/ColorPicker/ColorPicker';
+import { LocationDTO } from "@/shared/dtos/LocationDTO";
 
 import { 
   RouteDayEffect, 
 } from "@/shared/hooks/route-day-location-map/types/types";
-import { getRouteDayEffect } from "@/shared/hooks/route-day-location-map/utils/utils";
 import { RouteDayActionStateType, SortableLocationType } from '@/app/route_administration/components/SortableContainer/Types/types';
 
 type ColumnType = {
@@ -45,6 +45,9 @@ type ColumnType = {
   onResetRouteModification: (idRouteDay: string) => void;
   onCancelRouteModification: (idRouteDay: string) => void;
   onSelectAll: (idRouteDay: string, isSelectAll: boolean) => void;
+  onAddStore: (idRouteDay: string, idStore: string) => void; // Add new store to route day
+  availableStores: Map<string, LocationDTO>; // Map of id_location to LocationDTO
+  onHoverStore: (store: LocationDTO | null) => void; // Callback when hovering over store option
 }
 
 type RouteDayContainerActions = "reset" | "remove" | "save" | "close";
@@ -65,7 +68,10 @@ export function Column({
   onRemoveStores,
   onResetRouteModification,
   onCancelRouteModification,
-  onSelectAll
+  onSelectAll,
+  onAddStore,
+  availableStores,
+  onHoverStore
 }: ColumnType) {
   // --Custom hooks--
   const {isDropTarget, ref} = useDroppable({
@@ -122,7 +128,6 @@ export function Column({
   };
 
   const handleAcceptDialog = () => {
-    console.log("Dialog action: ", dialogAction)
     if (dialogAction === "remove") {
       handleAcceptDeleteStores();
     } else if (dialogAction === "reset") {
@@ -137,10 +142,10 @@ export function Column({
   };
 
   const handleAddStore = (idRouteDay: string, idStore: string) => {
-    if (onlyViewMode) return; // Do not allow add new clients if we are in view mode
+    if (!routeDayActionState.isEditable) return; // Do not allow add new clients if we are in edit mode
     onAddStore(idRouteDay, idStore);
     setInputValue("");
-    onHoverAutocompleteOption(null); // Reset hover state after adding a store
+    onHoverStore(null); // Reset hover state after adding a store
   };
 
   // Handlers regarded to actions
@@ -394,10 +399,8 @@ export function Column({
                 <div className="flex flex-row gap-3">
                   <div className="flex basis-4/5">
                     <Autocomplete
-                      disabled={routeDayActionState.isEditable}
-                      options={Array.from(storesMap.values()).map((item) => {
-                        return { id: item.id_location, ...item };
-                      })}
+                      disabled={!routeDayActionState.isEditable}
+                      options={Array.from(availableStores.values())}
                       className="w-full"
                       getOptionKey={(option) => option.id_location}
                       getOptionLabel={(option) =>
@@ -406,17 +409,20 @@ export function Column({
                           : getAddressOfStore(option)
                       }
                       inputValue={inputValue}
+                      onInputChange={(event, newInputValue) => {
+                        setInputValue(newInputValue);
+                      }}
                       onChange={(event, newValue) => {
                         if (newValue) {
-                          handleAddStore(idRouteDayColumn, newValue.id_location);
+                          handleAddStore(id, newValue.id_location);
                         }
                       }}
                       renderOption={(props, option) => (
                         <li
                           {...props}
                           key={option.id_location}
-                          onMouseEnter={() => onHoverAutocompleteOption(option)} // Detect hover
-                          onMouseLeave={() => onHoverAutocompleteOption(null)} // Detect hover
+                          onMouseEnter={() => onHoverStore(option)}
+                          onMouseLeave={() => onHoverStore(null)}
                         >
                           <div className="flex flex-col">
                             <span>
@@ -430,9 +436,6 @@ export function Column({
                       )}
                       renderInput={(params) => (
                         <TextField
-                          onChange={(event) => {
-                            setInputValue(event.target.value);
-                          }}
                           {...params}
                           label="Add Item"
                         />

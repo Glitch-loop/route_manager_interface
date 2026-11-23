@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Dispatch } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Dayjs } from "dayjs";
 import { move } from '@dnd-kit/helpers';
 import { DragDropProvider } from '@dnd-kit/react';
@@ -25,8 +25,6 @@ import {
   SortableLocationType, 
   RouteDayActionStateType 
 } from '@/app/route_administration/components/SortableContainer/Types/types';
-import { RouteDayEffectAction } from '@/app/route_administration/types/routeDayEffectActions';
-
 import { 
   RouteDayEffect, 
 } from "@/shared/hooks/route-day-location-map/types/types";
@@ -66,6 +64,7 @@ export default function ColumnsContainer({
   const [routeDaysInModification, setRouteDaysInModification] = useState<Record<string, SortableLocationType[]>>({});
   const [routeDayActionStateMap, setRouteDayActionStateMap] = useState<Map<string, RouteDayActionStateType>>(new Map<string, RouteDayActionStateType>());
   const [selectedRouteDayLocationMap, setSelectedRouteDayLocationMap] = useState<Map<string, Set<string>>>(new Map<string, Set<string>>());
+  const [hoveredStore, setHoveredStore] = useState<LocationDTO | null>(null);
 
   // Related to route transactions
   const [startDateSelected, setStartDateSelected] = useState<Dayjs | null>(null);
@@ -224,6 +223,47 @@ export default function ColumnsContainer({
     }
   };
 
+  /**
+   * Add a new store to a route day.
+   * Creates a new RouteDayLocationDTO entry with the next position in route.
+   */
+  const handleAddStore = (idRouteDay: string, idStore: string) => {
+    console.log("New store: ", idStore, " - idRouteDay: ", idRouteDay)
+    if(routeDaysInModification[idRouteDay] !== undefined) {
+      // Check if store is not already in this route day
+      const currentLocations = routeDaysInModification[idRouteDay] || [];
+  
+      // Get store details from locationMap
+      const store = locationMap.get(idStore);
+      if (!store) {
+        console.error(`Store ${idStore} not found in locationMap`);
+        return;
+      }
+  
+      // Create new RouteDayLocationDTO
+      const newPosition = currentLocations.length;
+      const newRouteDayLocation: RouteDayLocationDTO = {
+        id_route_day_store: generateUUIDv4(), // Generate unique ID for new entry
+        position_in_route: newPosition,
+        id_route_day: idRouteDay,
+        id_location: idStore,
+      };
+  
+      // Convert to SortableLocationType and add to state
+      const sortableLocation: SortableLocationType = {
+        ...newRouteDayLocation,
+        id: newRouteDayLocation.id_route_day_store,
+      };
+  
+      setRouteDaysInModification((prev) => {
+        const updated = { ...prev };
+        updated[idRouteDay] = [...(updated[idRouteDay] || []), sortableLocation];
+        return updated;
+      });
+
+    }
+  };
+
   const handleSelectRouteDayLocation = (idRouteDay: string, idRouteDayLocation: string) => {
     /*
       Rules:
@@ -358,6 +398,9 @@ export default function ColumnsContainer({
                 onResetRouteModification={handleResetRouteModification}
                 onCancelRouteModification={handleCloseRouteModification}
                 onSelectAll={handleSelectAllRouteDayLocations}
+                onAddStore={handleAddStore}
+                availableStores={locationMap}
+                onHoverStore={setHoveredStore}
                 >
               <div className="overflow-auto">
                 {items.map((sortableItem, index) => {
