@@ -94,14 +94,13 @@ function createMapHoverComponent(store: LocationDTO): React.ReactNode {
 }
 
 function createMapClickComponent(
-  store: LocationDTO,
-  storePositions: StorePositionInRouteType[],
+  location: LocationDTO,
+  locationPositions: StorePositionInRouteType[],
   onSelectStoreToUpdate?: (idStore: string) => void,
 ): React.ReactNode {
-  const { id_location, location_name } = store;
+  const { id_location, location_name } = location;
   const storeName = location_name ?? "Nombre no disponible";
-  const storeAddress = getAddressOfStore(store);
-  const modifiedRouteDayIds: Set<string> = new Set(); // Replace with actual logic to get modified route day IDs
+  const storeAddress = getAddressOfStore(location);
 
   return (
     <div className="p-3 min-w-[280px]">
@@ -139,14 +138,14 @@ function createMapClickComponent(
       <p className="text-sm text-gray-600 mb-1">
         {capitalizeFirstLetterOfEachWord(storeAddress)}
       </p>
-      {store.address_reference && (
+      {location.address_reference && (
         <p className="text-sm text-gray-500 mt-1">
-          Referencias: {capitalizeFirstLetter(store.address_reference)}
+          Referencias: {capitalizeFirstLetter(location.address_reference)}
         </p>
       )}
 
       {/* Route days table */}
-      {storePositions.length > 0 && (
+      {locationPositions.length > 0 && (
         <div className="mt-3 border-t pt-2">
           <p className="text-xs font-semibold text-gray-700 mb-1">
             Días de ruta:
@@ -161,8 +160,7 @@ function createMapClickComponent(
               </tr>
             </thead>
             <tbody>
-              {storePositions.map((pos) => {
-                const isBeingModified = modifiedRouteDayIds.has(pos.idRouteDay);
+              {locationPositions.map((pos) => {
                 return (
                   <tr
                     key={pos.idRouteDayStore}
@@ -176,19 +174,6 @@ function createMapClickComponent(
                     </td>
                     <td className="py-1 text-center">{pos.position}</td>
                     <td className="py-1 text-center">
-                      {isBeingModified && (
-                        <Tooltip
-                          title="Día de ruta en modificación"
-                          arrow
-                          placement="top"
-                        >
-                          <span className="inline-flex items-center justify-center w-5 h-5 bg-amber-500 rounded-full cursor-help">
-                            <span className="text-white text-xs font-bold">
-                              !
-                            </span>
-                          </span>
-                        </Tooltip>
-                      )}
                     </td>
                   </tr>
                 );
@@ -286,10 +271,10 @@ export default function Page() {
     routeDaysToDisplay: routesInModification,
     storeMap: mapStores,
     routeTransactionByStoreMap: mapRouteTransactionByStore,
-    onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => { 
-      return createMapHoverComponent(location); },
-    onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { return <div></div>
-      // return createMapClickComponent(store, storePositions, () => handleSelectStoreToUpdate(id_location)); 
+    onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => {  return createMapHoverComponent(location); },
+    onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { 
+      const locationPositions = mapStoresInRouteDay.get(location.id_location) ?? [];
+      return createMapClickComponent(location, locationPositions, () => handleSelectStoreToUpdate(location.id_location)); 
     }
   });
 
@@ -472,6 +457,7 @@ export default function Page() {
   // ]);
 
   // Handlers - Route menu
+
   const handleRouteSelect = (route: RouteDTO) => {
     setSelectedRoute(route);
   };
