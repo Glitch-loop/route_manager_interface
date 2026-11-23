@@ -264,6 +264,24 @@ export default function ColumnsContainer({
     });
   }
 
+  /**
+   * Reset modifications for a specific route day back to original state from routes.
+   */
+  const handleResetRouteModification = (idRouteDay: string) => {
+    const originalRouteDay: RouteDayDTO | null = getRouteDayFromRoutesList(
+      routes,
+      idRouteDay,
+    );
+
+    if (originalRouteDay) {      
+      const { locations } = originalRouteDay;
+      setRouteDaysInModification((prev) => {
+        prev[idRouteDay] = [...locations] as SortableLocationType[];
+        return {...prev}
+      })
+      
+    }
+  };
 
   return (
   <div className="w-full h-full bg-system-secondary-background flex flex-row p-2">
@@ -330,6 +348,7 @@ export default function ColumnsContainer({
                 onChangeRouteDayActionState={handleModifyActionState}
                 onChangeRouteDayEffect={onChangeRouteDayEffect}
                 onRemoveStores={handleRemoveStores}
+                onResetRouteModification={handleResetRouteModification}
                 onSelectAll={handleSelectAllRouteDayLocations}
                 >
               <div className="overflow-auto">

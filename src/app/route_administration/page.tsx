@@ -823,6 +823,8 @@ export default function Page() {
     setHideCoordSearchResults(hide);
   };
 
+
+
   // Map handlers
   const handleCoordSelected = (selectedCoords: coordinates | IMapMarker) => {
     if ("Lat" in selectedCoords && "Lng" in selectedCoords) {

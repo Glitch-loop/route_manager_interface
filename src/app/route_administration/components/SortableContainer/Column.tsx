@@ -42,6 +42,7 @@ type ColumnType = {
   onChangeRouteDayActionState: (routeDayId: string, routeDayActionState: RouteDayActionStateType) => void,
   onSaveRouteModification: (idRouteDay: string) => void;
   onRemoveStores: (idRouteDay: string) => void; // Callback to remove stores from route day, receives list of id_route_day_store to remove
+  onResetRouteModification: (idRouteDay: string) => void;
   onSelectAll: (idRouteDay: string, isSelectAll: boolean) => void;
 }
 
@@ -61,6 +62,7 @@ export function Column({
   onChangeRouteDayActionState,
   onSaveRouteModification,
   onRemoveStores,
+  onResetRouteModification,
   onSelectAll
 }: ColumnType) {
   // --Custom hooks--
@@ -97,9 +99,9 @@ export function Column({
     setSelectAll(!selectAll);
   };
 
-  // const handleResetRouteModification = () => {
-  //   onResetRouteModification(id);
-  // };
+  const handleResetRouteModification = () => {
+    onResetRouteModification(id);
+  };
 
   const handleSaveModifications = () => {
     onSaveRouteModification(id);
@@ -122,7 +124,7 @@ export function Column({
     if (dialogAction === "remove") {
       handleAcceptDeleteStores();
     } else if (dialogAction === "reset") {
-      // handleResetRouteModification();
+      handleResetRouteModification();
     } else if (dialogAction === "save") {
       handleSaveModifications();
     } else if (dialogAction === "close") {
@@ -132,12 +134,12 @@ export function Column({
     setDialogAction(null);
   };
 
-  // const handleAddStore = (idRouteDay: string, idStore: string) => {
-  //   if (onlyViewMode) return; // Do not allow add new clients if we are in view mode
-  //   onAddStore(idRouteDay, idStore);
-  //   setInputValue("");
-  //   onHoverAutocompleteOption(null); // Reset hover state after adding a store
-  // };
+  const handleAddStore = (idRouteDay: string, idStore: string) => {
+    if (onlyViewMode) return; // Do not allow add new clients if we are in view mode
+    onAddStore(idRouteDay, idStore);
+    setInputValue("");
+    onHoverAutocompleteOption(null); // Reset hover state after adding a store
+  };
 
   // Handlers regarded to actions
   // Regarded to edit (only reorder) the route day.
@@ -387,10 +389,10 @@ export function Column({
                   />
                   <span className="text-sm">{`Buscar por ${searchStoreBy === "name" ? "nombre" : "dirección"}`}</span>
                 </div>
-                {/* <div className="flex flex-row gap-3">
+                <div className="flex flex-row gap-3">
                   <div className="flex basis-4/5">
                     <Autocomplete
-                      disabled={onlyViewMode}
+                      disabled={routeDayActionState.isEditable}
                       options={Array.from(storesMap.values()).map((item) => {
                         return { id: item.id_location, ...item };
                       })}
@@ -448,7 +450,7 @@ export function Column({
                       Reset
                     </Button>
                   </Tooltip>
-                </div> */}
+                </div>
               </div>
             )}
           </div>
