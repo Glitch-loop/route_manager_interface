@@ -43,6 +43,7 @@ type ColumnType = {
   onSaveRouteModification: (idRouteDay: string) => void;
   onRemoveStores: (idRouteDay: string) => void; // Callback to remove stores from route day, receives list of id_route_day_store to remove
   onResetRouteModification: (idRouteDay: string) => void;
+  onCancelRouteModification: (idRouteDay: string) => void;
   onSelectAll: (idRouteDay: string, isSelectAll: boolean) => void;
 }
 
@@ -63,6 +64,7 @@ export function Column({
   onSaveRouteModification,
   onRemoveStores,
   onResetRouteModification,
+  onCancelRouteModification,
   onSelectAll
 }: ColumnType) {
   // --Custom hooks--
@@ -107,9 +109,9 @@ export function Column({
     onSaveRouteModification(id);
   };
 
-  // const handleCloseRouteModification = () => {
-  //   onCancelRouteModification(id);
-  // };
+  const handleCloseRouteModification = () => {
+    onCancelRouteModification(id);
+  };
 
   const handleOpenDialog = (actionType: RouteDayContainerActions) => {
     setDialogAction(actionType);
@@ -128,7 +130,7 @@ export function Column({
     } else if (dialogAction === "save") {
       handleSaveModifications();
     } else if (dialogAction === "close") {
-      // handleCloseRouteModification();
+      handleCloseRouteModification();
     }
 
     setDialogAction(null);

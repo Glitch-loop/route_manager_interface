@@ -39,6 +39,7 @@ type RouteDayContainerProps = {
   routeDayEffects: Map<string, RouteDayEffect>,
   onChangeRouteDayEffect: (routeDayId: string, routeDayEffect: RouteDayEffect) => void,
   onChangeRouteDayOrder: (newOrder: Map<string, RouteDayDTO>) => void;
+  onCloseRouteDay: (routeDayId: string) => void;
 };
 
 // Auxiliars functions
@@ -57,6 +58,7 @@ export default function ColumnsContainer({
   routeDayEffects,
   onChangeRouteDayEffect,
   onChangeRouteDayOrder,
+  onCloseRouteDay
   // onSaveRouteModification,
 }: RouteDayContainerProps) {
   // --Use states--
@@ -283,6 +285,11 @@ export default function ColumnsContainer({
     }
   };
 
+  const handleCloseRouteModification = (idRouteDay: string) => {
+    selectedRouteDayLocationMap.delete(idRouteDay);
+    onCloseRouteDay(idRouteDay);
+  }
+
   return (
   <div className="w-full h-full bg-system-secondary-background flex flex-row p-2">
     <div className="flex basis-1/5 items-center flex-col shrink-0  bg-system-third-background p-1 rounded-lg gap-2">
@@ -349,6 +356,7 @@ export default function ColumnsContainer({
                 onChangeRouteDayEffect={onChangeRouteDayEffect}
                 onRemoveStores={handleRemoveStores}
                 onResetRouteModification={handleResetRouteModification}
+                onCancelRouteModification={handleCloseRouteModification}
                 onSelectAll={handleSelectAllRouteDayLocations}
                 >
               <div className="overflow-auto">
