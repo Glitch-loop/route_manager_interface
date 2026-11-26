@@ -268,20 +268,50 @@ export default function ColumnsContainer({
       1. If the item is not in the data structure then the user has selected it.
       2. If the items is already in the structure then the user is unselected it.
     */
-    if(selectedRouteDayLocationMap.has(idRouteDay)) {
-      const idRouteDayLocationsSet:Set<string> =  selectedRouteDayLocationMap.get(idRouteDay)!;
-
-      if (idRouteDayLocationsSet.has(idRouteDayLocation)) {
-        idRouteDayLocationsSet.delete(idRouteDayLocation);
-      } else {
-        idRouteDayLocationsSet.add(idRouteDayLocation);
+    if (routeDayActionStateMap.has(idRouteDay)) {
+      const routeDayActionState = routeDayActionStateMap.get(idRouteDay)!
+      const { isDeletedMode } = routeDayActionState;
+      console.log("isDeletedMode: ", isDeletedMode)
+      if (isDeletedMode) {
+        if(selectedRouteDayLocationMap.has(idRouteDay)) {
+          const idRouteDayLocationsSet:Set<string> =  selectedRouteDayLocationMap.get(idRouteDay)!;
+    
+          if (idRouteDayLocationsSet.has(idRouteDayLocation)) {
+            idRouteDayLocationsSet.delete(idRouteDayLocation);
+          } else {
+            idRouteDayLocationsSet.add(idRouteDayLocation);
+          }
+        } else {
+          // This case is when the user is starting the process for selecting route day locations.
+          selectedRouteDayLocationMap.set(idRouteDay, new Set<string>());
+          selectedRouteDayLocationMap.get(idRouteDay)!.add(idRouteDayLocation)
+        }
+        setSelectedRouteDayLocationMap(new Map<string, Set<string>>(selectedRouteDayLocationMap));
       }
-    } else {
-      // This case is when the user is starting the process for selecting route day locations.
-      selectedRouteDayLocationMap.set(idRouteDay, new Set<string>());
-      selectedRouteDayLocationMap.get(idRouteDay)!.add(idRouteDayLocation)
     }
-    setSelectedRouteDayLocationMap(new Map<string, Set<string>>(selectedRouteDayLocationMap));
+
+    // Secondary, if the user clicks on a location in the route day, update the selected location in effects
+    if (routeDayEffects.has(idRouteDay)) {
+      const currentEffect = routeDayEffects.get(idRouteDay)!;
+      
+      // Create new effects map with updated selection
+      const updatedEffects = new Map(routeDayEffects);
+      
+      updatedEffects.forEach((value, key) => {
+        if (key === idRouteDay) {
+          // Set the selected location for this route day
+          updatedEffects.set(key, { ...value, selectedLocation: idRouteDayLocation });
+        } else {
+          // Clear selection for all other route days
+          updatedEffects.set(key, { ...value, selectedLocation: undefined });
+        }
+      });
+      
+      // Notify parent of changes for all affected route days
+      updatedEffects.forEach((effect, routeDayId) => {
+        onChangeRouteDayEffect(routeDayId, effect);
+      });
+    }
   }
 
   const handleSelectAllRouteDayLocations = (idRouteDay: string, isSelectAll: boolean) => {

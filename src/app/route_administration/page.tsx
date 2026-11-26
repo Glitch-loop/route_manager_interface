@@ -48,7 +48,6 @@ import { StorePositionInRouteType } from "@/shared/types/types";
 import { coordinates } from "@/shared/components/MarkerMap/types/types";
 import {
   MarkerGroup,
-  RouteDayEffect,
   DraggableRouteDayStore,
 } from "@/app/route_administration/types/types";
 
@@ -76,6 +75,9 @@ import { SortableLocationType } from "@/app/route_administration/components/Sort
 import routeDayReducer from "@/app/route_administration/reducers/routeDayEffectReducer";
 import { useRouteDayLocationMap } from "@/shared/hooks/route-day-location-map/useRouteDayLocationMap";
 import { generateUUIDv4 } from "@/utils/generalUtils";
+import { 
+  RouteDayEffect, 
+} from "@/shared/hooks/route-day-location-map/types/types";
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
   const storeName = store.location_name ?? "Nombre no disponible";
@@ -200,13 +202,8 @@ export default function Page() {
   const [routes, setRoutes] = useState<RouteDTO[]>([]); // Source of truth for route days.
   const [locationTypes, setLocationTypes] = useState<LocationTypeDTO[]>([]); // Source of truth for route days.
 
-  // reducers
-  const [routeDayEffect, routeDayEffectDispatch] = useReducer(routeDayReducer, new Map<string, RouteDayEffect>());
-
   // States related to store information.
-  const [mapStoresInRouteDay, setMapStoresInRouteDay] = useState<
-    Map<string, StorePositionInRouteType[]>
-  >(new Map()); // Map of store ID to LocationDTO for stores in the selected route day
+  const [mapStoresInRouteDay, setMapStoresInRouteDay] = useState<Map<string, StorePositionInRouteType[]>>(new Map()); // Map of store ID to LocationDTO for stores in the selected route day
   const [storeWithinRouteAssigned, setStoreWithinRouteAssigned] = useState<
     Set<string>
   >(new Set()); // Set of store IDs that are already assigned within the route being modified, used to avoid showing them in the search results when modifying a route day.
@@ -742,10 +739,23 @@ export default function Page() {
     });
   };
 
-
   const handleOverStoreAutoComplete = (store: LocationDTO | null) => {
     setHoveredStore(store);
   };
+
+  const handleModifyRouteDayEffect = (routeDayId: string, routeDayEffect: RouteDayEffect) => {
+    const { selectedLocation } = routeDayEffect;
+
+    if(selectedLocation !== undefined) {
+      if (selectedRouteDayStore === selectedLocation) {
+        setSelectedRouteDayStore(null);
+      } else {
+        setSelectedRouteDayStore(selectedLocation);
+      }
+    }
+
+    handleUpdateRouteDayEffects(routeDayId, routeDayEffect);
+  }
 
   const handleSelectRouteDayStore = (idRouteDayStore: string) => {
     if (selectedRouteDayStore === idRouteDayStore) {
@@ -1084,7 +1094,7 @@ export default function Page() {
                 locationMap={mapStores}
                 routes={routes}
                 routeDayEffects={effectRouteDay}
-                onChangeRouteDayEffect={handleUpdateRouteDayEffects}
+                onChangeRouteDayEffect={handleModifyRouteDayEffect}
                 onChangeRouteDayOrder={setRoutesInModification}
                 onCloseRouteDay={handleCloseRouteDay}
                 onSaveRouteModification={handleSaveRouteModification}

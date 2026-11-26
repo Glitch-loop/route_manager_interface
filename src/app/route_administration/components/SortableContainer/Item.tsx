@@ -43,7 +43,7 @@ export function Item({
   
   // Handlers
   const handleSelect = (id_route_day:string, id_route_day_store: string) => {
-    if(isSelectable) onSelectItem(id_route_day, id_route_day_store);
+    onSelectItem(id_route_day, id_route_day_store);
   };
 
   return (
