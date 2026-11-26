@@ -36,9 +36,6 @@ import { RouteDayEffect, RouteDayFilters } from "@/app/analytics/types/types";
 // Enums
 import DAY_OPERATIONS from "@/core/enums/DayOperations";
 
-
-
-
 type RouteDayContainerProps = {
   routeDayToDisplay: RouteDayDTO;
   locationsMap: Map<string, LocationDTO>; // id_store -> LocationDTO
@@ -78,10 +75,11 @@ export default function RouteDayContainer({
 
   // States
   const [showInformation, setShowInformation] = useState<boolean>(true);
-  const [colorSelected, setColorSelected] = useState<string>(
-    routeDayEffectsMap.get(id_route_day)?.assignedColor ?? "#000000",
-  );
   const [locationSelected, setLocationSelected] = useState<string|null>(null);
+  const [colorSelected, setColorSelected] 
+    = useState<string>(routeDayEffectsMap.get(id_route_day)?.assignedColor ?? "#000000");
+  
+  // Refs
   const locationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   // Use effects

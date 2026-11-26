@@ -263,7 +263,8 @@ export default function Page() {
     handleRemoveRouteDayEffects,
     handleUpdateRouteDayEffects,
     handleSetRouteDayFilters,
-    routeDayLocationMarkers
+    routeDayLocationMarkers,
+    selectedLocation
   } = useRouteDayLocationMap({
     routeDaysToDisplay: routesInModification,
     storeMap: mapStores,
@@ -743,21 +744,6 @@ export default function Page() {
     setHoveredStore(store);
   };
 
-  const handleModifyRouteDayEffect = (routeDayId: string, routeDayEffect: RouteDayEffect) => {
-    const { selectedLocation } = routeDayEffect;
-
-    
-    if(selectedLocation !== undefined) {
-      if (selectedRouteDayStore === selectedLocation) {
-        setSelectedRouteDayStore(null);
-      } else {
-        setSelectedRouteDayStore(selectedLocation);
-      }
-    }
-
-    handleUpdateRouteDayEffects(routeDayId, routeDayEffect);
-  }
-
   const handleSelectRouteDayStore = (idRouteDayStore: string) => {
     if (selectedRouteDayStore === idRouteDayStore) {
       setSelectedRouteDayStore(null);
@@ -838,14 +824,17 @@ export default function Page() {
       setSelectedCoordinate(selectedCoords);
     } else {
       // IMarker object
-      const { id_group } = selectedCoords as IMapMarker;
+      const { id_group, id_marker } = selectedCoords as IMapMarker;
 
       if (id_group === "pivot-coord-search") {
         setStoresFoundByPosition([]);
         setSelectedCoordinate(null);
         setTotalStoresFoundBySearchRange(0);
       } else {
-        // Do nothing
+        if (effectRouteDay.has(id_group)) {
+          const routeDayEffect = effectRouteDay.get(id_group);
+          handleUpdateRouteDayEffects(id_group, {...routeDayEffect!, selectedLocation: id_marker});
+        }    
       }
     }
   };
@@ -1044,7 +1033,7 @@ export default function Page() {
           </div>
           <MarkerMap
             markers={routeDayLocationMarkers}
-            idMarkerSelected={selectedRouteDayStore}
+            idMarkerSelected={selectedLocation}
             setIdMarkerSelected={setSelectedRouteDayStore}
             onCoordSelected={handleCoordSelected}
           />
@@ -1075,27 +1064,12 @@ export default function Page() {
             <div
               className={`flex flex-row w-full overflow-auto transition-all duration-300 ${bottomPanelExpanded ? "h-[75vh]" : "h-[50vh]"}`}
             >
-              {/* <RouteDayContainer
-                storeMap={mapStores}
-                routeDaysInModification={routesInModification}
-                routeDayEffectsMap={effectSelectedRouteDay}
-                routes={routes}
-                routeTransactionsMap={mapRouteTransactionByStore}
-                onRequireRouteTransactions={handleRetrieveRouteTransactions}
-                onSaveRouteModification={handleSaveRouteModification}
-                onCloseRouteDay={handleCloseRouteDay}
-                onShowInformation={handleShowInformation}
-                onSelectRouteDayColor={handleSelectRouteDayColor}
-                onModifyRouteDays={handleModifyRouteDays}
-                onHoverAutocompleteOption={handleOverStoreAutoComplete}
-                onSelectRouteDayStore={handleSelectRouteDayStore}
-              /> */}
               <ColumnsContainer 
                 selectedRouteDays={routesInModification}
                 locationMap={mapStores}
                 routes={routes}
                 routeDayEffects={effectRouteDay}
-                onChangeRouteDayEffect={handleModifyRouteDayEffect}
+                onChangeRouteDayEffect={handleUpdateRouteDayEffects}
                 onChangeRouteDayOrder={setRoutesInModification}
                 onCloseRouteDay={handleCloseRouteDay}
                 onSaveRouteModification={handleSaveRouteModification}

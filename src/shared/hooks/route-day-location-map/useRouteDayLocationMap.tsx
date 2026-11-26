@@ -219,7 +219,6 @@ export function useRouteDayLocationMap({
       })
     }
 
-
     if (effectRouteDay.has(routeDayId)) {
       effectRouteDay.set(routeDayId, routeDayEffect);
       setEffectRouteDay(new Map(effectRouteDay));

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Dayjs } from "dayjs";
 import { move } from '@dnd-kit/helpers';
-import { DragDropProvider, DragOverEvent } from '@dnd-kit/react';
+import { DragDropProvider } from '@dnd-kit/react';
 
 // DTOs
 import { RouteDTO } from "@/shared/dtos/RouteDTO";
@@ -11,6 +11,13 @@ import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
 import { RouteTransactionDTO } from "@/shared/dtos/RouteTransactionDTO";
 
 // Types
+import { 
+  SortableLocationType, 
+  RouteDayActionStateType 
+} from '@/app/route_administration/components/SortableContainer/Types/types';
+import { 
+  RouteDayEffect, 
+} from "@/shared/hooks/route-day-location-map/types/types";
 
 // UI components
 import { Button } from "@mui/material";
@@ -21,13 +28,6 @@ import RangeDateSelection from "@/shared/components/RangeDateSelection/RangeDate
 // Utils
 import { generateUUIDv4 } from "@/utils/generalUtils";
 import { getNameOfRouteDay, getRouteDayFromRoutesList } from "@/shared/utils/routes/utils";
-import { 
-  SortableLocationType, 
-  RouteDayActionStateType 
-} from '@/app/route_administration/components/SortableContainer/Types/types';
-import { 
-  RouteDayEffect, 
-} from "@/shared/hooks/route-day-location-map/types/types";
 import { getRouteDayEffect } from '@/shared/hooks/route-day-location-map/utils/utils';
 
 type RouteDayContainerProps = {
@@ -39,6 +39,7 @@ type RouteDayContainerProps = {
   onChangeRouteDayOrder: (newOrder: Map<string, RouteDayDTO>) => void;
   onCloseRouteDay: (routeDayId: string) => void;
   onSaveRouteModification: (routeDayId: string, routeDayLocations: RouteDayLocationDTO[]) => void;
+
 };
 
 // Auxiliars functions
@@ -66,13 +67,16 @@ export default function ColumnsContainer({
   const [routeDayActionStateMap, setRouteDayActionStateMap] = useState<Map<string, RouteDayActionStateType>>(new Map<string, RouteDayActionStateType>());
   const [selectedRouteDayLocationMap, setSelectedRouteDayLocationMap] = useState<Map<string, Set<string>>>(new Map<string, Set<string>>());
   const [hoveredStore, setHoveredStore] = useState<LocationDTO | null>(null);
+  const [locationSelected, setLocationSelected] = useState<string|null>(null);
 
   // Related to route transactions
   const [startDateSelected, setStartDateSelected] = useState<Dayjs | null>(null);
   const [endDateSelected, setEndDateSelected] = useState<Dayjs | null>(null);
 
+  // -- Refs --
+  const locationRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  // --Use effects
+  // -- Use effects --
   // Synchronize state: transform selectedRouteDays to sortable format (INITIAL LOAD ONLY)
   useEffect(() => {
     const newRouteDaysInModification: Record<string, SortableLocationType[]> = {};
@@ -153,6 +157,15 @@ export default function ColumnsContainer({
     }
   }, [routeDaysInModification]);
 
+  // Handle the approach to selected client.
+  useEffect(() => {
+    if (locationSelected === null) {
+      return;
+    }
+
+    const selectedLocationElement = locationRefs.current.get(locationSelected);
+    selectedLocationElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [locationSelected]);
 
   // --Handlers--
   const handleDateRangeChange = (start: Dayjs | null, end: Dayjs | null) => {
@@ -271,7 +284,6 @@ export default function ColumnsContainer({
     if (routeDayActionStateMap.has(idRouteDay)) {
       const routeDayActionState = routeDayActionStateMap.get(idRouteDay)!
       const { isDeletedMode } = routeDayActionState;
-      console.log("isDeletedMode: ", isDeletedMode)
       if (isDeletedMode) {
         if(selectedRouteDayLocationMap.has(idRouteDay)) {
           const idRouteDayLocationsSet:Set<string> =  selectedRouteDayLocationMap.get(idRouteDay)!;
@@ -282,7 +294,7 @@ export default function ColumnsContainer({
             idRouteDayLocationsSet.add(idRouteDayLocation);
           }
         } else {
-          // This case is when the user is starting the process for selecting route day locations.
+          // Represents when the user is starting the process for selecting route day locations.
           selectedRouteDayLocationMap.set(idRouteDay, new Set<string>());
           selectedRouteDayLocationMap.get(idRouteDay)!.add(idRouteDayLocation)
         }
@@ -291,26 +303,14 @@ export default function ColumnsContainer({
     }
 
     // Secondary, if the user clicks on a location in the route day, update the selected location in effects
-    if (routeDayEffects.has(idRouteDay)) {
-      const currentEffect = routeDayEffects.get(idRouteDay)!;
-      
-      // Create new effects map with updated selection
-      const updatedEffects = new Map(routeDayEffects);
-      
-      updatedEffects.forEach((value, key) => {
-        if (key === idRouteDay) {
-          // Set the selected location for this route day
-          updatedEffects.set(key, { ...value, selectedLocation: idRouteDayLocation });
-        } else {
-          // Clear selection for all other route days
-          updatedEffects.set(key, { ...value, selectedLocation: undefined });
-        }
-      });
-      
-      // Notify parent of changes for all affected route days
-      updatedEffects.forEach((effect, routeDayId) => {
-        onChangeRouteDayEffect(routeDayId, effect);
-      });
+    const effects = getRouteDayEffect(idRouteDay, routeDayEffects);
+    
+    if (idRouteDayLocation === locationSelected) { 
+      setLocationSelected(null)
+      onChangeRouteDayEffect(idRouteDay, {...effects, selectedLocation: undefined });
+    } else { 
+      setLocationSelected(idRouteDayLocation);
+      onChangeRouteDayEffect(idRouteDay, {...effects, selectedLocation: idRouteDayLocation });
     }
   }
 
@@ -444,24 +444,33 @@ export default function ColumnsContainer({
                       isSelected = selectedRouteDayLocationSet.has(id);
                   }
                   return (
-                    <Item 
-                      key={sortableItem.id} 
-                      id={sortableItem.id} 
-                      index={index} 
-                      column={column} 
-                      locationData={locationData}
-                      onSelectItem={handleSelectRouteDayLocation}
-                      isDraggable={isEditable}
-                      isSelectable={isDeletedMode}
-                      isSelected={isSelected}
-                    />
+                    <div
+                      key={sortableItem.id}
+                      ref={(element) => {
+                        if (element) {
+                          locationRefs.current.set(sortableItem.id, element);
+                        } else {
+                          locationRefs.current.delete(sortableItem.id);
+                        }
+                      }}
+                    >
+                      <Item 
+                        key={sortableItem.id} 
+                        id={sortableItem.id} 
+                        index={index} 
+                        column={column} 
+                        locationData={locationData}
+                        onSelectItem={handleSelectRouteDayLocation}
+                        isDraggable={isEditable}
+                        isSelectable={isDeletedMode}
+                        isSelected={isSelected}/>
+                    </div>
                   )
                 })}
               </div>
             </Column>
             )
-          }
-        )
+          })
         }
       </div>
     </DragDropProvider>

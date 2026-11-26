@@ -52,7 +52,7 @@ export function Item({
         handleSelect(column, id);
       }}
       
-      className="Item relative my-2 p-2" 
+      className={"Item relative my-2 p-2 cursor-pointer"}
       ref={!isDraggable ? null : ref} 
       data-dragging={isDragging}>
       { isSelected &&
