@@ -147,6 +147,9 @@ export function useRouteDayLocationMap({
     effectRouteDay
   ]);
 
+  const [selectedLocation, setSelectedLocation] = 
+    useState<string | null>(null);
+
   /**
    * This function add a new effect to a route day.
    * 
@@ -199,6 +202,24 @@ export function useRouteDayLocationMap({
     routeDayId: string,
     routeDayEffect: RouteDayEffect
   ) => {
+
+    // Business rule (11/25/26): Only one location can be selected at a time.
+    const { selectedLocation } = routeDayEffect;
+
+    // Only one location can be selected at a time.
+    if(selectedLocation) {
+      setSelectedLocation(selectedLocation);
+
+      effectRouteDay.forEach((value, key) => {
+        if (key === routeDayId) {
+          effectRouteDay.set(key, {...routeDayEffect}) 
+        } else {
+          effectRouteDay.set(key, {...value, selectedLocation: undefined}) 
+        }
+      })
+    }
+
+
     if (effectRouteDay.has(routeDayId)) {
       effectRouteDay.set(routeDayId, routeDayEffect);
       setEffectRouteDay(new Map(effectRouteDay));
@@ -227,6 +248,7 @@ export function useRouteDayLocationMap({
     routeDayFilters,
     handleSetRouteDayFilters,
     handleResetRouteDayFilter,
-    routeDayLocationMarkers
+    routeDayLocationMarkers,
+    selectedLocation
   };
 }

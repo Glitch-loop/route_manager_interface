@@ -307,10 +307,7 @@ export default function Page() {
     string | null
   >(null);
 
-  // State for the map
-  const [selectedRouteDayStore, setSelectedRouteDayStore] = useState<
-    string | null
-  >(null);
+
   // const [searchByCoords, setSearchByCoords] = useState<boolean>(false);
   const [includeDeactiveStores, setIncludeDeactiveStores] =
     useState<boolean>(false);
@@ -342,15 +339,16 @@ export default function Page() {
     handleRemoveRouteDayEffects,
     handleUpdateRouteDayEffects,
     handleSetRouteDayFilters,
-    routeDayLocationMarkers
+    routeDayLocationMarkers,
+    selectedLocation
   } = useRouteDayLocationMap({
     routeDaysToDisplay: selectedRouteDay,
     storeMap: mapStores,
     routeTransactionByStoreMap: mapRouteTransactionByStore,
     onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapHoverComponent(location); },
     onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { return createMapClickComponent(location, mapStoresInRouteDay, mapRouteTransactionByStore, productsMap); }
-  }
-  );
+  });
+
   const {
     searchByCoords,
     selectedCoordinate,
@@ -452,7 +450,7 @@ export default function Page() {
     setBottomPanelExpanded((prev) => !prev);
   };
 
-  const hanldeGenerateCSV = async (idRouteDay: string) => { 
+  const handleGenerateCSV = async (idRouteDay: string) => { 
     const routeDay = selectedRouteDay.find((selectedRouteDay) => { return selectedRouteDay.id_route_day === idRouteDay});
     
     if (routeDay === undefined) {
@@ -566,29 +564,6 @@ export default function Page() {
     await fetchRouteTransactions(startDate, endDate, idStores);
   };
 
-  // Handlers for route day filters and effects
-  const handleApplyRouteEffects = async (
-    routeDayId: string,
-    routeDayEffect: RouteDayEffect
-  ) => {
-    const { selectedLocation } = routeDayEffect;
-
-    // Only one location can be selected at a time.
-    if(selectedLocation) {
-      setSelectedRouteDayStore(selectedLocation);
-
-      effectRouteDay.forEach((value, key) => {
-        if (key === routeDayId) {
-          effectRouteDay.set(key, {...routeDayEffect}) 
-        } else {
-          effectRouteDay.set(key, {...value, selectedLocation: undefined}) 
-        }
-      })
-    }
-
-    handleUpdateRouteDayEffects(routeDayId, routeDayEffect);
-  }
-
   // Handlers for map
   const handleUnselectMarker = async (idRouteDayLocation: string|null) => { 
     // const updatedRouteDayEffects: Map<string, RouteDayEffect> = new Map<string, RouteDayEffect>();
@@ -624,7 +599,7 @@ export default function Page() {
 
         if (effectRouteDay.has(id_group)) {
           const routeDayEffect = effectRouteDay.get(id_group);
-          handleApplyRouteEffects(id_group, {...routeDayEffect!, selectedLocation: id_marker});
+          handleUpdateRouteDayEffects(id_group, {...routeDayEffect!, selectedLocation: id_marker});
         }
       }
     }
@@ -705,7 +680,7 @@ export default function Page() {
           </div>
           <MarkerMap
             markers={markers}
-            idMarkerSelected={selectedRouteDayStore}
+            idMarkerSelected={selectedLocation}
             setIdMarkerSelected={handleUnselectMarker}
             onCoordSelected={handleCoordSelected}
           />
@@ -779,8 +754,8 @@ export default function Page() {
                 }
                 onRequireRouteTransactions={handleRetrieveRouteTransactions}
                 onCloseRouteDay={handleCloseRouteDay}
-                onApplyRouteEffects={handleApplyRouteEffects}
-                onGenerateCSV={hanldeGenerateCSV}
+                onApplyRouteEffects={handleUpdateRouteDayEffects}
+                onGenerateCSV={handleGenerateCSV}
                 onApplyFilter={handleSetRouteDayFilters}
                 onGenerateReport={handleGeneratePDF}
               />

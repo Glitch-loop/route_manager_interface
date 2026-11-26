@@ -128,7 +128,6 @@ export default function RouteExpandMenu({
 
     // 3-second hover detection for route
     routeHoverTimeoutRef.current = setTimeout(() => {
-      console.log(`Route hovered for 1 second: ${route.route_name}`);
     }, 1000);
   };
 
@@ -195,7 +194,6 @@ export default function RouteExpandMenu({
 
   const handleDayClick = (dayId: string) => {    
     if (showDayCheckbox) {
-      console.log("checkedDays[dayId]: ", checkedDays[dayId])
       const newCheckedState = !checkedDays[dayId];
       const newCheckedDays = {
         ...checkedDays,

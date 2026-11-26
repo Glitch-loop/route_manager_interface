@@ -746,6 +746,7 @@ export default function Page() {
   const handleModifyRouteDayEffect = (routeDayId: string, routeDayEffect: RouteDayEffect) => {
     const { selectedLocation } = routeDayEffect;
 
+    
     if(selectedLocation !== undefined) {
       if (selectedRouteDayStore === selectedLocation) {
         setSelectedRouteDayStore(null);
