@@ -157,15 +157,33 @@ export default function ColumnsContainer({
     }
   }, [routeDaysInModification]);
 
-  // Handle the approach to selected client.
+  // Sync location selection from routeDayEffects whenever they change
+  useEffect(() => {
+    // Find any route day with a selected location
+    let selectedId: string | null = null;
+    
+    routeDayEffects.forEach((effect, routeDayId) => {
+      if (effect.selectedLocation !== undefined) {
+        selectedId = effect.selectedLocation;
+      }
+    });
+    
+    setLocationSelected(selectedId);
+  }, [routeDayEffects]);
+
+  // Handle the approach to selected client by scrolling to ref
   useEffect(() => {
     if (locationSelected === null) {
       return;
     }
 
     const selectedLocationElement = locationRefs.current.get(locationSelected);
-    selectedLocationElement?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    if (selectedLocationElement) {
+      selectedLocationElement.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }, [locationSelected]);
+
+
 
   // --Handlers--
   const handleDateRangeChange = (start: Dayjs | null, end: Dayjs | null) => {
@@ -437,12 +455,18 @@ export default function ColumnsContainer({
                   let isSelected: boolean = false;
                   const { id_location, id } = sortableItem;
                   const locationData = locationMap.get(id_location);
+                  
                   if(isDeletedMode) {
+                    // In delete mode, check if item is selected for deletion
                     if (selectedRouteDayLocationSet === undefined) 
                       isSelected = false;
                     else
                       isSelected = selectedRouteDayLocationSet.has(id);
+                  } else {
+                    // In normal mode, check if this is the selected location in the route day effect
+                    isSelected = currentRouteDayEffect.selectedLocation === id;
                   }
+                  
                   return (
                     <div
                       key={sortableItem.id}

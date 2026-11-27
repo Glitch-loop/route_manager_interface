@@ -4,7 +4,7 @@ import NumericValueCard from '@/shared/components/Cards/NumericValueCard/Numeric
 import { LocationDTO } from '@/shared/dtos/LocationDTO';
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { capitalizeFirstLetterOfEachWord } from '@/utils/generalUtils';
-import { RemoveCircleOutline } from '@mui/icons-material';
+import { RemoveCircleOutline, CheckCircle } from '@mui/icons-material';
 
 type ItemType = {
     id: string,
@@ -55,7 +55,7 @@ export function Item({
       className={"Item relative my-2 p-2 cursor-pointer"}
       ref={!isDraggable ? null : ref} 
       data-dragging={isDragging}>
-      { isSelected &&
+      {isSelected && isSelectable &&
         <div className="absolute right-3 top-3 bg-red-600 w-6 h-6 text-slate-200 rounded-full flex items-center justify-center">
           <RemoveCircleOutline fontSize="small" />
         </div>
@@ -64,6 +64,7 @@ export function Item({
         cardName={capitalizeFirstLetterOfEachWord(storeName)}
         cardDetails={capitalizeFirstLetterOfEachWord(storeAddress)}
         numericValue={"$$$"}
+        isSelected={isSelected}
       />
     </div>
   );

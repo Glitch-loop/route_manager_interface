@@ -596,7 +596,6 @@ export default function Page() {
         handleSelectCoordinates(null);
         setTotalStoresFoundBySearchRange(0);
       } else {
-
         if (effectRouteDay.has(id_group)) {
           const routeDayEffect = effectRouteDay.get(id_group);
           handleUpdateRouteDayEffects(id_group, {...routeDayEffect!, selectedLocation: id_marker});
