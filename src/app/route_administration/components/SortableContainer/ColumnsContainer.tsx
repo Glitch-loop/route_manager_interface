@@ -162,7 +162,7 @@ export default function ColumnsContainer({
     // Find any route day with a selected location
     let selectedId: string | null = null;
     
-    routeDayEffects.forEach((effect, routeDayId) => {
+    routeDayEffects.forEach((effect) => {
       if (effect.selectedLocation !== undefined) {
         selectedId = effect.selectedLocation;
       }

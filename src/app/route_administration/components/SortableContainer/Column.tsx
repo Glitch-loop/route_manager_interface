@@ -1,3 +1,4 @@
+// Libraries
 import React, { ReactNode, useState } from 'react';
 import {useDroppable} from '@dnd-kit/react';
 import {CollisionPriority} from '@dnd-kit/abstract';
@@ -20,15 +21,25 @@ import {
   ExpandLess,
   ExpandMore,
 } from "@mui/icons-material";
-import { capitalizeFirstLetterOfEachWord } from '@/utils/generalUtils';
-import { getAddressOfStore } from "@/shared/utils/stores/utils";
-import ColorPicker from '@/shared/components/ColorPicker/ColorPicker';
+
+// Dtos
 import { LocationDTO } from "@/shared/dtos/LocationDTO";
 
+// Types
 import { 
   RouteDayEffect, 
 } from "@/shared/hooks/route-day-location-map/types/types";
-import { RouteDayActionStateType, SortableLocationType } from '@/app/route_administration/components/SortableContainer/Types/types';
+import { 
+  RouteDayActionStateType, 
+  SortableLocationType 
+} from '@/app/route_administration/components/SortableContainer/Types/types';
+
+// Components
+import ColorPicker from '@/shared/components/ColorPicker/ColorPicker';
+
+// Utils
+import { getAddressOfStore } from "@/shared/utils/stores/utils";
+import { capitalizeFirstLetterOfEachWord } from '@/utils/generalUtils';
 
 type ColumnType = {
   children: ReactNode;
@@ -74,7 +85,7 @@ export function Column({
   onHoverStore
 }: ColumnType) {
   // --Custom hooks--
-  const {isDropTarget, ref} = useDroppable({
+  const { ref } = useDroppable({
     id,
     type: 'column',
     accept: 'item',
@@ -410,7 +421,7 @@ export function Column({
                       }
                       value={null}
                       inputValue={inputValue}
-                      onInputChange={(event, newInputValue, reason) => {
+                      onInputChange={(event, newInputValue) => {
                         setInputValue(newInputValue);
                       }}
                       onChange={(event, newValue) => {

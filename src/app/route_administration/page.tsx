@@ -2,7 +2,7 @@
 "use client";
 
 // Libraries
-import React, { useCallback, useEffect, useState, useMemo, useReducer } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import {
   Button,
@@ -20,6 +20,7 @@ import { UserDTO } from "@/shared/dtos/UserDTO";
 import { RouteDTO } from "@/shared/dtos/RouteDTO";
 import { LocationDTO } from "@/shared/dtos/LocationDTO";
 import { RouteDayDTO } from "@/shared/dtos/RouteDayDTO";
+import { LocationTypeDTO } from "@/shared/dtos/LocationTypeDTO";
 import { RouteDayLocationDTO } from "@/shared/dtos/RouteDayLocationDTO";
 
 // Actions
@@ -39,23 +40,23 @@ import SimpleCard from "@/shared/components/Cards/SimpleCard/SimpleCard";
 import SearchRoute from "@/app/route_administration/components/SearchRoute";
 import StoreSearchBar from "@/app/route_administration/components/StoreSearchBar";
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
-import RouteDayContainer from "@/app/route_administration/components/RouteDayContainer/RouteDayContainer";
 import ShowHideIconButton from "@/shared/components/ShowHideIconButton/ShowHideIconButton";
 import ColumnsContainer from "@/app/route_administration/components/SortableContainer/ColumnsContainer";
 
 // Types
 import { StorePositionInRouteType } from "@/shared/types/types";
 import { coordinates } from "@/shared/components/MarkerMap/types/types";
-import {
-  MarkerGroup,
-  DraggableRouteDayStore,
-} from "@/app/route_administration/types/types";
+import { DraggableRouteDayStore } from "@/app/route_administration/types/types";
 
 // Constants
 import { RANGE_OPTIONS } from "@/app/route_administration/constants/constants";
 
 // Interfaces 
 import { IMapMarker } from "@/shared/components/MarkerMap/interfaces/interfaces";
+
+// Hooks
+import { useRouteDayLocationMap } from "@/shared/hooks/route-day-location-map/useRouteDayLocationMap";
+import { RouteDayEffect } from "@/shared/hooks/route-day-location-map/types/types";
 
 // Utils
 import {
@@ -66,18 +67,11 @@ import {
   capitalizeFirstLetter,
   capitalizeFirstLetterOfEachWord,
 } from "@/shared/utils/strings/utils";
+import { generateUUIDv4 } from "@/utils/generalUtils";
 import { findStoresAround } from "@/shared/utils/clients/utils";
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { generateRandomColor } from "@/shared/utils/styles/utils";
-import { LocationTypeDTO } from "@/shared/dtos/LocationTypeDTO";
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
-import { SortableLocationType } from "@/app/route_administration/components/SortableContainer/Types/types";
-import routeDayReducer from "@/app/route_administration/reducers/routeDayEffectReducer";
-import { useRouteDayLocationMap } from "@/shared/hooks/route-day-location-map/useRouteDayLocationMap";
-import { generateUUIDv4 } from "@/utils/generalUtils";
-import { 
-  RouteDayEffect, 
-} from "@/shared/hooks/route-day-location-map/types/types";
 
 function createMapHoverComponent(store: LocationDTO): React.ReactNode {
   const storeName = store.location_name ?? "Nombre no disponible";

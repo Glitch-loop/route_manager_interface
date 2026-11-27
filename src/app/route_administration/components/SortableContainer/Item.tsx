@@ -1,10 +1,17 @@
+// Libraries
 import React from 'react';
 import { useSortable } from '@dnd-kit/react/sortable';
-import NumericValueCard from '@/shared/components/Cards/NumericValueCard/NumericValueCard';
+import { RemoveCircleOutline } from '@mui/icons-material';
+
+// Dtos
 import { LocationDTO } from '@/shared/dtos/LocationDTO';
+
+// Components
+import NumericValueCard from '@/shared/components/Cards/NumericValueCard/NumericValueCard';
+
+// Utils
 import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { capitalizeFirstLetterOfEachWord } from '@/utils/generalUtils';
-import { RemoveCircleOutline, CheckCircle } from '@mui/icons-material';
 
 type ItemType = {
     id: string,
