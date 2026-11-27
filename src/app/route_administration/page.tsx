@@ -207,9 +207,6 @@ export default function Page() {
     = useState<Map<string, RouteDayDTO>>(new Map<string, RouteDayDTO>()); // Keep track of routes that are being modified to apply special effects on map markers. <route day id, DraggableRouteDayStore>
   // const [routeDaysToModify, setRouteDaysToModify] = useState<RouteDayDTO[]>();
 
-  const [effectSelectedRouteDay, setEffectSelectedRouteDay] 
-    = useState<Map<string, RouteDayEffect>>(new Map());
-
   // States related to expand menu.
   const [checkedRouteDays, setCheckedRouteDays] = useState<Record<string, boolean>>({});
   const [pendingUnselectRouteDayId, setPendingUnselectRouteDayId] = useState<string | null>(null);
@@ -615,12 +612,7 @@ export default function Page() {
     });
 
     // Remove effects
-    // Replace with the dispather remove_route_day
-    setEffectSelectedRouteDay((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(idRouteDayToRemove);
-      return newMap;
-    });
+    handleRemoveRouteDayEffects(idRouteDayToRemove);
   };
 
   // Handlers - Route day modification (route container).
@@ -727,11 +719,7 @@ export default function Page() {
     });
 
     // Remove effects
-    setEffectSelectedRouteDay((prev) => {
-      const newMap = new Map(prev);
-      newMap.delete(idRouteDay);
-      return newMap;
-    });
+    handleRemoveRouteDayEffects(idRouteDay);
   };
 
   const handleOverStoreAutoComplete = (store: LocationDTO | null) => {
