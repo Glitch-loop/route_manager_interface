@@ -42,6 +42,8 @@ import StoreSearchBar from "@/app/route_administration/components/StoreSearchBar
 import RouteExpandMenu from "@/shared/components/RoutesExpandMenu/RoutesExpandMenu";
 import ShowHideIconButton from "@/shared/components/ShowHideIconButton/ShowHideIconButton";
 import ColumnsContainer from "@/app/route_administration/components/SortableContainer/ColumnsContainer";
+import MarkerInfoWindowHoverComponent from "@/app/route_administration/components/RouteMap/MarkerInfoWindowHoverComponent";
+import MarkerInfoWindowClickComponent from "@/app/route_administration/components/RouteMap/MarkerInfoWindowClickComponent";
 
 // Types
 import { StorePositionInRouteType } from "@/shared/types/types";
@@ -73,114 +75,8 @@ import { getAddressOfStore } from "@/shared/utils/stores/utils";
 import { generateRandomColor } from "@/shared/utils/styles/utils";
 import { useRouteLocation } from "@/shared/hooks/locations/useRouteLocation";
 
-function createMapHoverComponent(store: LocationDTO): React.ReactNode {
-  const storeName = store.location_name ?? "Nombre no disponible";
-  const storeAddress = getAddressOfStore(store);
 
-  return (
-    <div className="p-2">
-      <p className="text-lg font-semibold">
-        {capitalizeFirstLetterOfEachWord(storeName)}
-      </p>
-      <p className="text-base text-gray-600">
-        {capitalizeFirstLetterOfEachWord(storeAddress)}
-      </p>
-    </div>
-  );
-}
 
-function createMapClickComponent(
-  location: LocationDTO,
-  locationPositions: StorePositionInRouteType[],
-  onSelectStoreToUpdate?: (idStore: string) => void,
-): React.ReactNode {
-  const { id_location, location_name } = location;
-  const storeName = location_name ?? "Nombre no disponible";
-  const storeAddress = getAddressOfStore(location);
-
-  return (
-    <div className="p-3 min-w-[280px]">
-      {onSelectStoreToUpdate && (
-        <div className="flex items-center justify-between mb-2">
-          <h4 className="font-bold text-lg">
-            {capitalizeFirstLetterOfEachWord(storeName)}
-          </h4>
-          <Tooltip
-            title={"Actualizar información de la tienda"}
-            placement="right"
-            enterDelay={300}
-            arrow
-          >
-            <IconButton
-              onClick={() => onSelectStoreToUpdate(id_location)}
-              sx={{
-                backgroundColor: "#1976d2",
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "#1565c0",
-                },
-                width: 32,
-                height: 32,
-              }}
-              size="small"
-            >
-              <CreateSharp className="text-white" fontSize="small" />
-            </IconButton>
-          </Tooltip>
-        </div>
-      )}
-
-      {/* <p className="text-sm text-gray-600 mb-1">{id_location}</p> */}
-      <p className="text-sm text-gray-600 mb-1">
-        {capitalizeFirstLetterOfEachWord(storeAddress)}
-      </p>
-      {location.address_reference && (
-        <p className="text-sm text-gray-500 mt-1">
-          Referencias: {capitalizeFirstLetter(location.address_reference)}
-        </p>
-      )}
-
-      {/* Route days table */}
-      {locationPositions.length > 0 && (
-        <div className="mt-3 border-t pt-2">
-          <p className="text-xs font-semibold text-gray-700 mb-1">
-            Días de ruta:
-          </p>
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b">
-                <th className="text-left py-1 pr-2">Ruta</th>
-                <th className="text-left py-1 pr-2">Día</th>
-                <th className="text-center py-1">Pos.</th>
-                <th className="w-6"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {locationPositions.map((pos) => {
-                return (
-                  <tr
-                    key={pos.idRouteDayStore}
-                    className="border-b border-gray-100"
-                  >
-                    <td className="py-1 pr-2">
-                      {capitalizeFirstLetter(pos.routeName)}
-                    </td>
-                    <td className="py-1 pr-2">
-                      {capitalizeFirstLetter(pos.dayName)}
-                    </td>
-                    <td className="py-1 text-center">{pos.position}</td>
-                    <td className="py-1 text-center">
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
 
 export default function Page() {
   // Collapse menu states
@@ -238,7 +134,7 @@ export default function Page() {
 
   const [administrationView, setAdministrationView] = useState(2); // 1 for Routes, 2 for Stores
 
-  // Hooks
+  // --Hooks--
   const { 
     stores, 
     mapStores, 
@@ -246,8 +142,7 @@ export default function Page() {
     fetchRouteTransactions,
     setStores
   } = useRouteLocation();
-
-    const { 
+  const { 
     effectRouteDay, 
     routeDayFilters,
     handleAddRouteDayEffects, 
@@ -260,14 +155,16 @@ export default function Page() {
     routeDaysToDisplay: routesInModification,
     storeMap: mapStores,
     routeTransactionByStoreMap: mapRouteTransactionByStore,
-    onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => {  return createMapHoverComponent(location); },
+    onHoverMarkerComponent: (location: LocationDTO): React.ReactNode => {  
+      return MarkerInfoWindowHoverComponent(location); },
     onClickMarkerComponent: (location: LocationDTO): React.ReactNode => { 
       const locationPositions = mapStoresInRouteDay.get(location.id_location) ?? [];
-      return createMapClickComponent(location, locationPositions, () => handleSelectStoreToUpdate(location.id_location)); 
+      return MarkerInfoWindowClickComponent(location, 
+        locationPositions, () => handleSelectStoreToUpdate(location.id_location)); 
     }
   });
 
-  // Use effects
+  // --Use effects--
   useEffect(() => {
     const loadScreenInformation = async () => {
       const routes: RouteDTO[] = await listRoutes();
@@ -470,12 +367,12 @@ export default function Page() {
   const handleUpdateStore = async (updatedStore: LocationDTO) => {
     try {
       // Update local state after successful update
-      await updateStore(updatedStore);
+      console.log("Store to update: ", updatedStore)
+      // await updateStore(updatedStore);
       setStores((prevStores) =>
         prevStores.map((store) =>
           store.id_location === updatedStore.id_location
-            ? updatedStore
-            : { ...store },
+            ? updatedStore : { ...store },
         ),
       );
       setSelectedStore(null);
@@ -524,18 +421,15 @@ export default function Page() {
 
   // Handlers - Route day menu selection
   const handleRouteDaySelect = (routeDayId: string, state: boolean) => {
-    console.log("routeDayId: ", routeDayId, " - state: ", state)
     if (state) {
       // Add route day because it was selected
       // Check if already selected to avoid duplication
-      console.log("This route is already considered? ", routesInModification.has(routeDayId))
       if (routesInModification.has(routeDayId)) return;
       const routeDayFound: RouteDayDTO | null = getRouteDayFromRoutesList(
         routes,
         routeDayId,
       );
 
-      console.log("Get route day for appending in the map: ", routeDayFound)
       if (routeDayFound !== null) {
         // Add to routesInModification
         setRoutesInModification((prev) => (
@@ -651,12 +545,6 @@ export default function Page() {
     } catch (error: unknown) {
       console.error("Error retrieving route transactions: ", error);
     }
-  };
-
-  const handleModifyRouteDays = (
-    modifiedRouteDays: Record<string, DraggableRouteDayStore[]>,
-  ) => {
-    // setRoutesInModification(modifiedRouteDays);
   };
 
   const handleSaveRouteModification = async (

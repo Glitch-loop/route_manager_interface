@@ -1,7 +1,15 @@
 "use client";
 // Libraries
 import { useState, useEffect, useRef } from "react";
-import { APIProvider, Map, Marker, InfoWindow, useMap, MapMouseEvent } from "@vis.gl/react-google-maps";
+import { 
+  APIProvider, 
+  Map, 
+  Marker, 
+  InfoWindow, 
+  useMap, 
+  MapMouseEvent,
+  AdvancedMarker
+} from "@vis.gl/react-google-maps";
 
 // Components
 import { IconButton, Tooltip } from "@mui/material";
@@ -15,6 +23,7 @@ import { IMapMarker } from "./interfaces/interfaces";
 
 // Utils
 import { createCustomMarker } from "@/utils/stylesUtils";
+import { generateUUIDv4 } from "@/utils/generalUtils";
 
 
 interface MarkerMapProps {
@@ -22,6 +31,7 @@ interface MarkerMapProps {
   idMarkerSelected: string | null;
   setIdMarkerSelected: (id: string | null) => void;
   onCoordSelected: (clickCoordinates: coordinates | IMapMarker) => void;
+  isSelecting?: boolean | undefined, 
 }
 
 interface MapContentProps {
@@ -34,6 +44,7 @@ interface MapContentProps {
 const containerStyle = { width: "100%", height: "100%" };
 const defaultCenter = { lat: 20.648043093256433, lng: -105.21612612535338 }; // Default: Mexico City
 const MAP_ID = "marker-map";
+const GOOGLE_MAPS_ID = process.env.NEXT_PUBLIC_GOOGLE_MAPS_ID || "default-map-id";
 
 // Inner component that has access to the map instance
 function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSelected }: MapContentProps) {
@@ -148,7 +159,7 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
         </Tooltip>
       </div>
       {markers.map((marker) => (
-        <Marker
+        <AdvancedMarker
           key={marker.id_marker}
           icon={createCustomMarker(marker.color_item)}
           position={{ lat: parseFloat(marker.latitude), lng: parseFloat(marker.longitude) }}
@@ -157,8 +168,9 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
           onMouseOut={handleMouseOut}
         />
       ))}
+
       { clickedMarker && idMarkerSelected !== null && (
-          <Marker
+          <AdvancedMarker
             key={clickedMarker.id_marker}
             icon={createCustomMarker(clickedMarker.color_item)}
             position={{ lat: parseFloat(clickedMarker.latitude), lng: parseFloat(clickedMarker.longitude) }}
@@ -166,8 +178,8 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
             onMouseOver={() => handleMouseOver(clickedMarker)}
             onMouseOut={handleMouseOut}
           />
-        )
-      }
+      )}
+
       {/* Hover InfoWindow */}
       {hoveredMarker && clickedMarker?.id_marker !== hoveredMarker.id_marker && hoveredMarker.hoverComponent !== null && (
         <InfoWindow
@@ -191,7 +203,13 @@ function MapContent({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSel
   );
 }
 
-export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelected, onCoordSelected }: MarkerMapProps) {
+export default function MarkerMap({ 
+  markers, 
+  idMarkerSelected, 
+  setIdMarkerSelected, 
+  onCoordSelected,
+  isSelecting = true
+}: MarkerMapProps) {
   const [selectedCoordinate, setSelectedCoordinate] = useState<coordinates | null>(null);
   
 
@@ -216,6 +234,7 @@ export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelect
     <APIProvider apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY as string}>
       <Map 
         id={MAP_ID}
+        mapId={GOOGLE_MAPS_ID}
         style={containerStyle}
         defaultCenter={markers.length ? { lat: parseFloat(markers[0].latitude), lng: parseFloat(markers[0].longitude) } : defaultCenter}
         defaultZoom={13}
@@ -227,6 +246,17 @@ export default function MarkerMap({ markers, idMarkerSelected, setIdMarkerSelect
           setIdMarkerSelected={setIdMarkerSelected}
           onCoordSelected={handleCoordSelected} 
         />
+
+        { isSelecting && selectedCoordinate !== null &&
+          <AdvancedMarker
+            key={generateUUIDv4()}
+            icon={createCustomMarker("#dc3d35")}
+            position={{ lat: selectedCoordinate.Lat, lng: selectedCoordinate.Lng }}
+            // onClick={() => handleMarkerClick(clickedMarker)}
+            // onMouseOver={() => handleMouseOver(clickedMarker)}
+          />
+        }
+
       </Map>
     </APIProvider>
   );
